@@ -1,0 +1,6 @@
+PyYAML~=6.0.2
+chromadb~=1.0.7
+streamlit~=1.45.0
+transformers~=4.51.3
+langchain~=0.3.24
+langchain-community~=0.3.23

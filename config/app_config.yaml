@@ -1,0 +1,19 @@
+models:
+  embeddings:
+    # currently only embedding models from https://huggingface.co/sentence-transformers are supported
+    model_name: all-MiniLM-L6-v2
+    type: huggingface
+    tokenizer: all-MiniLM-L6-v2
+
+  chat:
+    model_name: meta-llama/Llama-3.2-1B
+    type: huggingface
+    tokenizer: meta-llama/Llama-3.2-1B
+    max_length: 2048
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 50
+    repetition_penalty: 1.2
+    num_return_sequences: 1
+    use_cache: true
+    do_sample: true
