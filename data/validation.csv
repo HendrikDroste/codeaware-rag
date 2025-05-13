@@ -1,0 +1,11 @@
+Question,URL,end_line,category
+How can I send a file?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/helpers.py#L526,567,
+How can I configure a Flask dev server to be visible across the network?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/cli.py#L891,891,
+How can I create a json from a list or dict?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/json/__init__.py#L138,170,
+How can I redirect a to a URL?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/helpers.py#L242,263,
+How to divide flask app into multiple py files?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/blueprints.py#L18,53,
+How can I set the response content type?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/wrappers.py#L222,244,
+How can I get all routes of my application?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/sansio/app.py#L650; https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/sansio/app.py#L259,661;263 ,multi-answer
+How can I add a rout to my application?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/sansio/app.py#L605; https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/sansio/blueprints.py#L87; https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/helpers.py#L62,661;116;106,multi-answer
+How can I run my app in debug mode?,https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/app.py#L546; https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/helpers.py#L27,667;32,
+"I get a Error 413, what can I do?",https://github.com/pallets/flask/blob/b78b5a210bde49e7e04b62a2a4f453ca10e0048c/src/flask/wrappers.py#L60,86,
