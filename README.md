@@ -1,9 +1,7 @@
 # Codeaware RAG
 
-[!Note]
-Currently, this project is in progress and not all sections are complete.
-
-T
+> [!Note]
+> Currently, this project is in progress and not all sections are complete.
 
 This projects aims to try out different retrievers for effective retrieval for questions about code.
 The project is currently in progress, therefore the 
