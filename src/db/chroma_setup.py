@@ -7,9 +7,21 @@ class ChromaSetup:
     def __init__(self):
         config = self.load_app_config("config/app_config.yaml")
         model_name = config["models"]["embeddings"]["model_name"]
-        embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=model_name,
-        )
+        type = config["models"]["embeddings"]["type"]
+        subtype = config["models"]["embeddings"]["subtype"]
+        if str(type).lower() == "huggingface" and str(subtype).lower() == "sentence-transformers":
+            embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+                model_name=model_name,
+            )
+        elif str(type).lower() == "huggingface" and str(subtype).lower() == "autotokenizer":
+            embedding_function = embedding_functions.HuggingFaceEmbeddingFunction(
+                model_name=model_name,
+            )
+        elif str(type).lower() == "openai" and str(subtype).lower() == "text-embedding-ada-002":
+            embedding_function = embedding_functions.OpenAIEmbeddingFunction(
+                model_name=model_name
+            )
+
 
         # Initialize the Chroma client with custom embedding function
         self.client = chromadb.Client(

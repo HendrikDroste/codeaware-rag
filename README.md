@@ -8,10 +8,13 @@ The project is currently in progress, therefore the
 
 ## Next Steps
 
-- [ ] Decide on Dataset that for evaluation
-- [ ] Develop an extensible RAG system that serves as a baseline (currently under development)
+- [x] Decide on Dataset that for evaluation -> Create a custom dataset based on Flask (see [validation.csv](data/validation.csv))
+- [x] Develop an extensible RAG system that serves as a baseline -> Baseline using huggingface sentence-transformers is implemented
+- [ ] Extend baseline to support autotokenizer and other models (unixcoder)
+- [ ] Validate questions
+- [ ] Use a LLM to generate the dataset for a given repository
 - [ ] Extend the RAG system with [tree-sitter](https://tree-sitter.github.io/tree-sitter/) and/or [multispy](https://github.com/microsoft/multilspy) 
-
+- [ ] Evaluate the performance of the retriever
 
 ## Dataset
 
@@ -75,3 +78,11 @@ Possible approaches for the deterministic retrievers are:
     - TODO
   - Cons
     - TODO
+
+- TODO how does the python splitter work (whole class vs function)
+
+- how many results is needed to get the correct answer
+- pass in k (is the correct answer in the top k results) to the retriever
+- Line vs function vs class based metrics
+
+- create custom dataset for different categories (dependencies, ...)

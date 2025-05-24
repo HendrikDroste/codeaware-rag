@@ -4,6 +4,7 @@ import logging
 from datasets import load_dataset
 import chromadb
 from chromadb.utils import embedding_functions
+from src.utils import load_config
 
 # Set up logging
 logging.basicConfig(
@@ -75,9 +76,9 @@ def create_chroma_collection(client, collection_name: str):
 
 
 def main(args):
-    # Use the same model name that will be used in the retriever
-    model_name = "sentence-transformers/all-MiniLM-L6-v2"
-    dataset = load_codesearchnet_dataset(split="train", max_samples=1000)
+    config = load_config("app_config")
+    model_name = f"sentence-transformers/{config['models']['embeddings']['name']}"
+    dataset = load_codesearchnet_dataset(split="train")
 
     # Access dataset elements correctly
     code_samples = dataset["code"]
@@ -86,7 +87,7 @@ def main(args):
     embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=model_name)
 
     logger.info(f"Connecting to ChromaDB at {args.db_path}")
-    db_path = "../.././chroma_db"  # Default path for ChromaDB
+    db_path = "../../chroma_db"  # Default path for ChromaDB
     client = chromadb.PersistentClient(path=db_path)
 
     # Create or get collection
@@ -103,7 +104,7 @@ def main(args):
     name=collection_name,
     embedding_function=embedding_function,
     metadata={
-        "description": "my first Chroma collection",
+        "description": "Collection for codesearchnet embeddings",
     }
 )
 
@@ -111,7 +112,7 @@ def main(args):
     logger.info(f"Adding {len(code_samples)} documents to ChromaDB collection")
 
     # Use batch processing to add documents
-    batch_size = 100  # Smaller batch size for better reliability
+    batch_size = 5000
     for i in range(0, len(code_samples), batch_size):
         end_idx = min(i + batch_size, len(code_samples))
         batch_codes = code_samples[i:end_idx]

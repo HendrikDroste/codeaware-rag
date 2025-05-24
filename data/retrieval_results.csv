@@ -1,0 +1,1739 @@
+question_id,question,snippet_rank,filename,line_start,line_end,is_match,question_score,expected_files,snippet,Ground_truth,comment
+1,How can I send a file?,1,flask/helpers.py,549,567,True,1.0,src/flask/helpers.py:526-567,":param directory: The directory that ``path`` must be located under,
+        relative to the current application's root path. This *must not*
+        be a value provided by the client, otherwise it becomes insecure.
+    :param path: The path to the file to send, relative to
+        ``directory``.
+    :param kwargs: Arguments to pass to :func:`send_file`.
+
+    .. versionchanged:: 2.0
+        ``path`` replaces the ``filename`` parameter.
+
+    .. versionadded:: 2.0
+        Moved the implementation to Werkzeug. This is now a wrapper to
+        pass some Flask-specific arguments.
+
+    .. versionadded:: 0.5
+    """"""
+    return werkzeug.utils.send_from_directory(  # type: ignore[return-value]
+        directory, path, **_prepare_send_file_kwargs(**kwargs)
+    )",True,
+1,How can I send a file?,2,flask/helpers.py,500,523,False,1.0,src/flask/helpers.py:526-567,".. versionchanged:: 0.7
+        MIME guessing and etag support for file-like objects was
+        removed because it was unreliable. Pass a filename if you are
+        able to, otherwise attach an etag yourself.
+
+    .. versionchanged:: 0.5
+        The ``add_etags``, ``cache_timeout`` and ``conditional``
+        parameters were added. The default behavior is to add etags.
+
+    .. versionadded:: 0.2
+    """"""
+    return werkzeug.utils.send_file(  # type: ignore[return-value]
+        **_prepare_send_file_kwargs(
+            path_or_file=path_or_file,
+            environ=request.environ,
+            mimetype=mimetype,
+            as_attachment=as_attachment,
+            download_name=download_name,
+            conditional=conditional,
+            etag=etag,
+            last_modified=last_modified,
+            max_age=max_age,
+        )
+    )",True,"Correct, but send_form_directory is safer"
+1,How can I send a file?,3,flask/blueprints.py,67,95,False,1.0,src/flask/helpers.py:526-567,".. versionchanged:: 2.0
+            The default configuration is ``None`` instead of 12 hours.
+
+        .. versionadded:: 0.9
+        """"""
+        value = current_app.config[""SEND_FILE_MAX_AGE_DEFAULT""]
+
+        if value is None:
+            return None
+
+        if isinstance(value, timedelta):
+            return int(value.total_seconds())
+
+        return value  # type: ignore[no-any-return]
+
+    def send_static_file(self, filename: str) -> Response:
+        """"""The view function used to serve files from
+        :attr:`static_folder`. A route is automatically registered for
+        this view at :attr:`static_url_path` if :attr:`static_folder` is
+        set.
+
+        Note this is a duplicate of the same method in the Flask
+        class.
+
+        .. versionadded:: 0.5
+
+        """"""
+        if not self.has_static_folder:
+            raise RuntimeError(""'static_folder' must be set to serve static_files."")",False,Serves only static files
+1,How can I send a file?,4,flask/blueprints.py,45,65,False,1.0,src/flask/helpers.py:526-567,"#: The Click command group for registering CLI commands for this
+        #: object. The commands are available from the ``flask`` command
+        #: once the application has been discovered and blueprints have
+        #: been registered.
+        self.cli = AppGroup()
+
+        # Set the name of the Click group in case someone wants to add
+        # the app's commands to another CLI tool.
+        self.cli.name = self.name
+
+    def get_send_file_max_age(self, filename: str | None) -> int | None:
+        """"""Used by :func:`send_file` to determine the ``max_age`` cache
+        value for a given file path if it wasn't passed.
+
+        By default, this returns :data:`SEND_FILE_MAX_AGE_DEFAULT` from
+        the configuration of :data:`~flask.current_app`. This defaults
+        to ``None``, which tells the browser to use conditional requests
+        instead of a timed cache, which is usually preferable.
+
+        Note this is a duplicate of the same method in the Flask
+        class.",False,Sets parameters for send_file
+1,How can I send a file?,5,flask/helpers.py,450,474,False,1.0,src/flask/helpers.py:526-567,".. versionchanged:: 2.0
+        ``download_name`` replaces the ``attachment_filename``
+        parameter. If ``as_attachment=False``, it is passed with
+        ``Content-Disposition: inline`` instead.
+
+    .. versionchanged:: 2.0
+        ``max_age`` replaces the ``cache_timeout`` parameter.
+        ``conditional`` is enabled and ``max_age`` is not set by
+        default.
+
+    .. versionchanged:: 2.0
+        ``etag`` replaces the ``add_etags`` parameter. It can be a
+        string to use instead of generating one.
+
+    .. versionchanged:: 2.0
+        Passing a file-like object that inherits from
+        :class:`~io.TextIOBase` will raise a :exc:`ValueError` rather
+        than sending an empty file.
+
+    .. versionadded:: 2.0
+        Moved the implementation to Werkzeug. This is now a wrapper to
+        pass some Flask-specific arguments.
+
+    .. versionchanged:: 1.1
+        ``filename`` may be a :class:`~os.PathLike` object.",False,Sets parameters for send_file
+2,How can I configure a Flask dev server to be visible across the network?,1,flask/app.py,657,671,False,0.0,src/flask/cli.py:891-891,"cli.show_server_banner(self.debug, self.name)
+
+        from werkzeug.serving import run_simple
+
+        try:
+            run_simple(t.cast(str, host), port, self, **options)
+        finally:
+            # reset the first request information if the development server
+            # reset normally.  This makes it possible to restart the server
+            # without reloader and that stuff from an interactive shell.
+            self._got_first_request = False
+
+    def test_client(self, use_cookies: bool = True, **kwargs: t.Any) -> FlaskClient:
+        """"""Creates a test client for this application.  For information
+        about unit testing head over to :doc:`/testing`.",False,
+2,How can I configure a Flask dev server to be visible across the network?,2,flask/app.py,582,595,False,0.0,src/flask/cli.py:891-891,":param host: the hostname to listen on. Set this to ``'0.0.0.0'`` to
+            have the server available externally as well. Defaults to
+            ``'127.0.0.1'`` or the host in the ``SERVER_NAME`` config variable
+            if present.
+        :param port: the port of the webserver. Defaults to ``5000`` or the
+            port defined in the ``SERVER_NAME`` config variable if present.
+        :param debug: if given, enable or disable debug mode. See
+            :attr:`debug`.
+        :param load_dotenv: Load the nearest :file:`.env` and :file:`.flaskenv`
+            files to set environment variables. Will also change the working
+            directory to the directory containing the first file found.
+        :param options: the options to be forwarded to the underlying Werkzeug
+            server. See :func:`werkzeug.serving.run_simple` for more
+            information.",False,Only shows the docstring but not the function
+2,How can I configure a Flask dev server to be visible across the network?,3,flask/app.py,621,655,False,0.0,src/flask/cli.py:891-891,"return
+
+        if get_load_dotenv(load_dotenv):
+            cli.load_dotenv()
+
+            # if set, env var overrides existing value
+            if ""FLASK_DEBUG"" in os.environ:
+                self.debug = get_debug_flag()
+
+        # debug passed to method overrides all other sources
+        if debug is not None:
+            self.debug = bool(debug)
+
+        server_name = self.config.get(""SERVER_NAME"")
+        sn_host = sn_port = None
+
+        if server_name:
+            sn_host, _, sn_port = server_name.partition("":"")
+
+        if not host:
+            if sn_host:
+                host = sn_host
+            else:
+                host = ""127.0.0.1""
+
+        if port or port == 0:
+            port = int(port)
+        elif sn_port:
+            port = int(sn_port)
+        else:
+            port = 5000
+
+        options.setdefault(""use_reloader"", self.debug)
+        options.setdefault(""use_debugger"", self.debug)
+        options.setdefault(""threaded"", True)",False,Expect server to have the data stored in the env file
+2,How can I configure a Flask dev server to be visible across the network?,4,flask/app.py,563,580,False,0.0,src/flask/cli.py:891-891,"If you want to run the application in debug mode, but disable the
+        code execution on the interactive debugger, you can pass
+        ``use_evalex=False`` as parameter.  This will keep the debugger's
+        traceback screen active, but disable code execution.
+
+        It is not recommended to use this function for development with
+        automatic reloading as this is badly supported.  Instead you should
+        be using the :command:`flask` command line script's ``run`` support.
+
+        .. admonition:: Keep in Mind
+
+           Flask will suppress any server error with a generic error page
+           unless it is in debug mode.  As such to enable just the
+           interactive debugger without the code reloading, you have to
+           invoke :meth:`run` with ``debug=True`` and ``use_reloader=False``.
+           Setting ``use_debugger`` to ``True`` without being in debug mode
+           won't catch any exceptions because there won't be any to
+           catch.",False,
+2,How can I configure a Flask dev server to be visible across the network?,5,flask/app.py,118,137,False,0.0,src/flask/cli.py:891-891,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+3,How can I create a json from a list or dict?,1,flask/app.py,1129,1149,False,0.0,src/flask/json/__init__.py:138-170,"def make_response(self, rv: ft.ResponseReturnValue) -> Response:
+        """"""Convert the return value from a view function to an instance of
+        :attr:`response_class`.
+
+        :param rv: the return value from the view function. The view function
+            must return a response. Returning ``None``, or the view ending
+            without returning, is not allowed. The following types are allowed
+            for ``view_rv``:
+
+            ``str``
+                A response object is created with the string encoded to UTF-8
+                as the body.
+
+            ``bytes``
+                A response object is created with the bytes as the body.
+
+            ``dict``
+                A dictionary that will be jsonify'd before being returned.
+
+            ``list``
+                A list that will be jsonify'd before being returned.",False,Documentation that the function is used there
+3,How can I create a json from a list or dict?,2,json/provider.py,124,142,False,0.0,src/flask/json/__init__.py:138-170,"class DefaultJSONProvider(JSONProvider):
+    """"""Provide JSON operations using Python's built-in :mod:`json`
+    library. Serializes the following additional data types:
+
+    -   :class:`datetime.datetime` and :class:`datetime.date` are
+        serialized to :rfc:`822` strings. This is the same as the HTTP
+        date format.
+    -   :class:`uuid.UUID` is serialized to a string.
+    -   :class:`dataclasses.dataclass` is passed to
+        :func:`dataclasses.asdict`.
+    -   :class:`~markupsafe.Markup` (or any object with a ``__html__``
+        method) will call the ``__html__`` method to get a string.
+    """"""
+
+    default: t.Callable[[t.Any], t.Any] = staticmethod(_default)  # type: ignore[assignment]
+    """"""Apply this function to any object that :meth:`json.dumps` does
+    not know how to serialize. It should return a valid JSON type or
+    raise a ``TypeError``.
+    """"""",False,"Correct class, but not correct method"
+3,How can I create a json from a list or dict?,3,json/provider.py,144,167,False,0.0,src/flask/json/__init__.py:138-170,"ensure_ascii = True
+    """"""Replace non-ASCII characters with escape sequences. This may be
+    more compatible with some clients, but can be disabled for better
+    performance and size.
+    """"""
+
+    sort_keys = True
+    """"""Sort the keys in any serialized dicts. This may be useful for
+    some caching situations, but can be disabled for better performance.
+    When enabled, keys must all be strings, they are not converted
+    before sorting.
+    """"""
+
+    compact: bool | None = None
+    """"""If ``True``, or ``None`` out of debug mode, the :meth:`response`
+    output will not add indentation, newlines, or spaces. If ``False``,
+    or ``None`` in debug mode, it will use a non-compact representation.
+    """"""
+
+    mimetype = ""application/json""
+    """"""The mimetype set in :meth:`response`.""""""
+
+    def dumps(self, obj: t.Any, **kwargs: t.Any) -> str:
+        """"""Serialize data as JSON to a string.",True,Other implementation
+3,How can I create a json from a list or dict?,4,json/provider.py,169,187,False,0.0,src/flask/json/__init__.py:138-170,"Keyword arguments are passed to :func:`json.dumps`. Sets some
+        parameter defaults from the :attr:`default`,
+        :attr:`ensure_ascii`, and :attr:`sort_keys` attributes.
+
+        :param obj: The data to serialize.
+        :param kwargs: Passed to :func:`json.dumps`.
+        """"""
+        kwargs.setdefault(""default"", self.default)
+        kwargs.setdefault(""ensure_ascii"", self.ensure_ascii)
+        kwargs.setdefault(""sort_keys"", self.sort_keys)
+        return json.dumps(obj, **kwargs)
+
+    def loads(self, s: str | bytes, **kwargs: t.Any) -> t.Any:
+        """"""Deserialize data as JSON from a string or bytes.
+
+        :param s: Text or UTF-8 bytes.
+        :param kwargs: Passed to :func:`json.loads`.
+        """"""
+        return json.loads(s, **kwargs)",True,Other implementation
+3,How can I create a json from a list or dict?,5,json/tag.py,219,254,False,0.0,src/flask/json/__init__.py:138-170,"class TaggedJSONSerializer:
+    """"""Serializer that uses a tag system to compactly represent objects that
+    are not JSON types. Passed as the intermediate serializer to
+    :class:`itsdangerous.Serializer`.
+
+    The following extra types are supported:
+
+    * :class:`dict`
+    * :class:`tuple`
+    * :class:`bytes`
+    * :class:`~markupsafe.Markup`
+    * :class:`~uuid.UUID`
+    * :class:`~datetime.datetime`
+    """"""
+
+    __slots__ = (""tags"", ""order"")
+
+    #: Tag classes to bind when creating the serializer. Other tags can be
+    #: added later using :meth:`~register`.
+    default_tags = [
+        TagDict,
+        PassDict,
+        TagTuple,
+        PassList,
+        TagBytes,
+        TagMarkup,
+        TagUUID,
+        TagDateTime,
+    ]
+
+    def __init__(self) -> None:
+        self.tags: dict[str, JSONTag] = {}
+        self.order: list[JSONTag] = []
+
+        for cls in self.default_tags:
+            self.register(cls)",True,Extended Json serializer
+4,How can I redirect a to a URL?,1,sansio/app.py,893,918,False,1.0,src/flask/helpers.py:242-263,"def redirect(self, location: str, code: int = 302) -> BaseResponse:
+        """"""Create a redirect response object.
+
+        This is called by :func:`flask.redirect`, and can be called
+        directly as well.
+
+        :param location: The URL to redirect to.
+        :param code: The status code for the redirect.
+
+        .. versionadded:: 2.2
+            Moved from ``flask.redirect``, which calls this method.
+        """"""
+        return _wz_redirect(
+            location,
+            code=code,
+            Response=self.response_class,  # type: ignore[arg-type]
+        )
+
+    def inject_url_defaults(self, endpoint: str, values: dict[str, t.Any]) -> None:
+        """"""Injects the URL defaults for the given endpoint directly into
+        the values dictionary passed.  This is used internally and
+        automatically called on URL building.
+
+        .. versionadded:: 0.7
+        """"""
+        names: t.Iterable[str | None] = (None,)",True,
+4,How can I redirect a to a URL?,2,flask/helpers.py,242,263,True,1.0,src/flask/helpers.py:242-263,"def redirect(
+    location: str, code: int = 302, Response: type[BaseResponse] | None = None
+) -> BaseResponse:
+    """"""Create a redirect response object.
+
+    If :data:`~flask.current_app` is available, it will use its
+    :meth:`~flask.Flask.redirect` method, otherwise it will use
+    :func:`werkzeug.utils.redirect`.
+
+    :param location: The URL to redirect to.
+    :param code: The status code for the redirect.
+    :param Response: The response class to use. Not used when
+        ``current_app`` is active, which uses ``app.response_class``.
+
+    .. versionadded:: 2.2
+        Calls ``current_app.redirect`` if available instead of always
+        using Werkzeug's default ``redirect``.
+    """"""
+    if current_app:
+        return current_app.redirect(location, code=code)
+
+    return _wz_redirect(location, code=code, Response=Response)",True,
+4,How can I redirect a to a URL?,3,flask/app.py,1102,1127,False,1.0,src/flask/helpers.py:242-263,"# It is an error to set _scheme when _external=False, in order
+        # to avoid accidental insecure URLs.
+        if _scheme is not None and not _external:
+            raise ValueError(""When specifying '_scheme', '_external' must be True."")
+
+        self.inject_url_defaults(endpoint, values)
+
+        try:
+            rv = url_adapter.build(  # type: ignore[union-attr]
+                endpoint,
+                values,
+                method=_method,
+                url_scheme=_scheme,
+                force_external=_external,
+            )
+        except BuildError as error:
+            values.update(
+                _anchor=_anchor, _method=_method, _scheme=_scheme, _external=_external
+            )
+            return self.handle_url_build_error(error, endpoint, values)
+
+        if _anchor is not None:
+            _anchor = _url_quote(_anchor, safe=""%!#$&'()*+,/:;=?@"")
+            rv = f""{rv}#{_anchor}""
+
+        return rv",False,URL-Building but not redirecting
+4,How can I redirect a to a URL?,4,flask/helpers.py,203,221,False,1.0,src/flask/helpers.py:242-263,":param endpoint: The endpoint name associated with the URL to
+        generate. If this starts with a ``.``, the current blueprint
+        name (if any) will be used.
+    :param _anchor: If given, append this as ``#anchor`` to the URL.
+    :param _method: If given, generate the URL associated with this
+        method for the endpoint.
+    :param _scheme: If given, the URL will have this scheme if it is
+        external.
+    :param _external: If given, prefer the URL to be internal (False) or
+        require it to be external (True). External URLs include the
+        scheme and domain. When not in an active request, URLs are
+        external by default.
+    :param values: Values to use for the variable parts of the URL rule.
+        Unknown keys are appended as query string arguments, like
+        ``?a=b&c=d``.
+
+    .. versionchanged:: 2.2
+        Calls ``current_app.url_for``, allowing an app to override the
+        behavior.",False,Generates URL for a given endpoint
+4,How can I redirect a to a URL?,5,flask/app.py,1257,1281,False,1.0,src/flask/helpers.py:242-263,"rv = t.cast(Response, rv)
+        # prefer the status if it was provided
+        if status is not None:
+            if isinstance(status, (str, bytes, bytearray)):
+                rv.status = status
+            else:
+                rv.status_code = status
+
+        # extend existing headers with provided headers
+        if headers:
+            rv.headers.update(headers)
+
+        return rv
+
+    def preprocess_request(self) -> ft.ResponseReturnValue | None:
+        """"""Called before the request is dispatched. Calls
+        :attr:`url_value_preprocessors` registered with the app and the
+        current blueprint (if any). Then calls :attr:`before_request_funcs`
+        registered with the app and the blueprint.
+
+        If any :meth:`before_request` handler returns a non-None value, the
+        value is handled as if it was the return value from the view, and
+        further request handling is stopped.
+        """"""
+        names = (None, *reversed(request.blueprints))",False,Processes the request
+5,How to divide flask app into multiple py files?,1,flask/app.py,118,137,False,0.0,src/flask/blueprints.py:18-53,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+5,How to divide flask app into multiple py files?,2,sansio/app.py,96,115,False,0.0,src/flask/blueprints.py:18-53,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+5,How to divide flask app into multiple py files?,3,flask/__main__.py,1,3,False,0.0,src/flask/blueprints.py:18-53,"from .cli import main
+
+main()",False,
+5,How to divide flask app into multiple py files?,4,flask/debughelpers.py,152,178,False,0.0,src/flask/blueprints.py:18-53,"for line in _dump_loader_info(loader):
+            info.append(f""       {line}"")
+
+        if triple is None:
+            detail = ""no match""
+        else:
+            detail = f""found ({triple[1] or '<string>'!r})""
+            total_found += 1
+        info.append(f""       -> {detail}"")
+
+    seems_fishy = False
+    if total_found == 0:
+        info.append(""Error: the template could not be found."")
+        seems_fishy = True
+    elif total_found > 1:
+        info.append(""Warning: multiple loaders returned a match for the template."")
+        seems_fishy = True
+
+    if blueprint is not None and seems_fishy:
+        info.append(
+            ""  The template was looked up from an endpoint that belongs""
+            f"" to the blueprint {blueprint!r}.""
+        )
+        info.append(""  Maybe you did not place a template in the right folder?"")
+        info.append(""  See https://flask.palletsprojects.com/blueprints/#templates"")
+
+    app.logger.info(""\n"".join(info))",False,Explains the template loading but not the usage of blueprints
+5,How to divide flask app into multiple py files?,5,flask/app.py,308,328,False,0.0,src/flask/blueprints.py:18-53,"def send_static_file(self, filename: str) -> Response:
+        """"""The view function used to serve files from
+        :attr:`static_folder`. A route is automatically registered for
+        this view at :attr:`static_url_path` if :attr:`static_folder` is
+        set.
+
+        Note this is a duplicate of the same method in the Flask
+        class.
+
+        .. versionadded:: 0.5
+
+        """"""
+        if not self.has_static_folder:
+            raise RuntimeError(""'static_folder' must be set to serve static_files."")
+
+        # send_file only knows to call get_send_file_max_age on the app,
+        # call it here so it works for blueprints too.
+        max_age = self.get_send_file_max_age(filename)
+        return send_from_directory(
+            t.cast(str, self.static_folder), filename, max_age=max_age
+        )",False,
+6,How can I set the response content type?,1,flask/wrappers.py,222,248,True,1.0,src/flask/wrappers.py:222-244,"class Response(ResponseBase):
+    """"""The response object that is used by default in Flask.  Works like the
+    response object from Werkzeug but is set to have an HTML mimetype by
+    default.  Quite often you don't have to create this object yourself because
+    :meth:`~flask.Flask.make_response` will take care of that for you.
+
+    If you want to replace the response object used you can subclass this and
+    set :attr:`~flask.Flask.response_class` to your subclass.
+
+    .. versionchanged:: 1.0
+        JSON support is added to the response, like the request. This is useful
+        when testing to get the test client response data as JSON.
+
+    .. versionchanged:: 1.0
+
+        Added :attr:`max_cookie_size`.
+    """"""
+
+    default_mimetype: str | None = ""text/html""
+
+    json_module = json
+
+    autocorrect_location_header = False
+
+    @property
+    def max_cookie_size(self) -> int:  # type: ignore
+        """"""Read-only view of the :data:`MAX_COOKIE_SIZE` config key.",True,
+6,How can I set the response content type?,2,json/provider.py,144,167,False,1.0,src/flask/wrappers.py:222-244,"ensure_ascii = True
+    """"""Replace non-ASCII characters with escape sequences. This may be
+    more compatible with some clients, but can be disabled for better
+    performance and size.
+    """"""
+
+    sort_keys = True
+    """"""Sort the keys in any serialized dicts. This may be useful for
+    some caching situations, but can be disabled for better performance.
+    When enabled, keys must all be strings, they are not converted
+    before sorting.
+    """"""
+
+    compact: bool | None = None
+    """"""If ``True``, or ``None`` out of debug mode, the :meth:`response`
+    output will not add indentation, newlines, or spaces. If ``False``,
+    or ``None`` in debug mode, it will use a non-compact representation.
+    """"""
+
+    mimetype = ""application/json""
+    """"""The mimetype set in :meth:`response`.""""""
+
+    def dumps(self, obj: t.Any, **kwargs: t.Any) -> str:
+        """"""Serialize data as JSON to a string.",False,Only the variable for the response type is set
+6,How can I set the response content type?,3,flask/app.py,1151,1168,False,1.0,src/flask/wrappers.py:222-244,"``generator`` or ``iterator``
+                A generator that returns ``str`` or ``bytes`` to be
+                streamed as the response.
+
+            ``tuple``
+                Either ``(body, status, headers)``, ``(body, status)``, or
+                ``(body, headers)``, where ``body`` is any of the other types
+                allowed here, ``status`` is a string or an integer, and
+                ``headers`` is a dictionary or a list of ``(key, value)``
+                tuples. If ``body`` is a :attr:`response_class` instance,
+                ``status`` overwrites the exiting value and ``headers`` are
+                extended.
+
+            :attr:`response_class`
+                The object is returned unchanged.
+
+            other :class:`~werkzeug.wrappers.Response` class
+                The object is coerced to :attr:`response_class`.",True,""
+6,How can I set the response content type?,4,flask/app.py,1129,1149,False,1.0,src/flask/wrappers.py:222-244,"def make_response(self, rv: ft.ResponseReturnValue) -> Response:
+        """"""Convert the return value from a view function to an instance of
+        :attr:`response_class`.
+
+        :param rv: the return value from the view function. The view function
+            must return a response. Returning ``None``, or the view ending
+            without returning, is not allowed. The following types are allowed
+            for ``view_rv``:
+
+            ``str``
+                A response object is created with the string encoded to UTF-8
+                as the body.
+
+            ``bytes``
+                A response object is created with the bytes as the body.
+
+            ``dict``
+                A dictionary that will be jsonify'd before being returned.
+
+            ``list``
+                A list that will be jsonify'd before being returned.",True,
+6,How can I set the response content type?,5,flask/app.py,1257,1281,False,1.0,src/flask/wrappers.py:222-244,"rv = t.cast(Response, rv)
+        # prefer the status if it was provided
+        if status is not None:
+            if isinstance(status, (str, bytes, bytearray)):
+                rv.status = status
+            else:
+                rv.status_code = status
+
+        # extend existing headers with provided headers
+        if headers:
+            rv.headers.update(headers)
+
+        return rv
+
+    def preprocess_request(self) -> ft.ResponseReturnValue | None:
+        """"""Called before the request is dispatched. Calls
+        :attr:`url_value_preprocessors` registered with the app and the
+        current blueprint (if any). Then calls :attr:`before_request_funcs`
+        registered with the app and the blueprint.
+
+        If any :meth:`before_request` handler returns a non-None value, the
+        value is handled as if it was the return value from the view, and
+        further request handling is stopped.
+        """"""
+        names = (None, *reversed(request.blueprints))",True,
+7,How can I get all routes of my application?,1,flask/app.py,118,137,False,0.0,src/flask/sansio/app.py:650-661; src/flask/sansio/app.py:259-263,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+7,How can I get all routes of my application?,2,sansio/app.py,96,115,False,0.0,src/flask/sansio/app.py:650-661; src/flask/sansio/app.py:259-263,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+7,How can I get all routes of my application?,3,sansio/scaffold.py,335,358,False,0.0,src/flask/sansio/app.py:650-661; src/flask/sansio/app.py:259-263,"@setupmethod
+    def route(self, rule: str, **options: t.Any) -> t.Callable[[T_route], T_route]:
+        """"""Decorate a view function to register it with the given URL
+        rule and options. Calls :meth:`add_url_rule`, which has more
+        details about the implementation.
+
+        .. code-block:: python
+
+            @app.route(""/"")
+            def index():
+                return ""Hello, World!""
+
+        See :ref:`url-route-registrations`.
+
+        The endpoint name for the route defaults to the name of the view
+        function if the ``endpoint`` parameter isn't passed.
+
+        The ``methods`` parameter defaults to ``[""GET""]``. ``HEAD`` and
+        ``OPTIONS`` are added automatically.
+
+        :param rule: The URL rule string.
+        :param options: Extra options passed to the
+            :class:`~werkzeug.routing.Rule` object.
+        """"""",False,registers a route and does not return the registered
+7,How can I get all routes of my application?,4,flask/views.py,44,64,False,0.0,src/flask/sansio/app.py:650-661; src/flask/sansio/app.py:259-263,"Set :attr:`init_every_request` to ``False`` for efficiency, unless
+    you need to store request-global data on ``self``.
+    """"""
+
+    #: The methods this view is registered for. Uses the same default
+    #: (``[""GET"", ""HEAD"", ""OPTIONS""]``) as ``route`` and
+    #: ``add_url_rule`` by default.
+    methods: t.ClassVar[t.Collection[str] | None] = None
+
+    #: Control whether the ``OPTIONS`` method is handled automatically.
+    #: Uses the same default (``True``) as ``route`` and
+    #: ``add_url_rule`` by default.
+    provide_automatic_options: t.ClassVar[bool | None] = None
+
+    #: A list of decorators to apply, in order, to the generated view
+    #: function. Remember that ``@decorator`` syntax is applied bottom
+    #: to top, so the first decorator in the list would be the bottom
+    #: decorator.
+    #:
+    #: .. versionadded:: 0.8
+    decorators: t.ClassVar[list[t.Callable[..., t.Any]]] = []",False,add route not get
+7,How can I get all routes of my application?,5,flask/app.py,262,279,False,0.0,src/flask/sansio/app.py:650-661; src/flask/sansio/app.py:259-263,"# Add a static route using the provided static_url_path, static_host,
+        # and static_folder if there is a configured static_folder.
+        # Note we do this without checking if static_folder exists.
+        # For one, it might be created while the server is running (e.g. during
+        # development). Also, Google App Engine stores static files somewhere
+        if self.has_static_folder:
+            assert bool(static_host) == host_matching, (
+                ""Invalid static_host/host_matching combination""
+            )
+            # Use a weakref to avoid creating a reference cycle between the app
+            # and the view function (see #3761).
+            self_ref = weakref.ref(self)
+            self.add_url_rule(
+                f""{self.static_url_path}/<path:filename>"",
+                endpoint=""static"",
+                host=static_host,
+                view_func=lambda **kw: self_ref().send_static_file(**kw),  # type: ignore # noqa: B950
+            )",False,add route not get
+8,How can I add a route to my application?,1,sansio/scaffold.py,335,358,False,0.0,src/flask/sansio/app.py:605-661; src/flask/sansio/blueprints.py:87-116; src/flask/helpers.py:62-106,"@setupmethod
+    def route(self, rule: str, **options: t.Any) -> t.Callable[[T_route], T_route]:
+        """"""Decorate a view function to register it with the given URL
+        rule and options. Calls :meth:`add_url_rule`, which has more
+        details about the implementation.
+
+        .. code-block:: python
+
+            @app.route(""/"")
+            def index():
+                return ""Hello, World!""
+
+        See :ref:`url-route-registrations`.
+
+        The endpoint name for the route defaults to the name of the view
+        function if the ``endpoint`` parameter isn't passed.
+
+        The ``methods`` parameter defaults to ``[""GET""]``. ``HEAD`` and
+        ``OPTIONS`` are added automatically.
+
+        :param rule: The URL rule string.
+        :param options: Extra options passed to the
+            :class:`~werkzeug.routing.Rule` object.
+        """"""",True,""
+8,How can I add a route to my application?,2,flask/app.py,1019,1034,False,0.0,src/flask/sansio/app.py:605-661; src/flask/sansio/blueprints.py:87-116; src/flask/helpers.py:62-106,"An *endpoint* is the name of a URL rule, usually added with
+        :meth:`@app.route() <route>`, and usually the same name as the
+        view function. A route defined in a :class:`~flask.Blueprint`
+        will prepend the blueprint's name separated by a ``.`` to the
+        endpoint.
+
+        In some cases, such as email messages, you want URLs to include
+        the scheme and domain, like ``https://example.com/hello``. When
+        not in an active request, URLs will be external by default, but
+        this requires setting :data:`SERVER_NAME` so Flask knows what
+        domain to use. :data:`APPLICATION_ROOT` and
+        :data:`PREFERRED_URL_SCHEME` should also be configured as
+        needed. This config is only used when not in an active request.
+
+        Functions can be decorated with :meth:`url_defaults` to modify
+        keyword arguments before the URL is built.",True,
+8,How can I add a route to my application?,3,flask/app.py,262,279,False,0.0,src/flask/sansio/app.py:605-661; src/flask/sansio/blueprints.py:87-116; src/flask/helpers.py:62-106,"# Add a static route using the provided static_url_path, static_host,
+        # and static_folder if there is a configured static_folder.
+        # Note we do this without checking if static_folder exists.
+        # For one, it might be created while the server is running (e.g. during
+        # development). Also, Google App Engine stores static files somewhere
+        if self.has_static_folder:
+            assert bool(static_host) == host_matching, (
+                ""Invalid static_host/host_matching combination""
+            )
+            # Use a weakref to avoid creating a reference cycle between the app
+            # and the view function (see #3761).
+            self_ref = weakref.ref(self)
+            self.add_url_rule(
+                f""{self.static_url_path}/<path:filename>"",
+                endpoint=""static"",
+                host=static_host,
+                view_func=lambda **kw: self_ref().send_static_file(**kw),  # type: ignore # noqa: B950
+            )",False,"Adds static route, but type is not definied in the question"
+8,How can I add a route to my application?,4,sansio/blueprints.py,110,116,False,0.0,src/flask/sansio/app.py:605-661; src/flask/sansio/blueprints.py:87-116; src/flask/helpers.py:62-106,"self.app.add_url_rule(
+            rule,
+            f""{self.name_prefix}.{self.name}.{endpoint}"".lstrip("".""),
+            view_func,
+            defaults=defaults,
+            **options,
+        )",True,Add route without a decorator
+8,How can I add a route to my application?,5,flask/views.py,44,64,False,0.0,src/flask/sansio/app.py:605-661; src/flask/sansio/blueprints.py:87-116; src/flask/helpers.py:62-106,"Set :attr:`init_every_request` to ``False`` for efficiency, unless
+    you need to store request-global data on ``self``.
+    """"""
+
+    #: The methods this view is registered for. Uses the same default
+    #: (``[""GET"", ""HEAD"", ""OPTIONS""]``) as ``route`` and
+    #: ``add_url_rule`` by default.
+    methods: t.ClassVar[t.Collection[str] | None] = None
+
+    #: Control whether the ``OPTIONS`` method is handled automatically.
+    #: Uses the same default (``True``) as ``route`` and
+    #: ``add_url_rule`` by default.
+    provide_automatic_options: t.ClassVar[bool | None] = None
+
+    #: A list of decorators to apply, in order, to the generated view
+    #: function. Remember that ``@decorator`` syntax is applied bottom
+    #: to top, so the first decorator in the list would be the bottom
+    #: decorator.
+    #:
+    #: .. versionadded:: 0.8
+    decorators: t.ClassVar[list[t.Callable[..., t.Any]]] = []",False,Internal decorator handeling for route creation
+9,How can I run my app in debug mode?,1,sansio/app.py,543,567,False,0.5,src/flask/app.py:546-667; src/flask/helpers.py:27-32,".. versionadded:: 0.5
+        """"""
+        if filename is None:
+            return True
+        return filename.endswith(("".html"", "".htm"", "".xml"", "".xhtml"", "".svg""))
+
+    @property
+    def debug(self) -> bool:
+        """"""Whether debug mode is enabled. When using ``flask run`` to start the
+        development server, an interactive debugger will be shown for unhandled
+        exceptions, and the server will be reloaded when code changes. This maps to the
+        :data:`DEBUG` config key. It may not behave as expected if set late.
+
+        **Do not enable debug mode when deploying in production.**
+
+        Default: ``False``
+        """"""
+        return self.config[""DEBUG""]  # type: ignore[no-any-return]
+
+    @debug.setter
+    def debug(self, value: bool) -> None:
+        self.config[""DEBUG""] = value
+
+        if self.config[""TEMPLATES_AUTO_RELOAD""] is None:
+            self.jinja_env.auto_reload = value",False,Check if debugging is enabled
+9,How can I run my app in debug mode?,2,flask/app.py,563,580,True,0.5,src/flask/app.py:546-667; src/flask/helpers.py:27-32,"If you want to run the application in debug mode, but disable the
+        code execution on the interactive debugger, you can pass
+        ``use_evalex=False`` as parameter.  This will keep the debugger's
+        traceback screen active, but disable code execution.
+
+        It is not recommended to use this function for development with
+        automatic reloading as this is badly supported.  Instead you should
+        be using the :command:`flask` command line script's ``run`` support.
+
+        .. admonition:: Keep in Mind
+
+           Flask will suppress any server error with a generic error page
+           unless it is in debug mode.  As such to enable just the
+           interactive debugger without the code reloading, you have to
+           invoke :meth:`run` with ``debug=True`` and ``use_reloader=False``.
+           Setting ``use_debugger`` to ``True`` without being in debug mode
+           won't catch any exceptions because there won't be any to
+           catch.",True,
+9,How can I run my app in debug mode?,3,flask/app.py,539,561,True,0.5,src/flask/app.py:546-667; src/flask/helpers.py:27-32,".. versionadded:: 0.11
+        """"""
+        rv = {""app"": self, ""g"": g}
+        for processor in self.shell_context_processors:
+            rv.update(processor())
+        return rv
+
+    def run(
+        self,
+        host: str | None = None,
+        port: int | None = None,
+        debug: bool | None = None,
+        load_dotenv: bool = True,
+        **options: t.Any,
+    ) -> None:
+        """"""Runs the application on a local development server.
+
+        Do not use ``run()`` in a production setting. It is not intended to
+        meet security and performance requirements for a production server.
+        Instead, see :doc:`/deploying/index` for WSGI server recommendations.
+
+        If the :attr:`debug` flag is set the server will automatically reload
+        for code changes and show a debugger in case an exception happened.",True,
+9,How can I run my app in debug mode?,4,flask/app.py,118,137,False,0.5,src/flask/app.py:546-667; src/flask/helpers.py:27-32,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+9,How can I run my app in debug mode?,5,sansio/app.py,96,115,False,0.5,src/flask/app.py:546-667; src/flask/helpers.py:27-32,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+10,"I get a Error 413, what can I do?",1,flask/debughelpers.py,23,26,False,0.0,src/flask/wrappers.py:60-86,"class DebugFilesKeyError(KeyError, AssertionError):
+    """"""Raised from request.files during debugging.  The idea is that it can
+    provide a better error message than just a generic KeyError/BadRequest.
+    """"""",False,
+10,"I get a Error 413, what can I do?",2,flask/app.py,789,814,False,0.0,src/flask/wrappers.py:60-86,".. versionchanged:: 1.0
+            Key errors raised from request data like ``form`` show the
+            bad key in debug mode rather than a generic bad request
+            message.
+
+        .. versionadded:: 0.7
+        """"""
+        if isinstance(e, BadRequestKeyError) and (
+            self.debug or self.config[""TRAP_BAD_REQUEST_ERRORS""]
+        ):
+            e.show_exception = True
+
+        if isinstance(e, HTTPException) and not self.trap_http_exception(e):
+            return self.handle_http_exception(e)
+
+        handler = self._find_error_handler(e, request.blueprints)
+
+        if handler is None:
+            raise
+
+        return self.ensure_sync(handler)(e)  # type: ignore[no-any-return]
+
+    def handle_exception(self, e: Exception) -> Response:
+        """"""Handle an exception that did not have an error handler
+        associated with it, or that was raised from an error handler.
+        This always causes a 500 ``InternalServerError``.",False,
+10,"I get a Error 413, what can I do?",3,flask/app.py,1036,1039,False,0.0,src/flask/wrappers.py:60-86,"If building fails for some reason, such as an unknown endpoint
+        or incorrect values, the app's :meth:`handle_url_build_error`
+        method is called. If that returns a string, that is returned,
+        otherwise a :exc:`~werkzeug.routing.BuildError` is raised.",False,
+10,"I get a Error 413, what can I do?",4,sansio/app.py,321,340,False,0.0,src/flask/wrappers.py:60-86,"#: An instance of :attr:`aborter_class` created by
+        #: :meth:`make_aborter`. This is called by :func:`flask.abort`
+        #: to raise HTTP errors, and can be called directly as well.
+        #:
+        #: .. versionadded:: 2.2
+        #:     Moved from ``flask.abort``, which calls this object.
+        self.aborter = self.make_aborter()
+
+        self.json: JSONProvider = self.json_provider_class(self)
+        """"""Provides access to JSON methods. Functions in ``flask.json``
+        will call methods on this provider when the application context
+        is active. Used for handling JSON requests and responses.
+
+        An instance of :attr:`json_provider_class`. Can be customized by
+        changing that attribute on a subclass, or by assigning to this
+        attribute afterwards.
+
+        The default, :class:`~flask.json.provider.DefaultJSONProvider`,
+        uses Python's built-in :mod:`json` library. A different provider
+        can use a different JSON library.",False,
+10,"I get a Error 413, what can I do?",5,flask/debughelpers.py,72,78,False,0.0,src/flask/wrappers.py:60-86,"buf.append(
+            "" Send requests to the canonical URL, or use 307 or 308 for""
+            "" routing redirects. Otherwise, browsers will drop form""
+            "" data.\n\n""
+            ""This exception is only raised in debug mode.""
+        )
+        super().__init__("""".join(buf))",False,
+11,Describe the inheritance tree for blueprints!,1,flask/debughelpers.py,152,178,False,0.0,src/flask/blueprints.py:18-18; src/flask/sansio/blueprints.py:119-133; src/flask/sansio/scaffold.py:52-54,"for line in _dump_loader_info(loader):
+            info.append(f""       {line}"")
+
+        if triple is None:
+            detail = ""no match""
+        else:
+            detail = f""found ({triple[1] or '<string>'!r})""
+            total_found += 1
+        info.append(f""       -> {detail}"")
+
+    seems_fishy = False
+    if total_found == 0:
+        info.append(""Error: the template could not be found."")
+        seems_fishy = True
+    elif total_found > 1:
+        info.append(""Warning: multiple loaders returned a match for the template."")
+        seems_fishy = True
+
+    if blueprint is not None and seems_fishy:
+        info.append(
+            ""  The template was looked up from an endpoint that belongs""
+            f"" to the blueprint {blueprint!r}.""
+        )
+        info.append(""  Maybe you did not place a template in the right folder?"")
+        info.append(""  See https://flask.palletsprojects.com/blueprints/#templates"")
+
+    app.logger.info(""\n"".join(info))",False,
+11,Describe the inheritance tree for blueprints!,2,sansio/blueprints.py,330,355,False,0.0,src/flask/blueprints.py:18-18; src/flask/sansio/blueprints.py:119-133; src/flask/sansio/scaffold.py:52-54,"# Merge blueprint data into parent.
+        if first_bp_registration or first_name_registration:
+            self._merge_blueprint_funcs(app, name)
+
+        for deferred in self.deferred_functions:
+            deferred(state)
+
+        cli_resolved_group = options.get(""cli_group"", self.cli_group)
+
+        if self.cli.commands:
+            if cli_resolved_group is None:
+                app.cli.commands.update(self.cli.commands)
+            elif cli_resolved_group is _sentinel:
+                self.cli.name = name
+                app.cli.add_command(self.cli)
+            else:
+                self.cli.name = cli_resolved_group
+                app.cli.add_command(self.cli)
+
+        for blueprint, bp_options in self._blueprints:
+            bp_options = bp_options.copy()
+            bp_url_prefix = bp_options.get(""url_prefix"")
+            bp_subdomain = bp_options.get(""subdomain"")
+
+            if bp_subdomain is None:
+                bp_subdomain = blueprint.subdomain",False,
+11,Describe the inheritance tree for blueprints!,3,flask/app.py,118,137,False,0.0,src/flask/blueprints.py:18-18; src/flask/sansio/blueprints.py:119-133; src/flask/sansio/scaffold.py:52-54,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+11,Describe the inheritance tree for blueprints!,4,sansio/app.py,96,115,False,0.0,src/flask/blueprints.py:18-18; src/flask/sansio/blueprints.py:119-133; src/flask/sansio/scaffold.py:52-54,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+11,Describe the inheritance tree for blueprints!,5,flask/__main__.py,1,3,False,0.0,src/flask/blueprints.py:18-18; src/flask/sansio/blueprints.py:119-133; src/flask/sansio/scaffold.py:52-54,"from .cli import main
+
+main()",False,
+12,How do the class AppGroup and FlaskGroup differ regarding their function?,1,sansio/app.py,171,185,False,0.0,src/flask/cli.py:405-411; src/flask/cli.py:531-561,"#: The class that is used for the :data:`~flask.g` instance.
+    #:
+    #: Example use cases for a custom class:
+    #:
+    #: 1. Store arbitrary attributes on flask.g.
+    #: 2. Add a property for lazy per-request database connectors.
+    #: 3. Return None instead of AttributeError on unexpected attributes.
+    #: 4. Raise exception if an unexpected attr is set, a ""controlled"" flask.g.
+    #:
+    #: In Flask 0.9 this property was called `request_globals_class` but it
+    #: was changed in 0.10 to :attr:`app_ctx_globals_class` because the
+    #: flask.g object is now application context scoped.
+    #:
+    #: .. versionadded:: 0.10
+    app_ctx_globals_class = _AppCtxGlobals",False,
+12,How do the class AppGroup and FlaskGroup differ regarding their function?,2,flask/app.py,102,116,False,0.0,src/flask/cli.py:405-411; src/flask/cli.py:531-561,"The idea of the first parameter is to give Flask an idea of what
+        belongs to your application.  This name is used to find resources
+        on the filesystem, can be used by extensions to improve debugging
+        information and a lot more.
+
+        So it's important what you provide there.  If you are using a single
+        module, `__name__` is always the correct value.  If you however are
+        using a package, it's usually recommended to hardcode the name of
+        your package there.
+
+        For example if your application is defined in :file:`yourapplication/app.py`
+        you should create it with one of the two versions below::
+
+            app = Flask('yourapplication')
+            app = Flask(__name__.split('.')[0])",False,
+12,How do the class AppGroup and FlaskGroup differ regarding their function?,3,sansio/app.py,80,94,False,0.0,src/flask/cli.py:405-411; src/flask/cli.py:531-561,"The idea of the first parameter is to give Flask an idea of what
+        belongs to your application.  This name is used to find resources
+        on the filesystem, can be used by extensions to improve debugging
+        information and a lot more.
+
+        So it's important what you provide there.  If you are using a single
+        module, `__name__` is always the correct value.  If you however are
+        using a package, it's usually recommended to hardcode the name of
+        your package there.
+
+        For example if your application is defined in :file:`yourapplication/app.py`
+        you should create it with one of the two versions below::
+
+            app = Flask('yourapplication')
+            app = Flask(__name__.split('.')[0])",False,
+12,How do the class AppGroup and FlaskGroup differ regarding their function?,4,flask/app.py,118,137,False,0.0,src/flask/cli.py:405-411; src/flask/cli.py:531-561,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",Flase,
+12,How do the class AppGroup and FlaskGroup differ regarding their function?,5,sansio/app.py,96,115,False,0.0,src/flask/cli.py:405-411; src/flask/cli.py:531-561,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+13,Describe the class Scaffold! Where is it used in the project?,1,flask/app.py,118,137,False,0.0,src/flask/sansio/scaffold.py:52-68; src/flask/sansio/app.py:59-104; src/flask/sansio/app.py:59-133; src/flask/sansio/blueprints.py:119-119,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+13,Describe the class Scaffold! Where is it used in the project?,2,sansio/app.py,96,115,False,0.0,src/flask/sansio/scaffold.py:52-68; src/flask/sansio/app.py:59-104; src/flask/sansio/app.py:59-133; src/flask/sansio/blueprints.py:119-119,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+13,Describe the class Scaffold! Where is it used in the project?,3,flask/__main__.py,1,3,False,0.0,src/flask/sansio/scaffold.py:52-68; src/flask/sansio/app.py:59-104; src/flask/sansio/app.py:59-133; src/flask/sansio/blueprints.py:119-119,"from .cli import main
+
+main()",False,
+13,Describe the class Scaffold! Where is it used in the project?,4,flask/sessions.py,114,133,False,0.0,src/flask/sansio/scaffold.py:52-68; src/flask/sansio/app.py:59-104; src/flask/sansio/app.py:59-133; src/flask/sansio/blueprints.py:119-119,"class SessionInterface:
+    """"""The basic interface you have to implement in order to replace the
+    default session interface which uses werkzeug's securecookie
+    implementation.  The only methods you have to implement are
+    :meth:`open_session` and :meth:`save_session`, the others have
+    useful defaults which you don't need to change.
+
+    The session object returned by the :meth:`open_session` method has to
+    provide a dictionary like interface plus the properties and methods
+    from the :class:`SessionMixin`.  We recommend just subclassing a dict
+    and adding that mixin::
+
+        class Session(dict, SessionMixin):
+            pass
+
+    If :meth:`open_session` returns ``None`` Flask will call into
+    :meth:`make_null_session` to create a session that acts as replacement
+    if the session support cannot work because some requirement is not
+    fulfilled.  The default :class:`NullSession` class that is created
+    will complain that the secret key was not set.",False,
+13,Describe the class Scaffold! Where is it used in the project?,5,sansio/scaffold.py,52,73,False,0.0,src/flask/sansio/scaffold.py:52-68; src/flask/sansio/app.py:59-104; src/flask/sansio/app.py:59-133; src/flask/sansio/blueprints.py:119-119,"class Scaffold:
+    """"""Common behavior shared between :class:`~flask.Flask` and
+    :class:`~flask.blueprints.Blueprint`.
+
+    :param import_name: The import name of the module where this object
+        is defined. Usually :attr:`__name__` should be used.
+    :param static_folder: Path to a folder of static files to serve.
+        If this is set, a static route will be added.
+    :param static_url_path: URL prefix for the static route.
+    :param template_folder: Path to a folder containing template files.
+        for rendering. If this is set, a Jinja loader will be added.
+    :param root_path: The path that static, template, and resource files
+        are relative to. Typically not set, it is discovered based on
+        the ``import_name``.
+
+    .. versionadded:: 2.0
+    """"""
+
+    cli: Group
+    name: str
+    _static_folder: str | None = None
+    _static_url_path: str | None = None",True,
+14,Which non-inherited attributes does my flask application have?,1,sansio/app.py,171,185,False,0.0,src/flask/app.py:256-273,"#: The class that is used for the :data:`~flask.g` instance.
+    #:
+    #: Example use cases for a custom class:
+    #:
+    #: 1. Store arbitrary attributes on flask.g.
+    #: 2. Add a property for lazy per-request database connectors.
+    #: 3. Return None instead of AttributeError on unexpected attributes.
+    #: 4. Raise exception if an unexpected attr is set, a ""controlled"" flask.g.
+    #:
+    #: In Flask 0.9 this property was called `request_globals_class` but it
+    #: was changed in 0.10 to :attr:`app_ctx_globals_class` because the
+    #: flask.g object is now application context scoped.
+    #:
+    #: .. versionadded:: 0.10
+    app_ctx_globals_class = _AppCtxGlobals",False,These are vars not attributes
+14,Which non-inherited attributes does my flask application have?,2,flask/app.py,118,137,False,0.0,src/flask/app.py:256-273,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+14,Which non-inherited attributes does my flask application have?,3,sansio/app.py,96,115,False,0.0,src/flask/app.py:256-273,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+14,Which non-inherited attributes does my flask application have?,4,flask/__main__.py,1,3,False,0.0,src/flask/app.py:256-273,"from .cli import main
+
+main()",False,
+14,Which non-inherited attributes does my flask application have?,5,sansio/app.py,321,340,False,0.0,src/flask/app.py:256-273,"#: An instance of :attr:`aborter_class` created by
+        #: :meth:`make_aborter`. This is called by :func:`flask.abort`
+        #: to raise HTTP errors, and can be called directly as well.
+        #:
+        #: .. versionadded:: 2.2
+        #:     Moved from ``flask.abort``, which calls this object.
+        self.aborter = self.make_aborter()
+
+        self.json: JSONProvider = self.json_provider_class(self)
+        """"""Provides access to JSON methods. Functions in ``flask.json``
+        will call methods on this provider when the application context
+        is active. Used for handling JSON requests and responses.
+
+        An instance of :attr:`json_provider_class`. Can be customized by
+        changing that attribute on a subclass, or by assigning to this
+        attribute afterwards.
+
+        The default, :class:`~flask.json.provider.DefaultJSONProvider`,
+        uses Python's built-in :mod:`json` library. A different provider
+        can use a different JSON library.",False,This is not the Flask application
+15,Which part of the code turns your view return value into a Response object?,1,flask/app.py,1129,1149,False,1.0,src/flask/helpers.py:139-185,"def make_response(self, rv: ft.ResponseReturnValue) -> Response:
+        """"""Convert the return value from a view function to an instance of
+        :attr:`response_class`.
+
+        :param rv: the return value from the view function. The view function
+            must return a response. Returning ``None``, or the view ending
+            without returning, is not allowed. The following types are allowed
+            for ``view_rv``:
+
+            ``str``
+                A response object is created with the string encoded to UTF-8
+                as the body.
+
+            ``bytes``
+                A response object is created with the bytes as the body.
+
+            ``dict``
+                A dictionary that will be jsonify'd before being returned.
+
+            ``list``
+                A list that will be jsonify'd before being returned.",True,""
+15,Which part of the code turns your view return value into a Response object?,2,flask/helpers.py,139,160,True,1.0,src/flask/helpers.py:139-185,"def make_response(*args: t.Any) -> Response:
+    """"""Sometimes it is necessary to set additional headers in a view.  Because
+    views do not have to return response objects but can return a value that
+    is converted into a response object by Flask itself, it becomes tricky to
+    add headers to it.  This function can be called instead of using a return
+    and you will get a response object which you can use to attach headers.
+
+    If view looked like this and you want to add a new header::
+
+        def index():
+            return render_template('index.html', foo=42)
+
+    You can now do something like this::
+
+        def index():
+            response = make_response(render_template('index.html', foo=42))
+            response.headers['X-Parachutes'] = 'parachutes are cool'
+            return response
+
+    This function accepts the very same arguments you can return from a
+    view function.  This for example creates a response with a 404 error
+    code::",True,
+15,Which part of the code turns your view return value into a Response object?,3,flask/app.py,1193,1208,False,1.0,src/flask/helpers.py:139-185,"# a 3-tuple is unpacked directly
+            if len_rv == 3:
+                rv, status, headers = rv  # type: ignore[misc]
+            # decide if a 2-tuple has status or headers
+            elif len_rv == 2:
+                if isinstance(rv[1], (Headers, dict, tuple, list)):
+                    rv, headers = rv  # pyright: ignore
+                else:
+                    rv, status = rv  # type: ignore[assignment,misc]
+            # other sized tuples are not allowed
+            else:
+                raise TypeError(
+                    ""The view function did not return a valid response tuple.""
+                    "" The tuple must have the form (body, status, headers),""
+                    "" (body, status), or (body, headers).""
+                )",True,
+15,Which part of the code turns your view return value into a Response object?,4,flask/helpers.py,162,185,True,1.0,src/flask/helpers.py:139-185,"response = make_response(render_template('not_found.html'), 404)
+
+    The other use case of this function is to force the return value of a
+    view function into a response which is helpful with view
+    decorators::
+
+        response = make_response(view_function())
+        response.headers['X-Parachutes'] = 'parachutes are cool'
+
+    Internally this function does the following things:
+
+    -   if no arguments are passed, it creates a new response argument
+    -   if one argument is passed, :meth:`flask.Flask.make_response`
+        is invoked with it.
+    -   if more than one argument is passed, the arguments are passed
+        to the :meth:`flask.Flask.make_response` function as tuple.
+
+    .. versionadded:: 0.6
+    """"""
+    if not args:
+        return current_app.response_class()
+    if len(args) == 1:
+        args = args[0]
+    return current_app.make_response(args)",True,
+15,Which part of the code turns your view return value into a Response object?,5,sansio/app.py,96,115,False,1.0,src/flask/helpers.py:139-185,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+16,"How does the add_url_rule method work under the hood, and how does it relate to the route decorator?",1,sansio/scaffold.py,335,358,False,0.0,src/flask/sansio/scaffold.py:336-433; src/flask/sansio/blueprints.py:413-411; src/flask/sansio/app.py:605-661,"@setupmethod
+    def route(self, rule: str, **options: t.Any) -> t.Callable[[T_route], T_route]:
+        """"""Decorate a view function to register it with the given URL
+        rule and options. Calls :meth:`add_url_rule`, which has more
+        details about the implementation.
+
+        .. code-block:: python
+
+            @app.route(""/"")
+            def index():
+                return ""Hello, World!""
+
+        See :ref:`url-route-registrations`.
+
+        The endpoint name for the route defaults to the name of the view
+        function if the ``endpoint`` parameter isn't passed.
+
+        The ``methods`` parameter defaults to ``[""GET""]``. ``HEAD`` and
+        ``OPTIONS`` are added automatically.
+
+        :param rule: The URL rule string.
+        :param options: Extra options passed to the
+            :class:`~werkzeug.routing.Rule` object.
+        """"""",True,
+16,"How does the add_url_rule method work under the hood, and how does it relate to the route decorator?",2,flask/views.py,44,64,False,0.0,src/flask/sansio/scaffold.py:336-433; src/flask/sansio/blueprints.py:413-411; src/flask/sansio/app.py:605-661,"Set :attr:`init_every_request` to ``False`` for efficiency, unless
+    you need to store request-global data on ``self``.
+    """"""
+
+    #: The methods this view is registered for. Uses the same default
+    #: (``[""GET"", ""HEAD"", ""OPTIONS""]``) as ``route`` and
+    #: ``add_url_rule`` by default.
+    methods: t.ClassVar[t.Collection[str] | None] = None
+
+    #: Control whether the ``OPTIONS`` method is handled automatically.
+    #: Uses the same default (``True``) as ``route`` and
+    #: ``add_url_rule`` by default.
+    provide_automatic_options: t.ClassVar[bool | None] = None
+
+    #: A list of decorators to apply, in order, to the generated view
+    #: function. Remember that ``@decorator`` syntax is applied bottom
+    #: to top, so the first decorator in the list would be the bottom
+    #: decorator.
+    #:
+    #: .. versionadded:: 0.8
+    decorators: t.ClassVar[list[t.Callable[..., t.Any]]] = []",True,
+16,"How does the add_url_rule method work under the hood, and how does it relate to the route decorator?",3,sansio/scaffold.py,360,393,False,0.0,src/flask/sansio/scaffold.py:336-433; src/flask/sansio/blueprints.py:413-411; src/flask/sansio/app.py:605-661,"def decorator(f: T_route) -> T_route:
+            endpoint = options.pop(""endpoint"", None)
+            self.add_url_rule(rule, endpoint, f, **options)
+            return f
+
+        return decorator
+
+    @setupmethod
+    def add_url_rule(
+        self,
+        rule: str,
+        endpoint: str | None = None,
+        view_func: ft.RouteCallable | None = None,
+        provide_automatic_options: bool | None = None,
+        **options: t.Any,
+    ) -> None:
+        """"""Register a rule for routing incoming requests and building
+        URLs. The :meth:`route` decorator is a shortcut to call this
+        with the ``view_func`` argument. These are equivalent:
+
+        .. code-block:: python
+
+            @app.route(""/"")
+            def index():
+                ...
+
+        .. code-block:: python
+
+            def index():
+                ...
+
+            app.add_url_rule(""/"", view_func=index)
+
+        See :ref:`url-route-registrations`.",True,
+16,"How does the add_url_rule method work under the hood, and how does it relate to the route decorator?",4,sansio/scaffold.py,417,433,False,0.0,src/flask/sansio/scaffold.py:336-433; src/flask/sansio/blueprints.py:413-411; src/flask/sansio/app.py:605-661,"If ``view_func`` has a ``required_methods`` attribute, those
+        methods are added to the passed and automatic methods. If it
+        has a ``provide_automatic_methods`` attribute, it is used as the
+        default if the parameter is not passed.
+
+        :param rule: The URL rule string.
+        :param endpoint: The endpoint name to associate with the rule
+            and view function. Used when routing and building URLs.
+            Defaults to ``view_func.__name__``.
+        :param view_func: The view function to associate with the
+            endpoint name.
+        :param provide_automatic_options: Add the ``OPTIONS`` method and
+            respond to ``OPTIONS`` requests automatically.
+        :param options: Extra options passed to the
+            :class:`~werkzeug.routing.Rule` object.
+        """"""
+        raise NotImplementedError",False,
+16,"How does the add_url_rule method work under the hood, and how does it relate to the route decorator?",5,flask/app.py,1019,1034,False,0.0,src/flask/sansio/scaffold.py:336-433; src/flask/sansio/blueprints.py:413-411; src/flask/sansio/app.py:605-661,"An *endpoint* is the name of a URL rule, usually added with
+        :meth:`@app.route() <route>`, and usually the same name as the
+        view function. A route defined in a :class:`~flask.Blueprint`
+        will prepend the blueprint's name separated by a ``.`` to the
+        endpoint.
+
+        In some cases, such as email messages, you want URLs to include
+        the scheme and domain, like ``https://example.com/hello``. When
+        not in an active request, URLs will be external by default, but
+        this requires setting :data:`SERVER_NAME` so Flask knows what
+        domain to use. :data:`APPLICATION_ROOT` and
+        :data:`PREFERRED_URL_SCHEME` should also be configured as
+        needed. This config is only used when not in an active request.
+
+        Functions can be decorated with :meth:`url_defaults` to modify
+        keyword arguments before the URL is built.",False,
+17,Where does the App load the default values?,1,flask/app.py,118,137,False,0.0,src/flask/app.py:178-279,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+17,Where does the App load the default values?,2,sansio/app.py,96,115,False,0.0,src/flask/app.py:178-279,"Why is that?  The application will work even with `__name__`, thanks
+        to how resources are looked up.  However it will make debugging more
+        painful.  Certain extensions can make assumptions based on the
+        import name of your application.  For example the Flask-SQLAlchemy
+        extension will look for the code in your application that triggered
+        an SQL query in debug mode.  If the import name is not properly set
+        up, that debugging information is lost.  (For example it would only
+        pick up SQL queries in `yourapplication.app` and not
+        `yourapplication.views.frontend`)
+
+    .. versionadded:: 0.7
+       The `static_url_path`, `static_folder`, and `template_folder`
+       parameters were added.
+
+    .. versionadded:: 0.8
+       The `instance_path` and `instance_relative_config` parameters were
+       added.
+
+    .. versionadded:: 0.11
+       The `root_path` parameter was added.",False,
+17,Where does the App load the default values?,3,flask/__main__.py,1,3,False,0.0,src/flask/app.py:178-279,"from .cli import main
+
+main()",False,
+17,Where does the App load the default values?,4,sansio/app.py,187,208,False,0.0,src/flask/app.py:178-279,"#: The class that is used for the ``config`` attribute of this app.
+    #: Defaults to :class:`~flask.Config`.
+    #:
+    #: Example use cases for a custom class:
+    #:
+    #: 1. Default values for certain config options.
+    #: 2. Access to config values through attributes in addition to keys.
+    #:
+    #: .. versionadded:: 0.11
+    config_class = Config
+
+    #: The testing flag.  Set this to ``True`` to enable the test mode of
+    #: Flask extensions (and in the future probably also Flask itself).
+    #: For example this might activate test helpers that have an
+    #: additional runtime cost which should not be enabled by default.
+    #:
+    #: If this is enabled and PROPAGATE_EXCEPTIONS is not changed from the
+    #: default it's implicitly enabled.
+    #:
+    #: This attribute can also be configured from the config with the
+    #: ``TESTING`` configuration key.  Defaults to ``False``.
+    testing = ConfigAttribute[bool](""TESTING"")",True,
+17,Where does the App load the default values?,5,flask/app.py,162,176,False,0.0,src/flask/app.py:178-279,"be used by the application.  Defaults to
+                            ``'templates'`` folder in the root path of the
+                            application.
+    :param instance_path: An alternative instance path for the application.
+                          By default the folder ``'instance'`` next to the
+                          package or module is assumed to be the instance
+                          path.
+    :param instance_relative_config: if set to ``True`` relative filenames
+                                     for loading the config are assumed to
+                                     be relative to the instance path instead
+                                     of the application root.
+    :param root_path: The path to the root of the application files.
+        This should only be set manually when it can't be detected
+        automatically, such as for namespace packages.
+    """"""",False,
+18,How does Flask create a Request object for each incoming HTTP request?,1,flask/views.py,66,83,False,0.0,src/flask/app.py:1529-1536,"#: Create a new instance of this view class for every request by
+    #: default. If a view subclass sets this to ``False``, the same
+    #: instance is used for every request.
+    #:
+    #: A single instance is more efficient, especially if complex setup
+    #: is done during init. However, storing data on ``self`` is no
+    #: longer safe across requests, and :data:`~flask.g` should be used
+    #: instead.
+    #:
+    #: .. versionadded:: 2.2
+    init_every_request: t.ClassVar[bool] = True
+
+    def dispatch_request(self) -> ft.ResponseReturnValue:
+        """"""The actual view function behavior. Subclasses must override
+        this and return a valid response. Any variables from the URL
+        rule are passed as keyword arguments.
+        """"""
+        raise NotImplementedError()",True,
+18,How does Flask create a Request object for each incoming HTTP request?,2,flask/testing.py,228,228,False,0.0,src/flask/app.py:1529-1536,"request = self._request_from_builder_args(args, kwargs)",False,
+18,How does Flask create a Request object for each incoming HTTP request?,3,sansio/app.py,171,185,False,0.0,src/flask/app.py:1529-1536,"#: The class that is used for the :data:`~flask.g` instance.
+    #:
+    #: Example use cases for a custom class:
+    #:
+    #: 1. Store arbitrary attributes on flask.g.
+    #: 2. Add a property for lazy per-request database connectors.
+    #: 3. Return None instead of AttributeError on unexpected attributes.
+    #: 4. Raise exception if an unexpected attr is set, a ""controlled"" flask.g.
+    #:
+    #: In Flask 0.9 this property was called `request_globals_class` but it
+    #: was changed in 0.10 to :attr:`app_ctx_globals_class` because the
+    #: flask.g object is now application context scoped.
+    #:
+    #: .. versionadded:: 0.10
+    app_ctx_globals_class = _AppCtxGlobals",False,
+18,How does Flask create a Request object for each incoming HTTP request?,4,sansio/app.py,390,411,False,0.0,src/flask/app.py:1529-1536,"#: The :class:`~werkzeug.routing.Map` for this instance.  You can use
+        #: this to change the routing converters after the class was created
+        #: but before any routes are connected.  Example::
+        #:
+        #:    from werkzeug.routing import BaseConverter
+        #:
+        #:    class ListConverter(BaseConverter):
+        #:        def to_python(self, value):
+        #:            return value.split(',')
+        #:        def to_url(self, values):
+        #:            return ','.join(super(ListConverter, self).to_url(value)
+        #:                            for value in values)
+        #:
+        #:    app = Flask(__name__)
+        #:    app.url_map.converters['list'] = ListConverter
+        self.url_map = self.url_map_class(host_matching=host_matching)
+
+        self.subdomain_matching = subdomain_matching
+
+        # tracks internally if the application already handled at least one
+        # request.
+        self._got_first_request = False",False,
+18,How does Flask create a Request object for each incoming HTTP request?,5,flask/helpers.py,162,185,False,0.0,src/flask/app.py:1529-1536,"response = make_response(render_template('not_found.html'), 404)
+
+    The other use case of this function is to force the return value of a
+    view function into a response which is helpful with view
+    decorators::
+
+        response = make_response(view_function())
+        response.headers['X-Parachutes'] = 'parachutes are cool'
+
+    Internally this function does the following things:
+
+    -   if no arguments are passed, it creates a new response argument
+    -   if one argument is passed, :meth:`flask.Flask.make_response`
+        is invoked with it.
+    -   if more than one argument is passed, the arguments are passed
+        to the :meth:`flask.Flask.make_response` function as tuple.
+
+    .. versionadded:: 0.6
+    """"""
+    if not args:
+        return current_app.response_class()
+    if len(args) == 1:
+        args = args[0]
+    return current_app.make_response(args)",False,

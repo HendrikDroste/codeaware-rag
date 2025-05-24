@@ -1,6 +1,13 @@
 PyYAML~=6.0.2
 chromadb~=1.0.7
-streamlit~=1.45.0
+streamlit~=1.31.0
 transformers~=4.51.3
 langchain~=0.3.24
 langchain-community~=0.3.23
+torch~=2.7.0
+langchain-openai~=0.3.16
+langchain-google-genai~=2.1.4
+langchain-text-splitters~=0.3.8
+datasets~=3.5.1
+multilspy~=0.0.15
+tree-sitter~=0.24.0

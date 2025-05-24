@@ -1,20 +1,22 @@
 import os
 import glob
 import logging
-from typing import List, Optional, Dict, Any, Callable, Union
+from typing import List, Any
+from dotenv import load_dotenv
 
 # ChromaDB imports
 import chromadb
-from chromadb.utils import embedding_functions
 
 # LangChain imports
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_text_splitters import Language
 from langchain_community.document_loaders import TextLoader
-from langchain_huggingface import HuggingFaceEmbeddings
 
 # import utils
 from src.embeddings.utils import create_or_get_collection, add_documents_to_collection
+from src.embeddings.embedding_functions import get_chroma_embedding_function
+from src.utils import load_config
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -37,6 +39,28 @@ def get_all_python_files(source_dir: str) -> List[str]:
     logger.info(f"Found {len(python_files)} Python files in {source_dir}")
     return python_files
 
+def get_src_base_path(file_path: str) -> str:
+    """
+    Get the base path up to and including the 'src' directory.
+    
+    Args:
+        file_path: Path to a file
+        
+    Returns:
+        Base path up to and including the 'src' directory
+    """
+    # Find the position of '/src/' in the path
+    src_index = file_path.find('/src/')
+    if (src_index == -1):
+        # If '/src/' not found, try with OS-specific path separator
+        src_index = file_path.find(os.path.join('', 'src', ''))
+    
+    if (src_index == -1):
+        logger.warning(f"Could not find 'src' directory in path: {file_path}")
+        return os.path.dirname(file_path)
+    
+    # Return the path including the 'src' directory
+    return file_path[:src_index + 5]  # +5 to include '/src/'
 
 def load_and_split_python_files(file_paths: List[str],
                                 chunk_size: int = 1000,
@@ -77,15 +101,12 @@ def load_and_split_python_files(file_paths: List[str],
             documents = loader.load()
 
             # Add metadata to each document
-            source_dir = os.path.dirname(os.path.dirname(file_path))  # Adjust based on your structure
+            source_dir = get_src_base_path(file_path)
             rel_path = os.path.relpath(file_path, source_dir)
 
             # Get the full content of the file to calculate byte ranges
             with open(file_path, 'rb') as f:
                 file_content = f.read().decode('utf-8')
-                
-            # Split file content into lines for line number calculation
-            file_lines = file_content.splitlines()
 
             for doc in documents:
                 doc.metadata["source"] = rel_path
@@ -100,7 +121,7 @@ def load_and_split_python_files(file_paths: List[str],
                 # Possible issue: duplicate content in the file
                 # Find the start byte of this content in the original file
                 start_byte = file_content.find(content)
-                if start_byte != -1:
+                if (start_byte != -1):
                     end_byte = start_byte + len(content)
                     # Flache Metadaten statt verschachtelter Dictionaries
                     split.metadata["byterange_start"] = start_byte
@@ -129,8 +150,6 @@ def load_and_split_python_files(file_paths: List[str],
     return all_splits
 
 
-
-
 def embed_python_directory(
         source_dir: str,
         db_path: str,
@@ -138,7 +157,9 @@ def embed_python_directory(
         chunk_size: int = 1000,
         chunk_overlap: int = 100,
         reset_collection: bool = False,
-        model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
+        model_type: str = "sentence-transformers",
+        model_vendor: str = "huggingface"
 ) -> None:
     """
     Process all Python files in a directory and create embeddings.
@@ -151,6 +172,8 @@ def embed_python_directory(
         chunk_overlap: Overlap between chunks
         reset_collection: Whether to reset an existing collection
         model_name: Name of the embedding model to use
+        model_type: Type of the embedding model (e.g., "sentence-transformers")
+        model_vendor: Vendor of the embedding model (e.g., "huggingface")
     """
     # Get all Python files
     python_files = get_all_python_files(source_dir)
@@ -167,11 +190,9 @@ def embed_python_directory(
     )
 
     client = chromadb.PersistentClient(path=db_path)
-
-    # Set up embedding function
-    embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name=model_name
-    )
+    
+    # Get a specifically ChromaDB-compatible embedding function
+    embedding_function = get_chroma_embedding_function(model_name, model_type, model_vendor)
 
     # Create or get collection
     collection = create_or_get_collection(
@@ -187,6 +208,16 @@ def embed_python_directory(
     logger.info(f"Successfully embedded {len(python_files)} Python files into {collection_name}")
 
 if __name__ == "__main__":
+
+    # loading variables from .env file
+    load_dotenv()
+
+    # load model details from config
+    config = load_config("app_config")
+    model_name = config['models']['embeddings']['name']
+    model_type = config['models']['embeddings']['type']
+    model_vendor = config['models']['embeddings']['vendor']
+
     # Example usage
     embed_python_directory(
         source_dir="../../../flask/src",
@@ -195,6 +226,7 @@ if __name__ == "__main__":
         chunk_size=1000,
         chunk_overlap=0,
         reset_collection=True,
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+        model_name=model_name,
+        model_type=model_type,
+        model_vendor=model_vendor
     )
-
