@@ -1,0 +1,2 @@
+Name,exact_match_score,MRR,Precision at 5,Recall at 5,Line Coverage,Date
+huggingface/microsoft/unixcoder-base,0.42592592592592593,0.4861111111111111,0.2888888888888889,0.42592592592592593,0.29512486649141784,28.05.2025 09:10
