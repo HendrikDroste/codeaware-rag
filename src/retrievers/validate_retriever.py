@@ -2,14 +2,22 @@ import os
 import pandas as pd
 import tempfile
 import requests
-import re
+import time
+import datetime
 from typing import List, Dict, Any, Tuple
 from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.vectorstores import VectorStoreRetriever
 from urllib.parse import urlparse
 from src.utils import load_config
 from src.embeddings.embedding_functions import get_embedding_function
+from src.retrievers.metrics import (
+    mean_reciprocal_rank, 
+    precision_at_k, 
+    recall_at_k, 
+    line_coverage_ratio, 
+    exact_match_score,
+    f1_score
+)
 
 def download_github_file(url: str) -> Tuple[str, str]:
     """
@@ -78,9 +86,9 @@ def load_retriever() -> VectorStoreRetriever:
     model_name = config['models']['embeddings']['name']
     model_type = config['models']['embeddings']['type']
     model_vendor = config['models']['embeddings']['vendor']
+    num_documents = int(config['models']['embeddings']['num_documents'])
     
-    # for_chromadb=False, since we need the LangChain interface here
-    embedding_function = get_embedding_function(model_name, model_type, model_vendor, for_chromadb=False)
+    embedding_function = get_embedding_function(model_name, model_type, model_vendor)
 
     # Create ChromaDB client with the same path
     db = Chroma(
@@ -94,7 +102,7 @@ def load_retriever() -> VectorStoreRetriever:
     print(f"Number of found documents in the collection: {doc_count}")
 
     # Create the retriever
-    retriever = db.as_retriever(search_kwargs={"k": 5})
+    retriever = db.as_retriever(search_kwargs={"k": num_documents})
     return retriever
 
 def extract_github_urls(urls: str) -> List[str]:
@@ -140,8 +148,13 @@ def extract_file_path_from_url(url: str) -> str:
     
     # Standard GitHub URL format: /:owner/:repo/blob/:branch/:path
     if len(path_parts) > 4 and path_parts[3] == 'blob':
-        return '/'.join(path_parts[5:])
-    return os.path.basename(parsed_url.path)
+        relative_path = '/'.join(path_parts[5:])
+    else:
+        relative_path = os.path.basename(parsed_url.path)
+
+    if relative_path.startswith("src/"):
+        relative_path = relative_path[4:]
+    return relative_path
 
 def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.DataFrame) -> Dict[str, Any]:
     """
@@ -160,7 +173,12 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
         "expected_metadata": [],
         "retrieved_snippets": [],
         "retrieved_metadata": [],
-        "exact_match_score": []
+        "exact_match_score": [],
+        "mrr": [],
+        "precision_at_5": [],
+        "recall_at_5": [],
+        "f1_at_5": [],
+        "line_coverage": []
     }
     
     # Create temporary directory for downloaded files
@@ -201,14 +219,26 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
             retrieved_snippets = [doc.page_content for doc in retrieved_docs]
             retrieved_metadata = [doc.metadata for doc in retrieved_docs]
 
-            # calculate scores and store results
-            score = exact_match_score(expected_metadata, retrieved_metadata)
+            # calculate scores using imported metrics
+            mrr = mean_reciprocal_rank(expected_metadata, retrieved_metadata)
+            p_at_5 = precision_at_k(expected_metadata, retrieved_metadata, k=5)
+            r_at_5 = recall_at_k(expected_metadata, retrieved_metadata, k=5)
+            f1_at_5 = f1_score(p_at_5, r_at_5)
+            line_cov = line_coverage_ratio(expected_snippets, retrieved_snippets)
+            ems = exact_match_score(expected_metadata, retrieved_metadata)
+            
+            # store results
             results["question"].append(question)
             results["expected_snippets"].append(expected_snippets)
             results["expected_metadata"].append(expected_metadata)
             results["retrieved_snippets"].append(retrieved_snippets)
             results["retrieved_metadata"].append(retrieved_metadata)
-            results["exact_match_score"].append(score)
+            results["exact_match_score"].append(ems)
+            results["mrr"].append(mrr)
+            results["precision_at_5"].append(p_at_5)
+            results["recall_at_5"].append(r_at_5)
+            results["f1_at_5"].append(f1_at_5)
+            results["line_coverage"].append(line_cov)
 
     
     finally:
@@ -225,55 +255,6 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
     
     return results
 
-def exact_match_score(expected_metadata, retrieved_metadata):
-    """
-    Calculate the score based on filename and line number matches.
-    
-    Args:
-        expected_metadata: List of dictionaries with filename, line_start, line_end
-        retrieved_metadata: List of dictionaries with metadata from retriever
-        
-    Returns:
-        Float score between 0 and 1
-    """
-    if not expected_metadata:
-        return 0
-    
-    matches = 0
-    for expected in expected_metadata:
-        expected_file = expected.get("filename")
-        expected_start = expected.get("line_start")
-        expected_end = expected.get("line_end")
-
-        # remove the /src/ prefix from the filename
-        if expected_file and expected_file.startswith("src/"):
-            expected_file = expected_file[4:]
-        
-        for retrieved in retrieved_metadata:
-            retrieved_file = retrieved.get("source") or retrieved.get("filename")
-            
-            # Check if filenames match (handle potential path differences)
-            filename_match = False
-            if expected_file and retrieved_file:
-                if expected_file == retrieved_file:
-                    filename_match = True
-                
-            if filename_match:
-                # If file matches, check for line overlap
-                retrieved_start = retrieved.get("line_start")
-                retrieved_end = retrieved.get("line_end")
-                
-                # If no line numbers in metadata, count as a match based on filename only
-                if retrieved_start is None or retrieved_end is None:
-                    matches += 1
-                    break
-
-                # Check for line range overlap
-                if (retrieved_start <= expected_end and retrieved_end >= expected_start):
-                    matches += 1
-                    break
-
-    return matches / len(expected_metadata)
 
 def print_validation_results(results: Dict[str, Any]):
     """
@@ -282,17 +263,32 @@ def print_validation_results(results: Dict[str, Any]):
     Args:
         results: Dictionary containing validation results
     """
-    # Calculate overall accuracy
-    avg_score = sum(results["exact_match_score"]) / len(results["exact_match_score"]) if results["exact_match_score"] else 0
+    # Calculate overall metrics
+    avg_exact_match = sum(results["exact_match_score"]) / len(results["exact_match_score"]) if results["exact_match_score"] else 0
+    avg_mrr = sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
+    avg_precision = sum(results["precision_at_5"]) / len(results["precision_at_5"]) if results["precision_at_5"] else 0
+    avg_recall = sum(results["recall_at_5"]) / len(results["recall_at_5"]) if results["recall_at_5"] else 0
+    avg_f1 = sum(results["f1_at_5"]) / len(results["f1_at_5"]) if results["f1_at_5"] else 0
+    avg_line_coverage = sum(results["line_coverage"]) / len(results["line_coverage"]) if results["line_coverage"] else 0
 
     print("\n=== Validation Results ===")
-    print(f"Average Exact Match Score: {avg_score:.2f} ({sum(results['exact_match_score'])}/{len(results['exact_match_score'])} matches)")
+    print(f"Average Exact Match Score: {avg_exact_match:.2f}")
+    print(f"Average Mean Reciprocal Rank: {avg_mrr:.2f}")
+    print(f"Average Precision@5: {avg_precision:.2f}")
+    print(f"Average Recall@5: {avg_recall:.2f}")
+    print(f"Average F1@5: {avg_f1:.2f}")
+    print(f"Average Line Coverage: {avg_line_coverage:.2f}")
 
     # Detailed output for each question
     for i in range(len(results["question"])):
         print(f"\n--- Question {i+1} ---")
         print(f"Question: {results['question'][i]}")
         print(f"Exact Match Score: {results['exact_match_score'][i]:.2f}")
+        print(f"MRR: {results['mrr'][i]:.2f}")
+        print(f"Precision@5: {results['precision_at_5'][i]:.2f}")
+        print(f"Recall@5: {results['recall_at_5'][i]:.2f}")
+        print(f"F1@5: {results['f1_at_5'][i]:.2f}")
+        print(f"Line Coverage: {results['line_coverage'][i]:.2f}")
 
         print("\nExpected Snippets:")
         for j, (snippet, metadata) in enumerate(zip(results["expected_snippets"][i], results["expected_metadata"][i])):
@@ -319,9 +315,6 @@ def print_validation_results(results: Dict[str, Any]):
         if len(results["retrieved_snippets"][i]) > 3:
             print(f"  ... and {len(results['retrieved_snippets'][i]) - 3} more snippets")
 
-    # print total score
-    print(f"\nTotal Exact Match Score: {sum(results['exact_match_score'])}/{len(results['exact_match_score'])} ({avg_score:.2f})")
-
 def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/retrieval_results.csv"):
     """
     Save validation results to a CSV file with one row per retrieved snippet.
@@ -335,6 +328,11 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
     for i in range(len(results["question"])):
         question = results["question"][i]
         question_score = results["exact_match_score"][i]
+        mrr = results["mrr"][i]
+        precision = results["precision_at_5"][i]
+        recall = results["recall_at_5"][i]
+        f1 = results["f1_at_5"][i]
+        line_cov = results["line_coverage"][i]
         expected_metadata = results["expected_metadata"][i]
         
         # Format expected metadata for reference
@@ -374,7 +372,12 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
                 "line_start": line_start,
                 "line_end": line_end,
                 "is_match": is_match,
-                "question_score": question_score,
+                "exact_match_score": question_score,
+                "mrr": mrr,
+                "precision_at_5": precision,
+                "recall_at_5": recall,
+                "f1_at_5": f1,
+                "line_coverage": line_cov,
                 "expected_files": expected_files_str,
                 "snippet": snippet
             })
@@ -384,21 +387,69 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
     df.to_csv(output_path, index=False)
     print(f"Ergebnisse wurden in {output_path} gespeichert")
 
+def save_model_results(results: Dict[str, Any], model_name: str, output_path: str = "../../data/model_results.csv"):
+    """
+    Save model validation metrics to the results CSV file.
+    
+    Args:
+        results: Dictionary containing validation results
+        model_name: Name of the model/retriever being evaluated
+        output_path: Path to the model_results.csv file
+    """
+    # Calculate overall metrics
+    avg_exact_match = sum(results["exact_match_score"]) / len(results["exact_match_score"]) if results["exact_match_score"] else 0
+    avg_mrr = sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
+    avg_precision = sum(results["precision_at_5"]) / len(results["precision_at_5"]) if results["precision_at_5"] else 0
+    avg_recall = sum(results["recall_at_5"]) / len(results["recall_at_5"]) if results["recall_at_5"] else 0
+    avg_f1 = sum(results["f1_at_5"]) / len(results["f1_at_5"]) if results["f1_at_5"] else 0
+    avg_line_coverage = sum(results["line_coverage"]) / len(results["line_coverage"]) if results["line_coverage"] else 0
+    
+    # Get current date and time in a human-readable format
+    current_datetime = datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
+    
+    # Create DataFrame with the new row
+    new_row = pd.DataFrame({
+        "Name": [model_name],
+        "exact_match_score": [avg_exact_match],
+        "MRR": [avg_mrr],
+        "Precision at 5": [avg_precision],
+        "Recall at 5": [avg_recall],
+        "F1 at 5": [avg_f1],
+        "Line Coverage": [avg_line_coverage],
+        "Date": [current_datetime]
+    })
+    
+
+    df = pd.read_csv(output_path)
+    df = pd.concat([df, new_row], ignore_index=True)
+
+    # Save updated DataFrame
+    df.to_csv(output_path, index=False)
+    print(f"Modell-Ergebnisse wurden in {output_path} gespeichert")
+
 def main():
     # Load validation data
     validation_data = pd.read_csv('../../data/validation.csv')
     
     # Load retriever
+    start_time = time.time()
     retriever = load_retriever()
+    
+    # Get the model name from config
+    config = load_config("app_config")
+    model_name = f"{config['models']['embeddings']['vendor']}/{config['models']['embeddings']['name']}"
     
     # Run validation
     results = validate_retriever(retriever, validation_data)
     
     # Print results
-    print_validation_results(results)
+    #print_validation_results(results)
     
-    # Save results to CSV
+    # Save detailed results to CSV
     #save_results_to_csv(results)
+    
+    # Save model metrics to model_results.csv
+    save_model_results(results, model_name)
 
 if __name__ == '__main__':
     main()

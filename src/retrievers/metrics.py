@@ -1,5 +1,3 @@
-
-
 def mean_reciprocal_rank(expected_metadata, retrieved_metadata):
     """
     Evaluate the position of the first relevant result
@@ -201,3 +199,19 @@ def exact_match_score(expected_metadata, retrieved_metadata):
                     break
 
     return matches / len(expected_metadata)
+
+
+def f1_score(precision: float, recall: float) -> float:
+    """
+    Calculate F1-Score from precision and recall.
+    
+    Args:
+        precision: Precision value
+        recall: Recall value
+        
+    Returns:
+        F1-Score (harmonic mean of precision and recall)
+    """
+    if precision + recall == 0:
+        return 0.0
+    return 2 * (precision * recall) / (precision + recall)

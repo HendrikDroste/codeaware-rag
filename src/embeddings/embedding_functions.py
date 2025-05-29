@@ -13,9 +13,15 @@ class CustomBertEmbeddings:
         self.model = AutoModel.from_pretrained(model_name)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)
+        self.max_seq_length = 512           # maximum sequence length graphcodebert-base model
         
     def _embed(self, text):
         code_tokens = self.tokenizer.tokenize(text)
+        # check if the token length exceeds the maximum sequence length
+        if len(code_tokens) + 2 > self.max_seq_length:
+            raise ValueError(f"Token length ({len(code_tokens) + 2}) exceeds maximum sequence length of {self.max_seq_length}. "
+                            f"Please use shorter text or implement a truncation method.")
+            
         tokens = [self.tokenizer.cls_token] + code_tokens + [self.tokenizer.sep_token]
         tokens_ids = self.tokenizer.convert_tokens_to_ids(tokens)
         tensor = torch.tensor(tokens_ids).unsqueeze(0).to(self.device)
