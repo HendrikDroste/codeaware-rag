@@ -1,9 +1,9 @@
 models:
   embeddings:
-    name: microsoft/unixcoder-base               # validated models: codebert-base, graphcodebert-base, unixcoder-base
+    name: Lajavaness/bilingual-embedding-large
     vendor: huggingface
-    type: autotokenizer
-    tokenizer: microsoft/unixcoder-base
+    type: sentence-transformers
+    tokenizer: Lajavaness/bilingual-embedding-large
     num_documents: 5              # number of documents to return for each query (k-nearest neighbors)
 
   chat:

@@ -169,9 +169,7 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
     """
     results = {
         "question": [],
-        "expected_snippets": [],
         "expected_metadata": [],
-        "retrieved_snippets": [],
         "retrieved_metadata": [],
         "exact_match_score": [],
         "mrr": [],
@@ -193,7 +191,6 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
             start_lines = extract_lines(row['start_line'])
             
             # Download and process expected files
-            expected_snippets = []
             expected_metadata = []
             for i, url in enumerate(expected_urls):
                 try:
@@ -204,8 +201,6 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
                     start_line = start_lines[i]
                     if start_line:
                         end_line = end_lines[i] if i < len(end_lines) else start_line
-                        snippet = get_code_snippet(content, start_line, end_line)
-                        expected_snippets.append(snippet)
                         expected_metadata.append({
                             "filename": relative_path,
                             "line_start": start_line,
@@ -216,7 +211,6 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
             
             # Get retrieved documents
             retrieved_docs = retriever.invoke(question)
-            retrieved_snippets = [doc.page_content for doc in retrieved_docs]
             retrieved_metadata = [doc.metadata for doc in retrieved_docs]
 
             # calculate scores using imported metrics
@@ -224,14 +218,12 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
             p_at_5 = precision_at_k(expected_metadata, retrieved_metadata, k=5)
             r_at_5 = recall_at_k(expected_metadata, retrieved_metadata, k=5)
             f1_at_5 = f1_score(p_at_5, r_at_5)
-            line_cov = line_coverage_ratio(expected_snippets, retrieved_snippets)
+            line_cov = line_coverage_ratio(expected_metadata, retrieved_metadata)
             ems = exact_match_score(expected_metadata, retrieved_metadata)
             
             # store results
             results["question"].append(question)
-            results["expected_snippets"].append(expected_snippets)
             results["expected_metadata"].append(expected_metadata)
-            results["retrieved_snippets"].append(retrieved_snippets)
             results["retrieved_metadata"].append(retrieved_metadata)
             results["exact_match_score"].append(ems)
             results["mrr"].append(mrr)
@@ -239,7 +231,6 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
             results["recall_at_5"].append(r_at_5)
             results["f1_at_5"].append(f1_at_5)
             results["line_coverage"].append(line_cov)
-
     
     finally:
         # Clean up temporary files
@@ -290,30 +281,19 @@ def print_validation_results(results: Dict[str, Any]):
         print(f"F1@5: {results['f1_at_5'][i]:.2f}")
         print(f"Line Coverage: {results['line_coverage'][i]:.2f}")
 
-        print("\nExpected Snippets:")
-        for j, (snippet, metadata) in enumerate(zip(results["expected_snippets"][i], results["expected_metadata"][i])):
-            print(f"  Snippet {j+1} ({metadata['filename']}, lines {metadata['line_start']}-{metadata['line_end']}):")
-            # Only display first lines to keep output manageable
-            snippet_lines = snippet.split("\n")
-            snippet_preview = "\n    ".join(snippet_lines[:3])
-            if len(snippet_lines) > 3:
-                snippet_preview += "\n    ..."
-            print(f"    {snippet_preview}")
+        print("\nExpected Files:")
+        for j, metadata in enumerate(results["expected_metadata"][i]):
+            print(f"  File {j+1}: {metadata['filename']}, lines {metadata['line_start']}-{metadata['line_end']}")
 
-        print("\nRetrieved Snippets:")
-        for j, (snippet, metadata) in enumerate(zip(results["retrieved_snippets"][i][:3], results["retrieved_metadata"][i][:3])):  # Limit to first 3 results
+        print("\nRetrieved Files:")
+        for j, metadata in enumerate(results["retrieved_metadata"][i][:3]):  # Limit to first 3 results
             filename = metadata.get("source", metadata.get("filename", "unknown"))
             line_start = metadata.get("line_start", "?")
             line_end = metadata.get("line_end", "?")
-            print(f"  Snippet {j+1} ({filename}, lines {line_start}-{line_end}):")
-            snippet_lines = snippet.split("\n")
-            snippet_preview = "\n    ".join(snippet_lines[:3])
-            if len(snippet_lines) > 3:
-                snippet_preview += "\n    ..."
-            print(f"    {snippet_preview}")
+            print(f"  File {j+1}: {filename}, lines {line_start}-{line_end}")
 
-        if len(results["retrieved_snippets"][i]) > 3:
-            print(f"  ... and {len(results['retrieved_snippets'][i]) - 3} more snippets")
+        if len(results["retrieved_metadata"][i]) > 3:
+            print(f"  ... and {len(results['retrieved_metadata'][i]) - 3} more files")
 
 def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/retrieval_results.csv"):
     """
@@ -341,10 +321,11 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
         expected_files_str = "; ".join(expected_files)
         
         # Add rows for each retrieved snippet
-        for j, (snippet, metadata) in enumerate(zip(results["retrieved_snippets"][i], results["retrieved_metadata"][i])):
+        for j, metadata in enumerate(results["retrieved_metadata"][i]):
             filename = metadata.get("source", metadata.get("filename", "unknown"))
             line_start = metadata.get("line_start", "")
             line_end = metadata.get("line_end", "")
+            snippet = metadata.get("content", "")
             
             # Check if this specific snippet matches any expected snippet
             is_match = False

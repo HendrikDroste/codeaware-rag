@@ -12,10 +12,11 @@ class ChromaSetup:
         if str(type).lower() == "huggingface" and str(subtype).lower() == "sentence-transformers":
             embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
                 model_name=model_name,
+                trust_remote_code=True
             )
-        elif str(type).lower() == "huggingface" and str(subtype).lower() == "autotokenizer":
+        elif str(type).lower() == "huggingface" and str(subtype).lower() == "automodel":
             embedding_function = embedding_functions.HuggingFaceEmbeddingFunction(
-                model_name=model_name,
+                model_name=model_name
             )
         elif str(type).lower() == "openai" and str(subtype).lower() == "text-embedding-ada-002":
             embedding_function = embedding_functions.OpenAIEmbeddingFunction(

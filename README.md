@@ -79,10 +79,17 @@ Dependent on the retriever other database index structures like inverted indexes
 To improve the embeddings we can try out two different approaches:
 
 ### Models
-These embedding models that **could** be used:
+The following models are currently supported as embeddings and can be used as a baseline:
 
-- [CodeBert](https://github.com/microsoft/CodeBERT)
-
+- [UniXcoder](https://huggingface.co/microsoft/unixcoder-base)
+- [SFR-Embedding](https://huggingface.co/Salesforce/SFR-Embedding-Code-400M_R) Model is available in multiple sizes.
+- [CodeT5-Plus](https://huggingface.co/Salesforce/codet5p-110m-embedding) Model is available in multiple sizes.
+- [codesage-large-v2](https://huggingface.co/CodeSage/codesage-large-v2)
+- [codesage-large](https://huggingface.co/CodeSage/codesage-large)
+- [CodeRankEmbed](https://huggingface.co/nomic-ai/CodeRankEmbed)
+- [inf-retriever-v1-1.5b](https://huggingface.co/infly/inf-retriever-v1-1.5b)
+- [multilingual-e5-large-instruct](https://huggingface.co/intfloat/multilingual-e5-large-instruct)
+- [bilingual-embedding-large](https://huggingface.co/Lajavaness/bilingual-embedding-large)
 
 ### Data Loaders
 Both dataset does not focus on the preparation of the code snippets.
