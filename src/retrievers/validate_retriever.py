@@ -11,11 +11,11 @@ from urllib.parse import urlparse
 from src.utils import load_config
 from src.embeddings.embedding_functions import get_embedding_function
 from src.retrievers.metrics import (
-    mean_reciprocal_rank, 
-    precision_at_k, 
-    recall_at_k, 
-    line_coverage_ratio, 
-    exact_match_score,
+    mean_reciprocal_rank,
+    precision_at_k,
+    recall_at_k,
+    line_coverage_ratio,
+    file_match_ratio,
     f1_score
 )
 
@@ -171,7 +171,7 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
         "question": [],
         "expected_metadata": [],
         "retrieved_metadata": [],
-        "exact_match_score": [],
+        "file_match_ratio": [],
         "mrr": [],
         "precision_at_5": [],
         "recall_at_5": [],
@@ -219,13 +219,13 @@ def validate_retriever(retriever: VectorStoreRetriever, validation_data: pd.Data
             r_at_5 = recall_at_k(expected_metadata, retrieved_metadata, k=5)
             f1_at_5 = f1_score(p_at_5, r_at_5)
             line_cov = line_coverage_ratio(expected_metadata, retrieved_metadata)
-            ems = exact_match_score(expected_metadata, retrieved_metadata)
+            ems = file_match_ratio(expected_metadata, retrieved_metadata)
             
             # store results
             results["question"].append(question)
             results["expected_metadata"].append(expected_metadata)
             results["retrieved_metadata"].append(retrieved_metadata)
-            results["exact_match_score"].append(ems)
+            results["file_match_ratio"].append(ems)
             results["mrr"].append(mrr)
             results["precision_at_5"].append(p_at_5)
             results["recall_at_5"].append(r_at_5)
@@ -255,7 +255,7 @@ def print_validation_results(results: Dict[str, Any]):
         results: Dictionary containing validation results
     """
     # Calculate overall metrics
-    avg_exact_match = sum(results["exact_match_score"]) / len(results["exact_match_score"]) if results["exact_match_score"] else 0
+    avg_exact_match = sum(results["file_match_ratio"]) / len(results["file_match_ratio"]) if results["file_match_ratio"] else 0
     avg_mrr = sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
     avg_precision = sum(results["precision_at_5"]) / len(results["precision_at_5"]) if results["precision_at_5"] else 0
     avg_recall = sum(results["recall_at_5"]) / len(results["recall_at_5"]) if results["recall_at_5"] else 0
@@ -307,7 +307,7 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
     
     for i in range(len(results["question"])):
         question = results["question"][i]
-        question_score = results["exact_match_score"][i]
+        question_score = results["file_match_ratio"][i]
         mrr = results["mrr"][i]
         precision = results["precision_at_5"][i]
         recall = results["recall_at_5"][i]
@@ -353,7 +353,7 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
                 "line_start": line_start,
                 "line_end": line_end,
                 "is_match": is_match,
-                "exact_match_score": question_score,
+                "file_match_ratio": question_score,
                 "mrr": mrr,
                 "precision_at_5": precision,
                 "recall_at_5": recall,
@@ -378,7 +378,7 @@ def save_model_results(results: Dict[str, Any], model_name: str, output_path: st
         output_path: Path to the model_results.csv file
     """
     # Calculate overall metrics
-    avg_exact_match = sum(results["exact_match_score"]) / len(results["exact_match_score"]) if results["exact_match_score"] else 0
+    avg_exact_match = sum(results["file_match_ratio"]) / len(results["file_match_ratio"]) if results["file_match_ratio"] else 0
     avg_mrr = sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
     avg_precision = sum(results["precision_at_5"]) / len(results["precision_at_5"]) if results["precision_at_5"] else 0
     avg_recall = sum(results["recall_at_5"]) / len(results["recall_at_5"]) if results["recall_at_5"] else 0
@@ -391,7 +391,7 @@ def save_model_results(results: Dict[str, Any], model_name: str, output_path: st
     # Create DataFrame with the new row
     new_row = pd.DataFrame({
         "Name": [model_name],
-        "exact_match_score": [avg_exact_match],
+        "file_match_ratio": [avg_exact_match],
         "MRR": [avg_mrr],
         "Precision at 5": [avg_precision],
         "Recall at 5": [avg_recall],

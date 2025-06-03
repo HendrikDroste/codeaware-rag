@@ -200,7 +200,7 @@ def line_coverage_ratio(expected_metadata, retrieved_metadata):
     return covered_lines / total_expected_lines
 
 
-def exact_match_score(expected_metadata, retrieved_metadata):
+def file_match_ratio(expected_metadata, retrieved_metadata):
     """
     Calculate the score based on filename and line number matches.
 

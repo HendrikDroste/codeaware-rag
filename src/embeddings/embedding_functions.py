@@ -25,7 +25,7 @@ class CustomBertEmbeddings:
             tokens_ids = self.tokenizer.convert_tokens_to_ids(tokens)
             return torch.tensor(tokens_ids).unsqueeze(0).to(self.device)
         else:
-            tokens_ids = self.tokenizer(text, return_tensors="pt")
+            tokens_ids = self.tokenizer.encode(text, return_tensors="pt")
         return tokens_ids.to(self.device)
 
 
