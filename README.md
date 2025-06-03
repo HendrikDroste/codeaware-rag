@@ -13,8 +13,7 @@ The project is currently in progress, therefore the
 - [x] Extend baseline to support autotokenizer and other models (unixcoder)
 - [x] Validate questions
 - [x] Generate other metrics (Line, Method, Class based metrics)
-- [ ] Add validation run with dataset from huggingface to validate the metrics and my implementation ?
-- [ ] Compare different embedding models (e.g. CodeBert, UnixCoder, ...)
+- [x] Compare different embedding models
 - [ ] Extend the RAG system with [tree-sitter](https://tree-sitter.github.io/tree-sitter/) and/or [multispy](https://github.com/microsoft/multilspy) 
 - [ ] Use a LLM to generate the dataset for a given repository
 - [ ] Category for questions
