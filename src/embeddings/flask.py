@@ -223,7 +223,7 @@ if __name__ == "__main__":
         source_dir="../../../flask/src",
         db_path="../../chroma_db",
         collection_name="python_codebase",
-        chunk_size=500,
+        chunk_size=900,
         chunk_overlap=0,
         reset_collection=True,
         model_name=model_name,

@@ -1,5 +1,6 @@
 import torch
 import os
+from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions, BaseModelOutputWithPooling
 from transformers import AutoTokenizer, AutoModel
 from chromadb.utils import embedding_functions
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -9,24 +10,39 @@ from langchain_openai import OpenAIEmbeddings
 # adapter that supports, ChromaDB and LangChain interfaces
 class CustomBertEmbeddings:
     def __init__(self, model_name):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model_name = model_name
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)
-        self.max_seq_length = 512           # maximum sequence length graphcodebert-base model
-        
+        self.max_seq_length = 512
+
+    def _prepare_inputs(self, text):
+        if self.model_name == "microsoft/unixcoder-base":
+            tokens = self.tokenizer.tokenize(text)
+            tokens = tokens[:self.max_seq_length-4]
+            tokens = [self.tokenizer.cls_token] + tokens + [self.tokenizer.sep_token]
+            tokens_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+            return torch.tensor(tokens_ids).unsqueeze(0).to(self.device)
+        else:
+            tokens_ids = self.tokenizer(text, return_tensors="pt")
+        return tokens_ids.to(self.device)
+
+
     def _embed(self, text):
         code_tokens = self.tokenizer.tokenize(text)
         # check if the token length exceeds the maximum sequence length
         if len(code_tokens) + 2 > self.max_seq_length:
             raise ValueError(f"Token length ({len(code_tokens) + 2}) exceeds maximum sequence length of {self.max_seq_length}. "
                             f"Please use shorter text or implement a truncation method.")
-            
-        tokens = [self.tokenizer.cls_token] + code_tokens + [self.tokenizer.sep_token]
-        tokens_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-        tensor = torch.tensor(tokens_ids).unsqueeze(0).to(self.device)
+
+        tensor = self._prepare_inputs(text)
         with torch.no_grad():
-            embedding = self.model(tensor)[0][0, 0].cpu().numpy()
+            result = self.model(tensor)
+            if isinstance(result, BaseModelOutputWithPoolingAndCrossAttentions) or isinstance(result, BaseModelOutputWithPooling):
+                embedding = result[0][0, 0].cpu().numpy()
+            else:
+                embedding = result[0].cpu().numpy()
         return embedding
     
     # ChromaDB Interface
@@ -72,11 +88,11 @@ def get_embedding_function(model_name, model_type, model_vendor, for_chromadb=Fa
     if str(model_vendor).lower() == "huggingface" and str(model_type).lower() == "sentence-transformers":
         if for_chromadb:
             # ChromaDB already has a special function for these models
-            return embedding_functions.SentenceTransformerEmbeddingFunction(model_name=model_name)
+            return embedding_functions.SentenceTransformerEmbeddingFunction(model_name=model_name, trust_remote_code=True)
         else:
-            return HuggingFaceEmbeddings(model_name=model_name)
+            return HuggingFaceEmbeddings(model_name=model_name, model_kwargs={"trust_remote_code": True})
             
-    elif str(model_vendor).lower() == "huggingface" and str(model_type).lower() == "autotokenizer":
+    elif str(model_vendor).lower() == "huggingface" and str(model_type).lower() == "automodel":
         # CustomBertEmbeddings supports both interfaces
         return CustomBertEmbeddings(model_name=model_name)
         
