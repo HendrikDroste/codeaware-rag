@@ -14,6 +14,8 @@ The project is currently in progress, therefore the
 - [x] Validate questions
 - [x] Generate other metrics (Line, Method, Class based metrics)
 - [x] Compare different embedding models
+- [ ] Create a retriever base class
+- [ ] Custom splitter for code snippets
 - [ ] Extend the RAG system with [tree-sitter](https://tree-sitter.github.io/tree-sitter/) and/or [multispy](https://github.com/microsoft/multilspy) 
 - [ ] Use a LLM to generate the dataset for a given repository
 - [ ] Category for questions
@@ -105,7 +107,8 @@ The advantage of sentence-transformers is that it is optimized for sentence embe
 It may be possible to only use the transformers library, but this is currently not our focus.
 
 
-### Custom Retrievers
+### Custom Retriever Types
+
 We have two types of retrievers we can implement.
 Embedding based retrievers and deterministic retrievers.
 Our focus is on the deterministic retrievers, but we can use the embedding based retrievers as a baseline.
@@ -124,8 +127,42 @@ Possible approaches for the deterministic retrievers are:
 
 - TODO how does the python splitter work (whole class vs function)
 
-- how many results is needed to get the correct answer
-- pass in k (is the correct answer in the top k results) to the retriever
-- Line vs function vs class based metrics
+### Retriever Base idea
+A first idea for a retriever is to create embeddings for all functions and methods in the codebase.
+Based on the distance between the query and the embeddings, we can retrieve the most relevant functions and methods.
+As metadata,, we use the path to the file and the start and end line of the function or method.
+This allows us to create snippets that contains an abstraction of one functionality with the relevant documentation.
+For the idea it is crucial to compare this with the RecursiveCharacterTextSplitter from LangChain.
+The python text splitter is based on simple regular expressions matching.
+In the class there is a defined [list of patterns](https://github.com/langchain-ai/langchain/blob/b149cce5f8a68e0122ef590c98b3ec8e229586cc/libs/text-splitters/langchain_text_splitters/character.py#L345) that are used to split the code into smaller chunks.
+On the highest level, it splits the code into classes.
+If the desired chunk size is not reached, it splits the code into methods and functions.
+This loop continues with other expressions until the desired chunk size is reached.
+As this logic is relatively simple, we expect that with a more complex splitter like tree-sitter or multispy we can improve the quality of the snippets.
 
-- create custom dataset for different categories (dependencies, ...)
+### Retriever Extension 1
+This extension uses a graph database to store the location of the function/method definitions in the codebase.
+We use the graph database to store edges from function/method definitions and their usages.
+This allows us to understand the usage of the function/method in the codebase.
+
+A high level query could look like this:
+1. We use the list with all function/method definitions to find the k most relevant functions/methods based on the query.
+2. We use the graph database to find all usages of the k most relevant functions/methods.
+3. Rerank the k most relevant functions/methods based on the definitions and the usages.
+
+### Retriever Extension 2
+This extension uses an agent approach to find the relevant code snippets.
+The agent has functions to query the graph database.
+
+### Retriever Extension 3
+If we have access to the git history we can use the git history to better understand the codebase.
+As a git commit is often on a more abstract level we can use the git history to answer more complex questions.
+Furthermore, we can use the diff files to identify related code snippets who are not directly connected via the graph database.
+
+### Retriever Extension 4
+Add debugging information to the code snippets.
+This can include the stack trace, the variables and their values, and the function/method calls.
+This could improve the understanding for the usage of objects.
+
+
+- TF/IDF

@@ -4,18 +4,13 @@ import logging
 from typing import List, Any
 from dotenv import load_dotenv
 
-# ChromaDB imports
-import chromadb
-
 # LangChain imports
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_text_splitters import Language
 from langchain_community.document_loaders import TextLoader
 
-# import utils
-from src.embeddings.utils import create_or_get_collection, add_documents_to_collection
-from src.embeddings.embedding_functions import get_chroma_embedding_function
-from src.utils import load_config
+# Import the embedding pipeline
+from src.pipelines.embedding_pipeline import EmbeddingPipeline
 
 # Set up logging
 logging.basicConfig(
@@ -42,10 +37,10 @@ def get_all_python_files(source_dir: str) -> List[str]:
 def get_src_base_path(file_path: str) -> str:
     """
     Get the base path up to and including the 'src' directory.
-    
+
     Args:
         file_path: Path to a file
-        
+
     Returns:
         Base path up to and including the 'src' directory
     """
@@ -54,11 +49,11 @@ def get_src_base_path(file_path: str) -> str:
     if (src_index == -1):
         # If '/src/' not found, try with OS-specific path separator
         src_index = file_path.find(os.path.join('', 'src', ''))
-    
+
     if (src_index == -1):
         logger.warning(f"Could not find 'src' directory in path: {file_path}")
         return os.path.dirname(file_path)
-    
+
     # Return the path including the 'src' directory
     return file_path[:src_index + 5]  # +5 to include '/src/'
 
@@ -126,7 +121,7 @@ def load_and_split_python_files(file_paths: List[str],
                     # Flache Metadaten statt verschachtelter Dictionaries
                     split.metadata["byterange_start"] = start_byte
                     split.metadata["byterange_end"] = end_byte
-                    
+
                     # Calculate line numbers
                     start_line = file_content[:start_byte].count('\n') + 1
                     end_line = start_line + content.count('\n')
@@ -156,13 +151,10 @@ def embed_python_directory(
         collection_name: str = "python_codebase",
         chunk_size: int = 1000,
         chunk_overlap: int = 100,
-        reset_collection: bool = False,
-        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
-        model_type: str = "sentence-transformers",
-        model_vendor: str = "huggingface"
+        reset_collection: bool = False
 ) -> None:
     """
-    Process all Python files in a directory and create embeddings.
+    Process all Python files in a directory and create embeddings using the embedding pipeline.
 
     Args:
         source_dir: Directory containing Python files
@@ -171,9 +163,6 @@ def embed_python_directory(
         chunk_size: Size of code chunks
         chunk_overlap: Overlap between chunks
         reset_collection: Whether to reset an existing collection
-        model_name: Name of the embedding model to use
-        model_type: Type of the embedding model (e.g., "sentence-transformers")
-        model_vendor: Vendor of the embedding model (e.g., "huggingface")
     """
     # Get all Python files
     python_files = get_all_python_files(source_dir)
@@ -189,34 +178,30 @@ def embed_python_directory(
         chunk_overlap=chunk_overlap
     )
 
-    client = chromadb.PersistentClient(path=db_path)
-    
-    # Get a specifically ChromaDB-compatible embedding function
-    embedding_function = get_chroma_embedding_function(model_name, model_type, model_vendor)
-
-    # Create or get collection
-    collection = create_or_get_collection(
-        client,
-        collection_name,
-        embedding_function,
-        reset=reset_collection
+    # Initialize the embedding pipeline
+    pipeline = EmbeddingPipeline(
+        collection_name=collection_name,
+        chroma_persist_directory=db_path
     )
+    
+    if reset_collection and hasattr(pipeline, 'collection'):
+        try:
+            # Try to delete the collection if it exists
+            pipeline.chroma_client.delete_collection(collection_name)
+            logger.info(f"Reset collection: {collection_name}")
+            # Recreate the collection
+            pipeline._setup_chroma_client()
+        except Exception as e:
+            logger.warning(f"Could not reset collection: {e}")
 
-    # Add documents to collection
-    add_documents_to_collection(collection, code_chunks, batch_size=1000)
+    # Add documents to collection using the pipeline
+    pipeline.add_documents(code_chunks, batch_size=1000)
 
     logger.info(f"Successfully embedded {len(python_files)} Python files into {collection_name}")
 
 if __name__ == "__main__":
-
     # loading variables from .env file
     load_dotenv()
-
-    # load model details from config
-    config = load_config("app_config")
-    model_name = config['models']['embeddings']['name']
-    model_type = config['models']['embeddings']['type']
-    model_vendor = config['models']['embeddings']['vendor']
 
     # Example usage
     embed_python_directory(
@@ -225,8 +210,5 @@ if __name__ == "__main__":
         collection_name="python_codebase",
         chunk_size=900,
         chunk_overlap=0,
-        reset_collection=True,
-        model_name=model_name,
-        model_type=model_type,
-        model_vendor=model_vendor
+        reset_collection=True
     )
