@@ -23,7 +23,8 @@ class EmbeddingPipeline(BaseRAGPipeline):
         self, 
         config_path: Optional[str] = None,
         collection_name: str = "documents",
-        chroma_persist_directory: Optional[str] = None
+        chroma_persist_directory: Optional[str] = None,
+        reset_collection: bool = False
     ):
         """
         Initializes the EmbeddingPipeline with the specified configuration.
@@ -46,6 +47,7 @@ class EmbeddingPipeline(BaseRAGPipeline):
         # Set up ChromaDB client and collection
         self.chroma_client = None
         self.collection = None
+        self.reset_collection = reset_collection
         self._setup_chroma_client()
 
     def _setup_embedding_provider(self) -> BaseEmbeddingProvider:
@@ -70,7 +72,8 @@ class EmbeddingPipeline(BaseRAGPipeline):
         self.collection = create_or_get_collection(
             client=self.chroma_client,
             collection_name=self.collection_name,
-            embedding_function=self.embedding_provider.get_chromadb_embedding_function()
+            embedding_function=self.embedding_provider.get_chromadb_embedding_function(),
+            reset=self.reset_collection
         )
 
     def embed(self, text: str) -> List[float]:

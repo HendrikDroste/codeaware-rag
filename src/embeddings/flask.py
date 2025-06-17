@@ -181,7 +181,8 @@ def embed_python_directory(
     # Initialize the embedding pipeline
     pipeline = EmbeddingPipeline(
         collection_name=collection_name,
-        chroma_persist_directory=db_path
+        chroma_persist_directory=db_path,
+        reset_collection=reset_collection
     )
     
     if reset_collection and hasattr(pipeline, 'collection'):
