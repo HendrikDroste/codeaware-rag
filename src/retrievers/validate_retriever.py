@@ -84,7 +84,7 @@ def load_embedding_pipeline() -> EmbeddingPipeline:
     
     return EmbeddingPipeline(
         config_path=None,
-        collection_name="python_codebase",
+        collection_name="python_functions",
         chroma_persist_directory="../../chroma_db"
     )
 
