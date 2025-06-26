@@ -14,8 +14,16 @@ The project is currently in progress, therefore the
 - [x] Validate questions
 - [x] Generate other metrics (Line, Method, Class based metrics)
 - [x] Compare different embedding models
-- [ ] Create a retriever base class
-- [ ] Custom splitter for code snippets
+- [x] Create a retriever base class
+- [x] Custom splitter for code snippets
+- [ ] Create a list of with approaches
+  1. Summarize each code snippet via a LLM and use the summary as the embedding
+  2. List all functions and methods to a LLM and filter functions and methods by name before comparing the embeddings
+  3. When creating embeddings, only create the embeddings for the documentation (and/or the function/method name)
+  4. Use a LLM to extract function/method/class names and search for the names in the codebase using tree-sitter
+  5. Create a neo4j database with the usage of the functions/methods and use the database to find the relevant code snippets (harder to implement)
+  6. Create an inheritance graph of the codebase in neo4j (harder to implement)
+- [ ] Try out the different approaches
 - [ ] Extend the RAG system with [tree-sitter](https://tree-sitter.github.io/tree-sitter/) and/or [multispy](https://github.com/microsoft/multilspy) 
 - [ ] Use a LLM to generate the dataset for a given repository
 - [ ] Category for questions
