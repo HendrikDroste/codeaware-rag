@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Any
+from typing import List
 
 
 class BaseRAGPipeline(ABC):
@@ -9,9 +9,9 @@ class BaseRAGPipeline(ABC):
     """
 
     @abstractmethod
-    def embed(self, text: str) -> None:
+    def prepare(self, text: str) -> None:
         """
-        Embed a single string into a vector representation.
+        Prepare a single string into a vector representation.
 
         Args:
             text (str): The input string to embed.
@@ -22,7 +22,7 @@ class BaseRAGPipeline(ABC):
         pass
 
     @abstractmethod
-    def embed_batch(self, texts: List[str]) -> None:
+    def prepare_batch(self, texts: List[str]) -> None:
         """
         Embed a batch of strings.
 

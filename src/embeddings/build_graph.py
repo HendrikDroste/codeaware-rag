@@ -3,8 +3,10 @@ from tree_sitter import Language, Parser
 import tree_sitter_python as tspython
 import jedi
 from neo4j import GraphDatabase
-from flask import get_all_python_files
+from file_processor import get_all_python_files
 
+# The code is currently in a prototype state and may not handle all edge cases.
+# It is designed to build a graph of Python functions and their calls in a codebase.
 
 def build_graph(codebase_path):
     # Initialize Tree-sitter Python parser
@@ -22,30 +24,47 @@ def build_graph(codebase_path):
         if not files.endswith(".py"):
             continue
         filepath = os.path.abspath(files)
+
+        # Read file in both binary mode (for tree-sitter) and text mode (for content extraction)
         code = open(filepath, "rb").read()
         tree = parser.parse(code)
+
+        with open(filepath, "r", encoding="utf-8") as f:
+            code_lines = f.readlines()
 
         # Create File node
         session.run("MERGE (f:File {path:$path})", path=filepath)
 
-        # Find all function definitions in this file
+        # Find all function definitions in this file - capture the entire function node
         query = PY_LANGUAGE.query("""
-                (function_definition name: (identifier) @function.def)
+                (function_definition) @function
             """)
         captures = query.captures(tree.root_node)
-        for _, nodes in captures.items():
-            for node in nodes:
-                # Extract function name and definition line
-                func_name = node.text.decode('utf8')
-                def_line = node.start_point[0] + 1
-                # Create Function node and link to File
+
+        if "function" not in captures:
+            print(f"No function definitions found in {filepath}. Skipping.")
+            continue
+
+        for node in captures["function"]:
+
+            # Extract function name from the name field of function_definition
+            name_node = node.child_by_field_name('name')
+            if name_node:
+                func_name = name_node.text.decode('utf8')
+                start_line = node.start_point[0] + 1  # Convert to 1-based indexing
+                end_line = node.end_point[0] + 1      # Get end line of the function
+
+                # Extract the full function content
+                function_content = ''.join(code_lines[start_line-1:end_line])
+
+                # Create Function node and link to File with start, end line and full content
                 session.run(
                     "MERGE (func:Function {name:$fn, file:$fp}) "
-                    "SET func.line = $ln "
+                    "SET func.start_line = $sln, func.end_line = $eln, func.content = $content "
                     "WITH func "
                     "MATCH (file:File {path:$fp}) "
                     "MERGE (func)-[:DEFINED_IN]->(file)",
-                    fn=func_name, fp=filepath, ln=def_line
+                    fn=func_name, fp=filepath, sln=start_line, eln=end_line, content=function_content
                 )
 
     # Second pass: resolve calls and create CALLS edges
@@ -160,4 +179,4 @@ def process_method_calls(nodes, script, session, filepath):
                     )
 
 if __name__ == "__main__":
-    build_graph("../../")
+    build_graph("../../../flask/src")
