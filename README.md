@@ -3,77 +3,8 @@
 > [!Note]
 > Currently, this project is in progress and not all sections are complete.
 
-This projects aims to explore different retrieval and chunking approaches for questions about code.
-For this purpose, we developed this RAG Evaluation System that can be extended with different retrievers and chunking approaches.
-
-## Table of Contents
-> [!IMPORTANT]
-> TODO
-
-
-## Installation
-This project requires python 3.11 or higher and pip.
-To install the project, you can use the following command:
-
-### Install the project
-```bash
-pip install requirements.txt
-```
-
-### Login to HuggingFace
-To use the HuggingFace models, you need to login to your HuggingFace account.
-```bash
-huggingface-cli login
-```
-
 This projects aims to try out different retrievers for effective retrieval for questions about code.
-
-
-## Usage
-
-### Quickstart
-
-To run the experiments execute the pipeline of you choice via this command:
-```bash
-python src/pipelies/<pipeline_name>.py # e.g. python src/pipelines/embedding_pipeline.py
-```
-> [!TIP]
-> **Tip:** You can customize the RAG behavior by modifying parameters in the `config.yaml` file. 
-> See the [Embedding Models]() section for available embedding model types.
-
-
-
-## Project Decisions
-In this section, we will document the decisions made during the development of the project.
-
-### Datasets
-
-### Embedding Models
-To compare the performance of the different retrievers and splitters, we will use different embedding models.
-Our focus was to keep the implementation simple, while providing a variety of models to compare.
-We therefore decided to use the [sentence-transformers](https://www.sbert.net/) library.
-All other providers (e.g. OpenAIProvider) are at different stages of development and not yet ready.
-
-> [!TIP]
-> You can find a list of currently top-level embedding models on the [HuggingFace MTEB Leaderboard](https://huggingface.co/spaces/mteb/leaderboard).
-
-
-### 
-
-## Results
-
-### Evaluation
-For the evaluation of the retrievers, we will use the Mean Reciprocal Rank (MRR) metrics.
-Where $Q$ is the set of questions and $\text{rank}_i$ is the rank of the first relevant code snippet for question \(i\).
-$$
-\text{MRR} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}
-$$
-
-TODO: Explain how we define and measure a hit.
-
-## Future Work
-
-
+The project is currently in progress, therefore the 
 
 ## Next Steps
 
@@ -85,13 +16,13 @@ TODO: Explain how we define and measure a hit.
 - [x] Compare different embedding models
 - [x] Create a retriever base class
 - [x] Custom splitter for code snippets
-- [x] Create a list of with approaches
+- [ ] Create a list of with approaches
   1. Summarize each code snippet via a LLM and use the summary as the embedding
   2. List all functions and methods to a LLM and filter functions and methods by name before comparing the embeddings
   3. When creating embeddings, only create the embeddings for the documentation (and/or the function/method name)
-  4. Create a neo4j database with the usage of the functions/methods and use the database to find the relevant code snippets (harder to implement)
-  5. Create an inheritance graph of the codebase in neo4j (harder to implement)
-  6. Use Jedi to enable a project-wide search beyond functions and methods
+  4. Use a LLM to extract function/method/class names and search for the names in the codebase using tree-sitter
+  5. Create a neo4j database with the usage of the functions/methods and use the database to find the relevant code snippets (harder to implement)
+  6. Create an inheritance graph of the codebase in neo4j (harder to implement)
 - [ ] Try out the different approaches
 - [ ] Extend the RAG system with [tree-sitter](https://tree-sitter.github.io/tree-sitter/) and/or [multispy](https://github.com/microsoft/multilspy) 
 - [ ] Use a LLM to generate the dataset for a given repository
@@ -179,7 +110,7 @@ By using the repositories from CodeXGLUE, we could create the snippets on our ow
 
 ### Baseline Retrievers
 For the baseline we implemented a retriever that uses the huggingface ecosystem.
-We currently support the [sentence-transformers](https://www.sbert.net/).
+We currently support the [sentence-transformers](https://www.sbert.net/) and [Transformers](https://huggingface.co/docs/transformers/en/index).
 The advantage of sentence-transformers is that it is optimized for sentence embeddings and provides a simple interface to use.
 It may be possible to only use the transformers library, but this is currently not our focus.
 
@@ -189,6 +120,20 @@ It may be possible to only use the transformers library, but this is currently n
 We have two types of retrievers we can implement.
 Embedding based retrievers and deterministic retrievers.
 Our focus is on the deterministic retrievers, but we can use the embedding based retrievers as a baseline.
+
+Possible approaches for the deterministic retrievers are:
+- [tree-sitter](https://tree-sitter.github.io/tree-sitter/)
+  - Pros
+    - TODO
+  - Cons
+    - TODO
+- [multispy](https://github.com/microsoft/multilspy) 
+  - Pros
+    - TODO
+  - Cons
+    - TODO
+
+- TODO how does the python splitter work (whole class vs function)
 
 ### Retriever Base idea
 A first idea for a retriever is to create embeddings for all functions and methods in the codebase.
@@ -228,14 +173,4 @@ This can include the stack trace, the variables and their values, and the functi
 This could improve the understanding for the usage of objects.
 
 
-
-## List with approaches and expected results
-| Approach                                                                                                                                      | Expected Result                                                                                                                                                                        | Actual Result | 
-|-----------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------| 
-| Summarize each code snippet via a LLM and use the summary as the embedding                                                                    | Strong performance when using Text-Embedding Models. Could outperform Baseline as we compare text with text and not text with code                                                     |               | 
-| List all functions and methods to a LLM and filter functions and methods by name before comparing the embeddings                              | The filter by name reduced the number comparisons. If this outperforms the Baseline is likely depended on the quality of the filter                                                    |               | 
-| When creating embeddings, only create the embeddings for the documentation (and/or the function/method name)                                  | Strong performance when using Text-Embedding Models. Could outperform Baseline as we compare text with text and not text with code. Strongly depends on well maintained documentation. |               | 
-| Create a neo4j database with the usage of the functions/methods and use the database to find the relevant code snippets (harder to implement) | Should outperform the Baseline especially in questions about code usage. We expect higher quality in general due to higher quality code snippets. Problem: How to call?                |               | 
-| Create an inheritance graph of the codebase in neo4j (harder to implement)                                                                    | Should outperform the Baseline especially in inheritance related questions. Problem: How to call?                                                                                      |               | 
-| Use git log to identify a more abstract overview of the code. Additionally find parts that were often edited together. (harder to implement)  | No better performance than baselines expected, as the questions are not abstract enough. Also highly dependent on git history.                                                         |               | 
-| Add debugging information to the code. (hard to implement)                                                                                    | Higher quality especially in questions about of error messages, inheritance or code usage. Problems: Code must run, lot of storage required                                            |               | 
+- TF/IDF

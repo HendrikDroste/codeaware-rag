@@ -3,6 +3,7 @@ Contains concrete implementations for various embedding model providers.
 """
 import os
 import torch
+from typing import List, Union, Tuple, Any
 from langchain_core.embeddings import Embeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import OpenAIEmbeddings
@@ -12,7 +13,7 @@ from chromadb.utils import embedding_functions
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Local import from the same package
-from .interfaces import BaseEmbeddingProvider
+from .base_embedding_provider import BaseEmbeddingProvider, EmbeddingText
 
 
 class SentenceTransformerProvider(BaseEmbeddingProvider):
@@ -42,6 +43,9 @@ class HuggingFaceAutoModelProvider(BaseEmbeddingProvider):
     """
     Provider for custom HuggingFace AutoModel implementations.
     This class implements both the LangChain and ChromaDB interfaces directly.
+
+    The SentenceTransformerProvider should be preferred over this one, as many of the models implemented here need special handling, often due to their architecture or tokenization requirements.
+    Therefore, not all the pipelines will work out of the box with this provider.
     """
 
     def __init__(self, model_name: str):
@@ -65,9 +69,10 @@ class HuggingFaceAutoModelProvider(BaseEmbeddingProvider):
                 text, return_tensors="pt", truncation=True, max_length=self.max_seq_length
             ).to(self.device)
 
-    def _embed(self, text: str) -> list[float]:
+    def _embed(self, text: EmbeddingText) -> List[float]:
         """Generates an embedding for a single piece of text."""
-        tensor = self._prepare_inputs(text)
+        embedding_text = self._extract_embedding_text(text)
+        tensor = self._prepare_inputs(embedding_text)
         with torch.no_grad():
             result = self.model(tensor)
             if isinstance(result, (BaseModelOutputWithPoolingAndCrossAttentions, BaseModelOutputWithPooling)):
@@ -81,20 +86,24 @@ class HuggingFaceAutoModelProvider(BaseEmbeddingProvider):
         return self
 
     def get_chromadb_embedding_function(self):
-        """Returns self as it is a callable that ChromaDB can use."""
-        return self
+        """Returns a wrapper function that extracts the correct text for embedding."""
+        def wrapper_function(input_texts: Union[List[EmbeddingText], EmbeddingText]) -> Union[List[List[float]], List[float]]:
+            if isinstance(input_texts, (str, tuple)):
+                return self._embed(input_texts)
+            return [self._embed(text) for text in input_texts]
+        return wrapper_function
 
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+    def embed_documents(self, texts: List[EmbeddingText]) -> List[List[float]]:
         """LangChain Interface: Embed a list of documents."""
         return [self._embed(text) for text in texts]
 
-    def embed_query(self, text: str) -> list[float]:
+    def embed_query(self, text: EmbeddingText) -> List[float]:
         """LangChain Interface: Embed a single query text."""
         return self._embed(text)
 
-    def __call__(self, input_texts: list[str]) -> list[list[float]]:
-        """ChromaDB Interface: Embeds a list of texts."""
-        if isinstance(input_texts, str):
+    def __call__(self, input_texts: Union[List[EmbeddingText], EmbeddingText]) -> Union[List[List[float]], List[float]]:
+        """ChromaDB Interface: Embeds a list of texts or a single text."""
+        if isinstance(input_texts, (str, tuple)):
              return self._embed(input_texts)
         return [self._embed(text) for text in input_texts]
 
@@ -119,14 +128,27 @@ class OpenAIProvider(BaseEmbeddingProvider):
         return self._langchain_embedder
 
     def get_chromadb_embedding_function(self):
-        """Returns a ChromaDB-native OpenAIEmbeddingFunction."""
+        """Returns a ChromaDB-native OpenAIEmbeddingFunction wrapped to handle tuples."""
         if self._chromadb_embedder is None:
-            self._chromadb_embedder = embedding_functions.OpenAIEmbeddingFunction(
+            original_embedder = embedding_functions.OpenAIEmbeddingFunction(
                 api_key=self.api_key, model_name=self.model_name
             )
+
+            # Create a wrapper that handles tuples
+            def wrapper_function(input_texts):
+                if isinstance(input_texts, (str, tuple)):
+                    text_to_embed = self._extract_embedding_text(input_texts)
+                    return original_embedder([text_to_embed])[0]
+                else:
+                    texts_to_embed = [self._extract_embedding_text(text) for text in input_texts]
+                    return original_embedder(texts_to_embed)
+
+            self._chromadb_embedder = wrapper_function
         return self._chromadb_embedder
 
 
+
+# WORK IN PROGRESS: This provider is not yet fully functional.
 class TFIDFProvider(BaseEmbeddingProvider):
     """
     Provider for Scikit-learn's TF-IDF vectorizer.
@@ -146,25 +168,28 @@ class TFIDFProvider(BaseEmbeddingProvider):
         """Check if the vectorizer has been fitted."""
         return hasattr(self.vectorizer, 'vocabulary_')
 
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+    def embed_documents(self, texts: List[EmbeddingText]) -> List[List[float]]:
         """
         Embed a list of documents. If the model is not yet fitted, it will be
         fitted on this list of documents.
         """
+        embedding_texts = [self._extract_embedding_text(text) for text in texts]
+
         if self._is_fitted:
-            return self.vectorizer.transform(texts).toarray().tolist()
+            return self.vectorizer.transform(embedding_texts).toarray().tolist()
         else:
             # If not fitted, fit and then transform
-            return self.vectorizer.fit_transform(texts).toarray().tolist()
+            return self.vectorizer.fit_transform(embedding_texts).toarray().tolist()
 
-    def embed_query(self, text: str) -> list[float]:
+    def embed_query(self, text: EmbeddingText) -> List[float]:
         """Embed a single query text."""
         if not self._is_fitted:
             raise RuntimeError(
                 "TF-IDF provider is not fitted. You must call 'embed_documents' "
                 "with the corpus before embedding a query."
             )
-        return self.vectorizer.transform([text]).toarray().tolist()[0]
+        embedding_text = self._extract_embedding_text(text)
+        return self.vectorizer.transform([embedding_text]).toarray().tolist()[0]
 
     def get_langchain_embedding_model(self) -> Embeddings:
         """Returns self as it conforms to the LangChain Embeddings interface."""
@@ -174,9 +199,9 @@ class TFIDFProvider(BaseEmbeddingProvider):
         """Returns self as it is a callable that ChromaDB can use."""
         return self
 
-    def __call__(self, input_texts: list[str] | str) -> list[list[float]]:
+    def __call__(self, input_texts: Union[List[EmbeddingText], EmbeddingText]) -> Union[List[List[float]], List[float]]:
         """ChromaDB Interface: Embeds a list of texts or a single text."""
-        if isinstance(input_texts, str):
+        if isinstance(input_texts, (str, tuple)):
              return self.embed_query(input_texts)
         # When ChromaDB calls this with a list, it's for embedding documents
         return self.embed_documents(input_texts)

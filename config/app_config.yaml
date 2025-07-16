@@ -1,20 +1,22 @@
 models:
   embeddings:
-    name: Lajavaness/bilingual-embedding-large
+    name: codesage/codesage-large-v2
     vendor: huggingface
     type: sentence-transformers
-    tokenizer: Lajavaness/bilingual-embedding-large
+    tokenizer: codesage/codesage-large-v2
     num_documents: 5              # number of documents to return for each query (k-nearest neighbors)
 
   chat:
-    name: meta-llama/Llama-3.2-1B
+    name: meta-llama/Llama-3.2-1B-Instruct
     type: huggingface
-    tokenizer: meta-llama/Llama-3.2-1B
+    tokenizer: meta-llama/Llama-3.2-1B-Instruct
     max_length: 2048
     temperature: 0.7
-    top_p: 0.9
     top_k: 50
     repetition_penalty: 1.2
     num_return_sequences: 1
     use_cache: true
-    do_sample: true
+    do_sample: false
+
+database:
+  collection_name: documents

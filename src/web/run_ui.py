@@ -2,53 +2,25 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 import streamlit as st
-import torch
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains import RetrievalQA
 from langchain_chroma import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFacePipeline
-from langchain_openai import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from transformers import AutoTokenizer, pipeline
+from src.utils import load_config, load_llm
 
 
-from src.utils import load_config
-# Run via streamlit run src/core/run_ui.py
 
+# Prototype Web UI for Codeaware RAG (Retrieval-Augmented Generation) using Streamlit
+# run via: streamlit run src/core/run_ui.py
+# The code does not read the app_config.yaml file. Update the code if the UI is regularly used.
+
+collection_name = "codesearchnet"
 st.set_page_config(page_title="Codeaware RAG Gui", page_icon=":robot_face:", layout="wide")
 st.title("Codeaware RAG Gui")
 st.chat_message('ai').write("Please insert your question about the code in the input field below")
 
-def load_model(type: str, model_name: str):
-    """
-    Load the model for the specified type.
-    :param type: The type of model (e.g., "huggingface", "openai", "gemini").
-    :param model_name: Name of the model to load.
-    :return: The loaded model
-    """
-    if type == "huggingface":
-        # Load tokenizer and model
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            device_map="auto",
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        )
-    elif type == "openai":
-        # check if openai api key is set
-        if "OPENAI_API_KEY" not in os.environ:
-            raise ValueError("OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.")
-        model = ChatOpenAI(model=model_name)
-    elif type == "gemini":
-        # check if google api key is set
-        if "GOOGLE_API_KEY" not in os.environ:
-            raise ValueError("Google API key is not set. Please set the GOOGLE_API_KEY environment variable.")
-        model = ChatGoogleGenerativeAI(model=model_name)
-    else:
-        raise ValueError(f"Model type '{type}' is not supported.")
-
-    return model
 
 def load_tokenizer(type: str, tokenizer_name: str):
     """
@@ -81,7 +53,7 @@ def load_pipeline():
     tokenizer_name = config["models"]["chat"]["tokenizer"]
 
     tokenizer = load_tokenizer(model_type, tokenizer_name)
-    model = load_model(model_type, model_name)
+    model = load_llm(model_type, model_name)
     # Create pipeline
     pipe = pipeline(
         "text-generation",
@@ -139,7 +111,7 @@ def load_retriever():
     # Create ChromaDB client with the same path
     db = Chroma(
         persist_directory="./chroma_db",
-        collection_name="codesearchnet",
+        collection_name=collection_name,
         embedding_function=embedding_function
     )
 

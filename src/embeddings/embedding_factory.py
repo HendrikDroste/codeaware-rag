@@ -1,13 +1,15 @@
 """
 Factory function for creating and retrieving embedding providers.
 """
-# Local imports from the same package
-from .interfaces import BaseEmbeddingProvider
+
+from .base_embedding_provider import BaseEmbeddingProvider
 from .providers import SentenceTransformerProvider, HuggingFaceAutoModelProvider, OpenAIProvider, TFIDFProvider
 
 def get_embedding_provider(model_name: str, model_vendor: str, model_type: str) -> BaseEmbeddingProvider:
     """
     Factory function to get the correct embedding provider instance.
+    Currently only the support for HuggingFace is validated.
+    Other vendors and model types can therefore be y.bugg
 
     Args:
         model_name: Name of the embedding model.
