@@ -1,8 +1,0 @@
-Name,MRR,Line Coverage,file_match_ratio,Date,Comment
-huggingface/Salesforce/SFR-Embedding-Code-400M_R,0.3148148148148148,0.1378893651349817,0.1898148148148148,30.06.2025 19:04,LLM generated text for embedding
-huggingface/codesage/codesage-large-v2,0.3657407407407407,0.1653674293452321,0.287037037037037,30.06.2025 19:11,LLM generated text for embedding
-huggingface/codesage/codesage-large,0.2268518518518518,0.1352129910902027,0.2268518518518518,30.06.2025 19:16,LLM generated text for embedding
-huggingface/nomic-ai/CodeRankEmbed,0.3194444444444444,0.1473764789980217,0.3101851851851852,30.06.2025 19:19,LLM generated text for embedding
-huggingface/infly/inf-retriever-v1-1.5b,0.3703703703703704,0.171050330212944,0.2268518518518518,30.06.2025 19:24,LLM generated text for embedding
-huggingface/intfloat/multilingual-e5-large-instruct,0.3425925925925926,0.1260136278400665,0.2268518518518518,30.06.2025 19:27,LLM generated text for embedding
-huggingface/Lajavaness/bilingual-embedding-large,0.35185185185185186,0.19801722326611865,0.27314814814814814,30.06.2025 19:32,LLM generated text for embedding

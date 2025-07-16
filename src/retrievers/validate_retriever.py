@@ -2,14 +2,19 @@ import os
 import pandas as pd
 import tempfile
 import requests
+import time
 import datetime
 from typing import List, Dict, Any, Tuple
 from urllib.parse import urlparse
-from src.pipelines.base_pipeline import BaseRAGPipeline
+from src.utils import load_config
+from src.pipelines.embedding_pipeline import EmbeddingPipeline
 from src.retrievers.metrics import (
     mean_reciprocal_rank,
+    precision_at_k,
+    recall_at_k,
     line_coverage_ratio,
     file_match_ratio,
+    f1_score
 )
 
 def download_github_file(url: str) -> Tuple[str, str]:
@@ -68,6 +73,21 @@ def get_code_snippet(content: str, line_number: int, end_line: int = None, conte
 
     return '\n'.join(lines[final_start:final_end])
 
+def load_embedding_pipeline() -> EmbeddingPipeline:
+    """
+    Load the embedding pipeline for retrieval.
+
+    Returns:
+        EmbeddingPipeline instance
+    """
+    config = load_config("app_config")
+    
+    return EmbeddingPipeline(
+        config_path=None,
+        collection_name="python_functions",
+        chroma_persist_directory="../../chroma_db"
+    )
+
 def extract_github_urls(urls: str) -> List[str]:
     """
     Extract GitHub URLs from a semicolon-separated string.
@@ -119,7 +139,7 @@ def extract_file_path_from_url(url: str) -> str:
         relative_path = relative_path[4:]
     return relative_path
 
-def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame) -> dict[str, list[Any]] | None:
+def validate_retriever(pipeline: EmbeddingPipeline, validation_data: pd.DataFrame) -> Dict[str, Any]:
     """
     Validate the retriever against the validation data.
 
@@ -136,6 +156,9 @@ def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame)
         "retrieved_metadata": [],
         "file_match_ratio": [],
         "mrr": [],
+        "precision_at_5": [],
+        "recall_at_5": [],
+        "f1_at_5": [],
         "line_coverage": []
     }
 
@@ -188,6 +211,9 @@ def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame)
 
             # calculate scores using imported metrics
             mrr = mean_reciprocal_rank(expected_metadata, retrieved_metadata)
+            p_at_5 = precision_at_k(expected_metadata, retrieved_metadata, k=5)
+            r_at_5 = recall_at_k(expected_metadata, retrieved_metadata, k=5)
+            f1_at_5 = f1_score(p_at_5, r_at_5)
             line_cov = line_coverage_ratio(expected_metadata, retrieved_metadata)
             ems = file_match_ratio(expected_metadata, retrieved_metadata)
 
@@ -197,6 +223,9 @@ def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame)
             results["retrieved_metadata"].append(retrieved_metadata)
             results["file_match_ratio"].append(ems)
             results["mrr"].append(mrr)
+            results["precision_at_5"].append(p_at_5)
+            results["recall_at_5"].append(r_at_5)
+            results["f1_at_5"].append(f1_at_5)
             results["line_coverage"].append(line_cov)
 
     finally:
@@ -224,18 +253,28 @@ def print_validation_results(results: Dict[str, Any]):
     # Calculate overall metrics
     avg_exact_match = sum(results["file_match_ratio"]) / len(results["file_match_ratio"]) if results["file_match_ratio"] else 0
     avg_mrr = sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
+    avg_precision = sum(results["precision_at_5"]) / len(results["precision_at_5"]) if results["precision_at_5"] else 0
+    avg_recall = sum(results["recall_at_5"]) / len(results["recall_at_5"]) if results["recall_at_5"] else 0
+    avg_f1 = sum(results["f1_at_5"]) / len(results["f1_at_5"]) if results["f1_at_5"] else 0
     avg_line_coverage = sum(results["line_coverage"]) / len(results["line_coverage"]) if results["line_coverage"] else 0
 
     print("\n=== Validation Results ===")
     print(f"Average Exact Match Score: {avg_exact_match:.2f}")
     print(f"Average Mean Reciprocal Rank: {avg_mrr:.2f}")
+    print(f"Average Precision@5: {avg_precision:.2f}")
+    print(f"Average Recall@5: {avg_recall:.2f}")
+    print(f"Average F1@5: {avg_f1:.2f}")
     print(f"Average Line Coverage: {avg_line_coverage:.2f}")
 
     # Detailed output for each question
     for i in range(len(results["question"])):
         print(f"\n--- Question {i+1} ---")
         print(f"Question: {results['question'][i]}")
+        print(f"Exact Match Score: {results['exact_match_score'][i]:.2f}")
         print(f"MRR: {results['mrr'][i]:.2f}")
+        print(f"Precision@5: {results['precision_at_5'][i]:.2f}")
+        print(f"Recall@5: {results['recall_at_5'][i]:.2f}")
+        print(f"F1@5: {results['f1_at_5'][i]:.2f}")
         print(f"Line Coverage: {results['line_coverage'][i]:.2f}")
 
         print("\nExpected Files:")
@@ -266,6 +305,9 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
         question = results["question"][i]
         question_score = results["file_match_ratio"][i]
         mrr = results["mrr"][i]
+        precision = results["precision_at_5"][i]
+        recall = results["recall_at_5"][i]
+        f1 = results["f1_at_5"][i]
         line_cov = results["line_coverage"][i]
         expected_metadata = results["expected_metadata"][i]
 
@@ -309,6 +351,9 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
                 "is_match": is_match,
                 "file_match_ratio": question_score,
                 "mrr": mrr,
+                "precision_at_5": precision,
+                "recall_at_5": recall,
+                "f1_at_5": f1,
                 "line_coverage": line_cov,
                 "expected_files": expected_files_str,
                 "snippet": snippet
@@ -317,7 +362,7 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
     # Create DataFrame and save to CSV
     df = pd.DataFrame(rows)
     df.to_csv(output_path, index=False)
-    print(f"Results saved to {output_path}")
+    print(f"Ergebnisse wurden in {output_path} gespeichert")
 
 def save_model_results(results: Dict[str, Any], model_name: str, output_path: str = "../../data/model_results.csv"):
     """
@@ -331,6 +376,9 @@ def save_model_results(results: Dict[str, Any], model_name: str, output_path: st
     # Calculate overall metrics
     avg_exact_match = sum(results["file_match_ratio"]) / len(results["file_match_ratio"]) if results["file_match_ratio"] else 0
     avg_mrr = sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
+    avg_precision = sum(results["precision_at_5"]) / len(results["precision_at_5"]) if results["precision_at_5"] else 0
+    avg_recall = sum(results["recall_at_5"]) / len(results["recall_at_5"]) if results["recall_at_5"] else 0
+    avg_f1 = sum(results["f1_at_5"]) / len(results["f1_at_5"]) if results["f1_at_5"] else 0
     avg_line_coverage = sum(results["line_coverage"]) / len(results["line_coverage"]) if results["line_coverage"] else 0
 
     # Get current date and time in a human-readable format
@@ -341,6 +389,9 @@ def save_model_results(results: Dict[str, Any], model_name: str, output_path: st
         "Name": [model_name],
         "file_match_ratio": [avg_exact_match],
         "MRR": [avg_mrr],
+        "Precision at 5": [avg_precision],
+        "Recall at 5": [avg_recall],
+        "F1 at 5": [avg_f1],
         "Line Coverage": [avg_line_coverage],
         "Date": [current_datetime]
     })
@@ -351,4 +402,31 @@ def save_model_results(results: Dict[str, Any], model_name: str, output_path: st
 
     # Save updated DataFrame
     df.to_csv(output_path, index=False)
-    print(f"Model results saved to {output_path}")
+    print(f"Modell-Ergebnisse wurden in {output_path} gespeichert")
+
+def main():
+    # Load validation data
+    validation_data = pd.read_csv('../../data/validation.csv')
+
+    # Load embedding pipeline
+    start_time = time.time()
+    pipeline = load_embedding_pipeline()
+
+    # Get the model name from config
+    config = load_config("app_config")
+    model_name = f"{config['models']['embeddings']['vendor']}/{config['models']['embeddings']['name']}"
+
+    # Run validation
+    results = validate_retriever(pipeline, validation_data)
+
+    # Print results
+    #print_validation_results(results)
+
+    # Save detailed results to CSV
+    #save_results_to_csv(results)
+
+    # Save model metrics to model_results.csv
+    save_model_results(results, model_name)
+
+if __name__ == '__main__':
+    main()

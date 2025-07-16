@@ -4,9 +4,9 @@ various text embedding models from providers like HuggingFace and OpenAI.
 
 It is designed to be compatible with both LangChain and ChromaDB.
 """
-from .embedding_factory import get_embedding_provider, get_chroma_embedding_function
+from .factory import get_embedding_provider, get_chroma_embedding_function
 from .providers import SentenceTransformerProvider, HuggingFaceAutoModelProvider, OpenAIProvider, TFIDFProvider
-from .base_embedding_provider import BaseEmbeddingProvider
+from .interfaces import BaseEmbeddingProvider
 
 # Expose the public API of the package
 __all__ = [

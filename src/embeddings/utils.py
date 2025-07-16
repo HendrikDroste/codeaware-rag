@@ -1,13 +1,10 @@
 import os
 import logging
-from typing import List, Optional, Dict, Any, Callable, Union, TYPE_CHECKING
+from typing import List, Optional, Dict, Any, Callable, Union
 
 # ChromaDB imports
 import chromadb
 from chromadb.utils import embedding_functions
-
-if TYPE_CHECKING:
-    from src.pipelines.base_pipeline import BaseRAGPipeline
 
 # Set up logging
 logging.basicConfig(
@@ -65,8 +62,7 @@ def add_documents_to_collection(collection: Any,
                                 batch_size: int = 100,
                                 id_prefix: str = "doc",
                                 extra_metadata: Optional[Dict[str, Any]] = None,
-                                metadata_fn: Optional[Callable[[Dict[str, Any], int], Dict[str, Any]]] = None,
-                                pipeline: Optional["BaseRAGPipeline"] = None) -> None:
+                                metadata_fn: Optional[Callable[[Dict[str, Any], int], Dict[str, Any]]] = None) -> None:
     """
     Add documents to a ChromaDB collection in batches with enhanced metadata.
 
@@ -77,7 +73,6 @@ def add_documents_to_collection(collection: Any,
         id_prefix: Prefix for document IDs
         extra_metadata: Additional metadata to add to all documents
         metadata_fn: Optional function to transform metadata (takes metadata dict and index as input)
-        pipeline: Optional BaseRAGPipeline to use for generating embeddings
     """
     logger.info(f"Adding {len(documents)} documents to ChromaDB collection")
 
@@ -127,26 +122,14 @@ def add_documents_to_collection(collection: Any,
         batch_texts = texts[i:end_idx]
         batch_metadatas = metadatas[i:end_idx]
 
-        # Add documents with embeddings from pipeline if available
-        if pipeline:
-            # Generate embeddings using the pipeline's prepare_batch function
-            embeddings = pipeline.prepare_batch(batch_texts)
+        # Add documents with embeddings
+        collection.add(
+            ids=batch_ids,
+            documents=batch_texts,
+            metadatas=batch_metadatas
+        )
 
-            collection.add(
-                ids=batch_ids,
-                documents=batch_texts,
-                metadatas=batch_metadatas,
-                embeddings=embeddings
-            )
-            logger.info(f"Added batch {i // batch_size + 1} with pipeline embeddings")
-        else:
-            # Use ChromaDB's default embedding function
-            collection.add(
-                ids=batch_ids,
-                documents=batch_texts,
-                metadatas=batch_metadatas
-            )
-            logger.info(f"Added batch {i // batch_size + 1} with ChromaDB embeddings")
+        logger.info(f"Added batch {i // batch_size + 1} to ChromaDB ({i} to {end_idx})")
 
     # Verify data was added
     count = collection.count()

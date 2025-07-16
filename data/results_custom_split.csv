@@ -1,8 +1,0 @@
-Name,MRR,Line Coverage,file_match_ratio,Date,Comment
-huggingface/codesage/codesage-large-v2,0.3138888888888889,0.3692314513619299,0.2777777777777778,20.06.2025 23:40,Custom class split
-huggingface/codesage/codesage-large,0.3305555555555555,0.3272013453487224,0.287037037037037,21.06.2025 10:57,Custom class split
-huggingface/infly/inf-retriever-v1-1.5b,0.462962962962963,0.691890483918272,0.3935185185185185,21.06.2025 11:36,Custom class split
-huggingface/intfloat/multilingual-e5-large-instruct,0.3490740740740741,0.5757528569703178,0.3287037037037037,21.06.2025 11:38,Custom class split
-huggingface/Lajavaness/bilingual-embedding-large,0.3379629629629629,0.4918232306578952,0.2731481481481481,21.06.2025 11:42,Custom class split
-huggingface/Salesforce/SFR-Embedding-Code-400M_R,0.4462962962962963,0.6094236314435313,0.3518518518518518,21.06.2025 11:46,Custom class split
-huggingface/nomic-ai/CodeRankEmbed,0.2777777777777778,0.3641052131226436,0.199074074074074,21.06.2025 11:49,Custom class split

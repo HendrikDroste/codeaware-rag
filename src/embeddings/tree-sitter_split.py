@@ -1,12 +1,12 @@
 import os
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import tree_sitter_python as tspython
 from tree_sitter import Language, Parser
 from langchain_core.documents import Document
 from dotenv import load_dotenv
 
-from src.embeddings.file_processor import (
+from src.embeddings.flask import (
     get_all_python_files,
     get_src_base_path
 )
@@ -21,16 +21,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def extract_function_details(node, source_code: bytes) -> Tuple[str, str, int, int, int, int]:
+def extract_function_details(node, source_code: bytes) -> List[Tuple[str, str, int, int, int, int]]:
     """
     Extract name, content, start byte, end byte, start line and end line from a function node.
+    If function content exceeds 4000 characters, it will be split into exactly two pieces in the middle.
 
     Args:
         node: Tree-sitter node representing a function or method
         source_code: Source code as bytes
 
     Returns:
-        Tuple containing (function_name, function_content, start_byte, end_byte, start_line, end_line)
+        List of tuples containing (function_name, function_content, start_byte, end_byte, start_line, end_line)
+        If the function content is <= 4000 characters, the list will have only one tuple.
     """
     name_node = node.child_by_field_name('name')
     function_name = name_node.text.decode('utf-8') if name_node else "anonymous_function"
@@ -42,7 +44,25 @@ def extract_function_details(node, source_code: bytes) -> Tuple[str, str, int, i
     start_line = node.start_point[0] + 1
     end_line = node.end_point[0] + 1
 
-    return function_name, function_content, start_byte, end_byte, start_line, end_line
+    # If content is small enough, return single tuple in a list
+    if len(function_content) < 4000:
+        return [(function_name, function_content, start_byte, end_byte, start_line, end_line)]
+
+    # Split content in the middle
+    middle = len(function_content) // 2
+
+    # Find the nearest newline after the middle to make a cleaner split
+    split_index = function_content.find('\n', middle)
+    if split_index == -1:  # If no newline found, just use the middle
+        split_index = middle
+
+    part1 = function_content[:split_index]
+    part2 = function_content[split_index:]
+
+    return [
+        (f"{function_name}_part1", part1, start_byte, end_byte, start_line, end_line),
+        (f"{function_name}_part2", part2, start_byte, end_byte, start_line, end_line)
+    ]
 
 
 def load_and_split_python_functions(
@@ -51,7 +71,7 @@ def load_and_split_python_functions(
     """
     Load Python files and split them by functions/methods using Tree-sitter.
     Each function or method becomes its own chunk with metadata.
-
+    
     Args:
         file_paths: List of paths to Python files
 
@@ -93,44 +113,26 @@ def load_and_split_python_functions(
             functions = captures["function"]
             classes = captures["class"]
             for node in functions:
-                function_name, function_content, start_byte, end_byte, start_line, end_line = extract_function_details(
-                    node, source_code
-                )
+                function_details = extract_function_details(node, source_code)
 
-                chunk = Document(
-                    page_content=function_content,
-                    metadata={
-                        **base_metadata,
-                        "chunk_type": "function",
-                        "function_name": function_name,
-                        "byterange_start": start_byte,
-                        "byterange_end": end_byte,
-                        "line_start": start_line,
-                        "line_end": end_line
-                    }
-                )
-
-                all_chunks.append(chunk)
+                for func_name, func_content, start_byte, end_byte, start_line, end_line in function_details:
+                    chunk = Document(
+                        page_content=func_content,
+                        metadata={
+                            **base_metadata,
+                            "chunk_type": "function",
+                            "function_name": func_name,
+                            "byterange_start": start_byte,
+                            "byterange_end": end_byte,
+                            "line_start": start_line,
+                            "line_end": end_line
+                        }
+                    )
+                    all_chunks.append(chunk)
 
             for node in classes:
                 class_name_node = node.child_by_field_name('name')
                 class_name = class_name_node.text.decode('utf-8') if class_name_node else "anonymous_class"
-
-                class_content = source_code[node.start_byte:node.end_byte].decode('utf-8')
-
-                class_chunk = Document(
-                    page_content=class_content,
-                    metadata={
-                        **base_metadata,
-                        "chunk_type": "class",
-                        "class_name": class_name,
-                        "byterange_start": node.start_byte,
-                        "byterange_end": node.end_byte,
-                        "line_start": node.start_point[0] + 1,
-                        "line_end": node.end_point[0] + 1
-                    }
-                )
-                all_chunks.append(class_chunk)
 
                 # Now find and extract all methods within the class
                 method_query = """
@@ -141,24 +143,23 @@ def load_and_split_python_functions(
                 for method_node in method_captures["method"]:
                     parent_block = method_node.parent
                     if parent_block and parent_block.parent == node:
-                        method_name, method_content, m_start_byte, m_end_byte, m_start_line, m_end_line = extract_function_details(
-                            method_node, source_code
-                        )
+                        method_details = extract_function_details(method_node, source_code)
 
-                        method_chunk = Document(
-                            page_content=method_content,
-                            metadata={
-                                **base_metadata,
-                                "chunk_type": "method",
-                                "method_name": method_name,
-                                "class_name": class_name,
-                                "byterange_start": m_start_byte,
-                                "byterange_end": m_end_byte,
-                                "line_start": m_start_line,
-                                "line_end": m_end_line
-                            }
-                        )
-                        all_chunks.append(method_chunk)
+                        for method_name, method_content, m_start_byte, m_end_byte, m_start_line, m_end_line in method_details:
+                            method_chunk = Document(
+                                page_content=method_content,
+                                metadata={
+                                    **base_metadata,
+                                    "chunk_type": "method",
+                                    "method_name": method_name,
+                                    "class_name": class_name,
+                                    "byterange_start": m_start_byte,
+                                    "byterange_end": m_end_byte,
+                                    "line_start": m_start_line,
+                                    "line_end": m_end_line
+                                }
+                            )
+                            all_chunks.append(method_chunk)
 
         except Exception as e:
             logger.error(f"Error processing {file_path}: {e}")
