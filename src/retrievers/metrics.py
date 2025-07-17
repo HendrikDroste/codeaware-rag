@@ -98,10 +98,6 @@ def line_coverage_ratio(expected_metadata, retrieved_metadata):
                     overlap_end = min(end, r_end)
                     overlap = max(0, overlap_end - overlap_start + 1)
                     covered_lines += overlap
-                    
-                    # Avoid double-counting covered lines
-                    if overlap > 0:
-                        expected_line_count -= overlap
     
     if total_expected_lines == 0:
         return 0.0

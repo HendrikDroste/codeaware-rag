@@ -9,15 +9,16 @@ import os
 import logging
 from src.utils import load_config, load_llm
 from langchain_community.llms import HuggingFacePipeline
-from langchain_core.language_models import LLM
 from transformers import pipeline as hf_pipeline
-import torch
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# TODO find cypher query paper for all functions in a file
+
+# The code is currently not functional, because the GraphCypherQAChain is unable to create a Cypher query based on the questions.
+# This code could be used as a starting point for implementing a RAG pipeline that uses a Neo4j graph database.
+# More details about this idea can be found in the README.md file of the repository.
 class GraphPipeline(BaseRAGPipeline):
     """
     Implementation of BaseRAGPipeline using Neo4j graph database and GraphCypherQAChain.
@@ -94,7 +95,6 @@ class GraphPipeline(BaseRAGPipeline):
 
         logger.info("Initializing GraphCypherQAChain")
 
-        # Prüfen, ob das LLM ein direkt aus Hugging Face geladenes Modell ist, das gewrappt werden muss
         if hasattr(self.llm, "__class__") and "transformers" in str(self.llm.__class__) and not hasattr(self.llm, "bind"):
             logger.info(f"Wrapping Hugging Face model {self.llm.__class__.__name__} with LangChain compatible interface")
             pipe = hf_pipeline(
@@ -106,7 +106,6 @@ class GraphPipeline(BaseRAGPipeline):
                 top_p=0.9,
                 do_sample=True
             )
-            # Wrapping mit HuggingFacePipeline für LangChain-Kompatibilität
             self.llm = HuggingFacePipeline(pipeline=pipe)
 
         return GraphCypherQAChain.from_llm(
