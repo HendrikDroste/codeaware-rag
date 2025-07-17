@@ -1,8 +1,5 @@
 # Codeaware RAG
 
-> [!Note]
-> Currently, this project is in progress and not all sections are complete.
-
 This projects aims to explore different retrieval and chunking approaches for questions about code.
 For this purpose, we developed this RAG Evaluation System that can be extended with different retrievers and chunking approaches.
 
@@ -11,6 +8,7 @@ For this purpose, we developed this RAG Evaluation System that can be extended w
 * [Codeaware RAG](#codeaware-rag)
   * [Table of Contents](#table-of-contents)
   * [Installation](#installation)
+    * [Requirements](#requirements)
     * [Install the project](#install-the-project)
     * [Login to HuggingFace](#login-to-huggingface)
   * [Usage](#usage)
@@ -35,14 +33,17 @@ For this purpose, we developed this RAG Evaluation System that can be extended w
       * [Search Pipeline](#search-pipeline)
 <!-- TOC -->
 
-
 ## Installation
 This project requires python 3.11 or higher and pip.
 To install the project, you can use the following command:
 
+### Requirements
+- Python 3.11 or higher
+- Pip
+
 ### Install the project
 ```bash
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Login to HuggingFace
@@ -58,7 +59,7 @@ To run the experiments you have to clone the Flask repository in the same direct
 
 Then you can run the following command to run the experiments:
 ```bash
-python src/pipelies/<pipeline_name>.py # e.g. python src/pipelines/embedding_pipeline.py
+python src/pipelines/<pipeline_name>.py # e.g. python src/pipelines/embedding_pipeline.py
 ```
 
 ### Create a Custom Pipeline
@@ -79,7 +80,7 @@ In this section, we will document the decisions made during the development of t
 
 ### Datasets
 We decided to use a custom dataset based on the Flask repository, because no dataset is available that fits our needs.
-The closet dataset is the [CodeSearchNet](https://huggingface.co/datasets/sentence-transformers/codesearchnet) dataset, with the task is to find a function for a given comment.
+The closest dataset is the [CodeSearchNet](https://huggingface.co/datasets/sentence-transformers/codesearchnet) dataset, with the task is to find a function for a given comment.
 The dataset is not suitable for our needs, as there were no questions regarding important concepts like inheritance or usage of functions.
 
 
@@ -131,25 +132,34 @@ The models and capabilities of the models are changing rapidly, so the results m
 
 ### Baseline Results
 The baseline results are stored in the `data/baseline_results.csv` file.
-It consists of the following of the Langchain [RecursiveCharacterTextSplitter](RecursiveCharacterTextSplitter) and the [EmbeddingPipeline](src/pipelines/embedding_pipeline.py).
+It consists of the following of the Langchain [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_loaders/text_splitters/character_text_splitter) and the [EmbeddingPipeline](src/pipelines/embedding_pipeline.py).
 The `RecursiveCharacterTextSplitter` splits the code into smaller chunks based on following class and function definition as well as empty lines until the desired chunk size of 900 characters is reached.
 
 ![Baseline](data/plots/baseline_mmr.png)
+The baseline results show that Code-specialized models, except the codesage-large-v2 are superior to models fine-tuned on english language.
+Even the best performing models reach scores below 0.5 indicating significant room for improvement.
 
 
 ### Custom Chunking Results
 The idea of the custom chunking is to use the more [tree-sitter](https://tree-sitter.github.io/tree-sitter/) to create more meaningful chunks.
 Instead of defining a maximum chunk size, we create exactly one chunk for each function and method in the codebase.
 This should lead to more meaningful embeddings, as the embeddings are created for a single functionality and not for multiple ones.
-![Custom Chunking](data/plots/custom_chunking_mmr.png)
+
+![Custom Chunking](data/plots/custom_split_vs_baseline.png)
+We see with the `CodeRankEmbed` and the `inf-retriever-v1-1.5b` models are 2 significant outliers in this chart.
+The reasons for this are unclear, as we could not find any reasons for this behavior in the paper of the models.
+We suspect that this is due to the small dataset.
+Our hypothesis is that the custom chunking leads to better embeddings is therefore not supported by these results.
 
 ### Embedding Summary Chunking Results
 The idea of the embedding summary chunking is to use a LLM to summarize each code chunk and use the summary as the embedding.
 As most of the embedding models are trained on text or code, but not on text and code, this could lead to better results.
-For chunking we use the [RecursiveCharacterTextSplitter](RecursiveCharacterTextSplitter), as the custom chunking did not lead to better results.
+For chunking we use the [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_loaders/text_splitters/character_text_splitter), as the custom chunking did not lead to better results.
 
-![Embedding Summary Chunking](data/plots/embedding_summary_chunking_mmr.png)
-
+![Embedding Summary Chunking](data/plots/llm_embedding_vs_baseline.png)
+We see that the results except the `bilingual-embedding-large` and `inf-retriever-v1-1.5b` are very similar to the baseline results.
+Both outliers are again not explainable by the paper of the models.
+Similar to the custom chunking we suspect that the small dataset is the reason for the outliers.
 
 > [!IMPORTANT]
 > The results differ from the results used in the presentation.
@@ -167,12 +177,11 @@ If successful, this could lead to a dataset that covers multiple repositories or
 ### Evaluation Metrics
 To get a full overview of the performance of the different retrievers, we need to implement additional metrics.
 While it is unclear which exact metrics are necessary, the following problems should be solved:
-- Questions that require multiple code chunks to be solved should be evaluated correctly. Possible solutions are:
-  - Retrieve code chunks until all relevant code chunks are found.
-- The MRR metric does not take into account the total number of relevant code chunks. It is likely that a smaller number of chunks would lead to better results.
-  -  
-- Only the retrieval and chunking performance is evaluated. It is unclear how the performance of the generator is affected by the different retrievers and chunking approaches.
-  - We could use [LLM-as-a-Judge](https://arxiv.org/abs/2306.05685) to evaluate the end-to-end performance of the RAG system.
+  - Questions that require multiple code chunks to be solved should be evaluated correctly. Possible solutions are:
+    - Retrieve code chunks until all relevant code chunks are found.
+  - The MRR metric does not take into account the total number of relevant code chunks. It is likely that a smaller number of chunks would lead to better results.
+  - Only the retrieval and chunking performance is evaluated. It is unclear how the performance of the generator is affected by the different retrievers and chunking approaches.
+    - We could use [LLM-as-a-Judge](https://arxiv.org/abs/2306.05685) to evaluate the end-to-end performance of the RAG system.
 
 
 ### Additional Pipelines
