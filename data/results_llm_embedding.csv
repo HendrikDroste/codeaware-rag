@@ -1,8 +1,8 @@
 Name,MRR,Line Coverage,file_match_ratio,Date,Comment
-Salesforce/SFR-Embedding-Code-400M_R,0.4351851851851852,0.2149113516722075,0.3287037037037037,16.07.2025 21:21,LLM generated text for embedding
-codesage/codesage-large-v2,0.3351851851851852,0.1138766147207337,0.3101851851851852,16.07.2025 21:24,LLM generated text for embedding
-codesage/codesage-large,0.4,0.181545363316208,0.3842592592592593,16.07.2025 21:27,LLM generated text for embedding
-nomic-ai/CodeRankEmbed,0.3842592592592593,0.1474037693287119,0.3009259259259259,16.07.2025 21:28,LLM generated text for embedding
-infly/inf-retriever-v1-1.5b,0.4277777777777778,0.2392796729108458,0.3379629629629629,16.07.2025 21:31,LLM generated text for embedding
-intfloat/multilingual-e5-large-instruct,0.3351851851851852,0.1856242508163617,0.3611111111111111,16.07.2025 21:32,LLM generated text for embedding
-Lajavaness/bilingual-embedding-large,0.5,0.21542804016633285,0.3657407407407407,16.07.2025 21:33,LLM generated text for embedding
+huggingface/Salesforce/SFR-Embedding-Code-400M_R,0.4351851851851852,0.2149113516722075,0.3287037037037037,16.07.2025 21:21,LLM generated text for embedding
+huggingface/codesage/codesage-large-v2,0.3351851851851852,0.1138766147207337,0.3101851851851852,16.07.2025 21:24,LLM generated text for embedding
+huggingface/codesage/codesage-large,0.4,0.181545363316208,0.3842592592592593,16.07.2025 21:27,LLM generated text for embedding
+huggingface/nomic-ai/CodeRankEmbed,0.3842592592592593,0.1474037693287119,0.3009259259259259,16.07.2025 21:28,LLM generated text for embedding
+huggingface/infly/inf-retriever-v1-1.5b,0.4277777777777778,0.2392796729108458,0.3379629629629629,16.07.2025 21:31,LLM generated text for embedding
+huggingface/intfloat/multilingual-e5-large-instruct,0.3351851851851852,0.1856242508163617,0.3611111111111111,16.07.2025 21:32,LLM generated text for embedding
+huggingface/Lajavaness/bilingual-embedding-large,0.5,0.21542804016633285,0.3657407407407407,16.07.2025 21:33,LLM generated text for embedding

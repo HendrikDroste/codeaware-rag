@@ -8,9 +8,9 @@ The system supports multiple embedding models from the sentence-transformers lib
 To evaluate our framework, we created a custom dataset based on the Flask repository containing 18 natural language queries inspired by frequently asked questions on Stack Overflow.
 
 The architecture currently includes three main retrieval pipelines:
-(1) embedding-based retrieval with python langchain text splitters,
+(1) embedding-based retrieval with python langchain text splitters
 (2) syntax-aware chunking using Tree-Sitter for more structurally meaningful code boundaries
-(3) abstraction-based retrieval using LLM-generated summaries.
+(3) abstraction-based retrieval using LLM-generated summaries
 Each approach inherits from the base pipeline, allowing for comparable evaluation using Mean Reciprocal Rank (MRR).
 Additionally, this structure allows for easy integration of new retrieval methods.
 
