@@ -224,22 +224,6 @@ class EmbeddingSummaryPipeline(EmbeddingPipeline):
         langchain_model = self.embedding_provider.get_langchain_embedding_model()
         return langchain_model.embed_documents(summaries)
 
-    def add_documents(self, documents: List[Any], batch_size: int = 100) -> None:
-        """
-        Adds documents to the ChromaDB collection.
-
-        Args:
-            documents: List of LangChain documents
-            batch_size: Number of documents to process per batch
-        """
-        add_documents_to_collection(
-            collection=self.collection,
-            documents=documents,
-            batch_size=batch_size,
-            pipeline=self  # Pass self as the pipeline parameter
-        )
-        logger.info(f"{len(documents)} documents added to collection")
-
 if __name__ == '__main__':
     # Load configuration
     config = load_config("app_config")

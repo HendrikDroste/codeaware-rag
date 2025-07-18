@@ -71,28 +71,37 @@ For embedding-based pipelines, you can inherit from the `EmbeddingPipeline` clas
 All important configuration parameters are stored in the `config.yaml` file, including parameters for embedding models and pipeline settings.
 Currently, all models from the [sentence-transformers](https://www.sbert.net/) library are supported.
 
-The chat section contains parameters used when running the Streamlit app.
+The chat section contains parameters used when running the Streamlit app via `streamlit run src/app.py`.
 Additionally, the model is used for the EmbeddingSummaryPipeline.
 
 ## Project Decisions
 This section documents the key decisions made during project development.
 
 ### Datasets
-We developed a custom dataset based on the Flask repository because no existing dataset met our requirements. The closest alternative is the [CodeSearchNet](https://huggingface.co/datasets/sentence-transformers/codesearchnet) dataset, which focuses on finding functions for given comments. However, this dataset lacks coverage of important concepts like inheritance and function usage patterns.
+We developed a custom dataset based on the Flask repository because no existing dataset met our requirements.
+The closest alternative is the [CodeSearchNet](https://huggingface.co/datasets/sentence-transformers/codesearchnet) dataset, which focuses on finding functions for given comments.
+However, this dataset lacks coverage of important concepts like inheritance and function usage patterns.
 
 ### Chunking
-For chunking Python files, we use the [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_loaders/text_splitters/character_text_splitter) from LangChain as our baseline. LangChain is a well-established library for building RAG systems and provides a simple interface for splitting text into smaller chunks.
+For chunking Python files, we use the [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_loaders/text_splitters/character_text_splitter) from LangChain as our baseline.
+LangChain is a popular library for building RAG systems and provides a simple interface for splitting text into smaller chunks.
 
-We also implemented a custom splitter (see [Custom Splitter](#results) for details). Since we don't plan to further develop chunking approaches, we haven't included the splitter in our pipelines. To change the chunking approach, modify the splitter in the `file_processor.py` file.
+We also implemented a custom splitter (see [Custom Splitter](#results) for details).
+Since we do not plan to further develop chunking approaches, we have not included the splitter in our pipelines.
+To change the chunking approach, modify the splitter in the `file_processor.py` file.
 
 ### Embedding Models
-To compare the performance of different retrievers and splitters, we use multiple embedding models. Our focus was on maintaining implementation simplicity while providing a variety of models for comparison. We therefore chose the [sentence-transformers](https://www.sbert.net/) library. Other providers (e.g., OpenAIProvider) are at different stages of development and not yet ready for production use.
+To compare the performance of different retrievers and splitters, we use multiple embedding models.
+Our focus was on maintaining implementation simplicity while providing a variety of models for comparison.
+We therefore chose the [sentence-transformers](https://www.sbert.net/) library.
+Other providers (e.g., OpenAIProvider) are at different stages of development and not yet ready for production use.
 
 > [!TIP]
 > You can find a list of current top-performing embedding models on the [HuggingFace MTEB Leaderboard](https://huggingface.co/spaces/mteb/leaderboard).
 
 ### Pipelines
-To enable rapid prototyping of different retrievers, we adopted a pipeline-based approach. This architecture allows us to focus on data preparation and retrieval while reusing existing implementations for data loading, chunking, model handling, and evaluation.
+To enable rapid prototyping of different retrievers, we adopted a pipeline-based approach.
+This architecture allows us to focus on data preparation and retrieval while reusing existing implementations for data loading, chunking, model handling, and evaluation.
 
 Popular approaches like the [EmbeddingPipeline](src/pipelines/embedding_pipeline.py) can be reused to create custom pipelines, as demonstrated in the [EmbeddingSummaryPipeline](src/pipelines/embedding_summary_pipeline.py).
 
@@ -167,8 +176,8 @@ While the exact metrics needed are unclear, the following problems should be add
 
 - Questions requiring multiple code chunks for complete solutions should be evaluated correctly. Possible solutions include:
   - Retrieving code chunks until all relevant chunks are found
-- The MRR metric doesn't account for the total number of created code chunks. A smaller number of total chunks would likely lead to better results. Therefore the number total chunks has be part of at least one evaluation metric
-- Only retrieval and chunking performance is evaluated. It's unclear how generator performance is affected by different retrievers and chunking approaches
+- The MRR metric does not account for the total number of created code chunks. A smaller number of total chunks would likely lead to better results. Therefore, the number total chunks has to be part of at least one evaluation metric
+- Only retrieval and chunking performance is evaluated. It is unclear how generator performance is affected by different retrievers and chunking approaches
   - We could use [LLM-as-a-Judge](https://arxiv.org/abs/2306.05685) to evaluate end-to-end RAG system performance
 
 ### Additional Pipelines

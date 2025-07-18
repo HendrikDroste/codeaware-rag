@@ -28,4 +28,6 @@ huggingface/codesage/codesage-large,0.4,0.181545363316208,0.3842592592592593,16.
 huggingface/nomic-ai/CodeRankEmbed,0.3842592592592593,0.1474037693287119,0.3009259259259259,16.07.2025 21:28,LLM generated text for embedding
 huggingface/infly/inf-retriever-v1-1.5b,0.4277777777777778,0.2392796729108458,0.3379629629629629,16.07.2025 21:31,LLM generated text for embedding
 huggingface/intfloat/multilingual-e5-large-instruct,0.3351851851851852,0.1856242508163617,0.3611111111111111,16.07.2025 21:32,LLM generated text for embedding
-huggingface/Lajavaness/bilingual-embedding-large,0.5,0.21542804016633285,0.3657407407407407,16.07.2025 21:33,LLM generated text for embedding
+huggingface/Lajavaness/bilingual-embedding-large,0.5,0.2154280401663328,0.3657407407407407,16.07.2025 21:33,LLM generated text for embedding
+Lajavaness/bilingual-embedding-large,0.3518518518518518,0.2133865963228336,0.3888888888888889,18.07.2025 21:28,
+Lajavaness/bilingual-embedding-large,0.5,0.2154280401663328,0.3657407407407407,18.07.2025 21:29,

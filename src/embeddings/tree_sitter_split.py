@@ -11,6 +11,7 @@ from src.embeddings.file_processor import (
     get_src_base_path
 )
 from src.pipelines.embedding_pipeline import EmbeddingPipeline
+from src.embeddings.utils import add_documents_to_collection
 from src.utils import load_config
 
 # Setup logging
@@ -171,7 +172,6 @@ def embed_python_functions(
         source_dir: str,
         db_path: str,
         collection_name: str = "python_functions",
-        include_class_definitions: bool = True,
         reset_collection: bool = False,
 ) -> None:
     """
@@ -204,20 +204,12 @@ def embed_python_functions(
     )
 
     # Add documents to collection using the pipeline
-    pipeline.add_documents(code_chunks, batch_size=1)
+    add_documents_to_collection(
+        collection=pipeline.collection,
+        documents=code_chunks,
+        batch_size=100,
+        pipeline=pipeline  # Pass self as the pipeline parameter
+    )
 
     logger.info(
         f"Successfully embedded {len(code_chunks)} function/method chunks from {len(python_files)} Python files in {collection_name}")
-
-
-if __name__ == "__main__":
-    load_dotenv()
-    config = load_config("app_config")
-
-    embed_python_functions(
-        source_dir="../../../flask/src",
-        db_path="../../chroma_db",
-        collection_name="python_functions",
-        include_class_definitions=True,
-        reset_collection=True
-    )

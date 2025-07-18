@@ -78,8 +78,11 @@ def load_and_split_python_files(file_paths: List[str],
     text_splitter = RecursiveCharacterTextSplitter.from_language(
         language=Language.PYTHON,
         chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap
-    )
+        chunk_overlap=chunk_overlap)
+
+    # Note: If you want to use Tree-sitter for splitting, uncomment the following lines
+    #from src.embeddings.tree_sitter_split import load_and_split_python_functions
+    #return load_and_split_python_functions(file_paths)
 
     all_splits = []
 
