@@ -1,0 +1,19 @@
+# Abstract
+
+Conventional Retrieval-Augmented Generation (RAG) approaches for chunking are suboptimal in terms of granularity and retrieval method.
+This paper presents a modular evaluation framework designed to explore different retrieval and chunking strategies for code-aware tasks.
+
+We developed a flexible RAG pipeline architecture built around an abstract BasePipeline class that enables rapid prototyping and comparison of various retrieval approaches.
+The system supports multiple embedding models from the sentence-transformers library and provides configurable preparation and retrieval strategies through a standardized interface.
+To evaluate our framework, we created a custom dataset based on the Flask repository containing 18 natural language queries inspired by frequently asked questions on Stack Overflow.
+
+The architecture currently includes three main retrieval pipelines:
+(1) embedding-based retrieval with python langchain text splitters,
+(2) syntax-aware chunking using Tree-Sitter for more structurally meaningful code boundaries
+(3) abstraction-based retrieval using LLM-generated summaries.
+Each approach inherits from the base pipeline, allowing for comparable evaluation using Mean Reciprocal Rank (MRR).
+Additionally, this structure allows for easy integration of new retrieval methods.
+
+Neither syntax-aware chunking nor LLM summarization provided improvements over baseline text splitting, suggesting that existing methods already capture relevant code structure effectively.
+To improve the interpretability of results, we suggested a more detailed evaluation framework that included more metrics and a broader set of questions.
+Furthermore, we encourage the use of our modular framework to explore alternative retrieval strategies, such as unfinished graph-based approach or search-based methods, which could potentially enhance code retrieval performance.
