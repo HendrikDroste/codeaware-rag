@@ -1,0 +1,137 @@
+# Pinned Flask retrieval benchmark, version 2
+
+This is a corrected copy of the 18 original seminar questions. Question wording
+and row order are preserved from [`data/validation.csv`](../../validation.csv).
+The original dataset, saved result CSVs and plots have not been rewritten.
+
+The target is Flask commit
+[`49943b5a94413a530761350f04e896f76e8d620e`](https://github.com/pallets/flask/tree/49943b5a94413a530761350f04e896f76e8d620e),
+the `main` revision obtained by pulling the existing checkout for this update.
+This is a pinned development revision, not a claim about the latest release.
+Do not pull again during a benchmark run. Use a separate checkout of this commit
+if your normal Flask checkout has moved on.
+
+## Files and checks
+
+- `validation.csv`: questions with matching lists of immutable source URLs and
+  inclusive, one-based start/end lines. All paths include `src/` and are relative
+  to the Flask repository root, matching the MCP indexer's metadata.
+- `manifest.json`: dataset ID, revision, metric version, CSV checksum, historical
+  CSV checksum and hashes of all 83 Python files in the indexed corpus. This
+  includes tests and examples, using the indexer's normal exclusions.
+- `src/retrievers/validate_retriever.py`: `load_benchmark` validates the checksums,
+  corpus, URL revisions, list lengths and line bounds before evaluation. No
+  GitHub downloads are needed. The evaluator checks corpus hashes again before
+  and after retrieval.
+
+The content hashes identify the Python corpus even when it is supplied as a
+source archive without Git metadata. Non-Python files are outside these checks.
+
+## Label review
+
+Ranges were inspected against this checkout. They are selected evidence for
+retrieval evaluation, not exhaustive answer rubrics or proof that the agent
+understands the code. Class-introduction ranges deliberately avoid requiring
+retrieval of an entire class. Several questions require multiple snippets.
+
+| Question | Review and correction |
+|---|---|
+| 1 | Relocated `send_from_directory` to its current function range. |
+| 2 | Relocated the CLI `--host` option. |
+| 3 | Checked `jsonify` and `DefaultJSONProvider`; retained their relevant ranges. |
+| 4 | Relocated the helper and application redirect implementations. |
+| 5 | Retained the concrete Blueprint constructor and added the sans-I/O class description explaining grouped routes. |
+| 6 | Checked Response defaults and relocated `Flask.make_response`. Setting inherited response properties may require Werkzeug context outside this corpus. |
+| 7 | Replaced route-registration code with `routes_command` using `url_map.iter_rules`; retained URL-map context. |
+| 8 | Removed unrelated `stream_with_context` and `url_for` documentation plus a duplicate. Labels now cover `route` and the three relevant `add_url_rule` implementations. |
+| 9 | Relocated `Flask.run` and `get_debug_flag`. |
+| 10 | Checked the `Request.max_content_length` getter and configuration documentation. |
+| 11 | Checked the concrete Blueprint, sans-I/O Blueprint and Scaffold inheritance declarations. |
+| 12 | Checked AppGroup and FlaskGroup class descriptions. External Click behavior is outside the corpus. |
+| 13 | Removed the repeated App range and repaired the missing end-line entry; retained Scaffold and its direct subclasses. |
+| 14 | Interpreted the ambiguous wording as attributes defined or overridden by Flask itself: `default_config`, `request_class`, `response_class`, `session_interface` and instance `cli`. Replaced a partial constructor range with this evidence. |
+| 15 | Relocated the helper and application response-conversion functions. |
+| 16 | Relocated the route decorator and registration methods; removed unrelated `View` documentation. |
+| 17 | Labelled the default values, `App.make_config` and its constructor call instead of only the config-class description. |
+| 18 | Replaced unrelated View-instance lifecycle text. In this revision request creation is in `AppContext.from_environ`; labels also cover `Flask.request_context` and its WSGI call site. |
+
+These are manually reviewed seed labels, not an independently adjudicated
+benchmark. A second review and broader task coverage would strengthen them.
+
+## Validate the local checkout
+
+From the Codeaware project root, with its virtual environment active:
+
+```python
+from pathlib import Path
+from src.retrievers.validate_retriever import load_benchmark
+
+repository = Path("/absolute/path/to/flask")
+data = load_benchmark("data/benchmarks/flask", repository)
+print(data.attrs["benchmark"])
+print(f"Validated {len(data)} questions")
+```
+
+Added, deleted or edited Python files cause a mismatch. Adjusting labels also
+requires an intentional new manifest/dataset version; do not silently reuse the
+existing identity for different inputs.
+
+## Evaluate and save separately
+
+Build the repository index from this exact corpus first, using the main README's
+indexing command. Then open that existing collection with the original pipeline
+and evaluate it. For the default embedding configuration:
+
+```python
+from pathlib import Path
+from src.index_state import COLLECTION, DEFAULT_CONFIG, read_manifest
+from src.pipelines.embedding_pipeline import EmbeddingPipeline
+from src.retrievers.validate_retriever import (
+    load_benchmark,
+    save_model_results,
+    save_results_to_csv,
+    validate_retriever,
+)
+
+repository = Path("/absolute/path/to/flask")
+index = Path("/absolute/path/to/codeaware-index")
+data = load_benchmark("data/benchmarks/flask", repository)
+manifest = read_manifest(repository, index, DEFAULT_CONFIG)
+pipeline = EmbeddingPipeline(
+    config_path=str(DEFAULT_CONFIG),
+    collection_name=COLLECTION,
+    chroma_persist_directory=str(index / "chroma"),
+    explicit_embeddings=True,
+    existing_only=True,
+)
+if pipeline.collection.metadata.get("build_id") != manifest["build_id"]:
+    raise ValueError("Collection and manifest belong to different builds")
+results = validate_retriever(pipeline, data)
+output = Path("data/benchmark_results/flask-49943b5a-v2")
+output.mkdir(parents=True, exist_ok=True)
+save_results_to_csv(results, str(output / "retrieval.csv"))
+save_model_results(results, "your-model-name", str(output / "models.csv"))
+```
+
+If indexing used a custom embedding configuration, use that same file for both
+`read_manifest` and `EmbeddingPipeline` instead of `DEFAULT_CONFIG`.
+
+The local repository root is inferred from the loaded dataset. Canonical
+repository-relative paths, absolute paths within that checkout, and the old
+`flask/...` paths relative to `src/` are normalized to `src/flask/...`. Paths
+outside the checkout are rejected. If loading a CSV directly instead, pass
+`repository_root=repository` explicitly for this normalization. Legacy calls
+without a repository root retain the old src-relative convention, but malformed
+annotations now fail rather than silently dropping labels.
+
+Metric version `unique-line-coverage-v2` counts each expected file/line pair once.
+Retrieved ranges are unioned before intersection with the expected union, so
+duplicates and overlaps cannot inflate coverage beyond 1.0. MRR still measures
+only the first overlapping hit; file matching still measures whether each
+expected range was hit at least once. Neither checks the correctness of an
+agent's final answer. Exported result rows include the dataset ID, repository
+revision and metric version.
+
+Do not append corrected runs to the historical result CSVs. Label and metric
+changes mean new scores are not directly comparable to those saved experiments.
+No embedding models or host agents were rerun as part of this dataset repair.

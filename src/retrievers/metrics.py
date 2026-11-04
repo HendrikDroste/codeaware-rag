@@ -1,3 +1,6 @@
+METRIC_VERSION = "unique-line-coverage-v2"
+
+
 def mean_reciprocal_rank(expected_metadata, retrieved_metadata):
     """
     Evaluate the position of the first relevant result
@@ -59,64 +62,34 @@ def line_coverage_ratio(expected_metadata, retrieved_metadata):
             'source' or 'filename' keys
 
     Returns:
-        Ratio of expected lines found in retrieved snippets, or 0 if no
-        expected lines
+        Fraction of unique expected file/line pairs retrieved, or 0 if
+        there are no expected lines. Overlapping ranges count once.
     """
     if not expected_metadata or not retrieved_metadata:
         return 0.0
 
-    # Create a mapping of filenames to line ranges
-    expected_files = {}
-    for meta in expected_metadata:
-        filename = meta.get('filename')
-        if not filename:
-            continue
+    def lines_by_file(metadata):
+        files = {}
+        for item in metadata:
+            path = item.get("source") or item.get("filename")
+            start, end = item.get("line_start"), item.get("line_end")
+            if path and start is not None and end is not None:
+                if start < 1 or end < start:
+                    raise ValueError(
+                        "Line ranges must be positive and inclusive"
+                    )
+                files.setdefault(path, set()).update(range(start, end + 1))
+        return files
 
-        line_start = meta.get('line_start')
-        line_end = meta.get('line_end')
-
-        if filename not in expected_files:
-            expected_files[filename] = []
-
-        if line_start is not None and line_end is not None:
-            expected_files[filename].append((line_start, line_end))
-
-    retrieved_files = {}
-    for meta in retrieved_metadata:
-        filename = meta.get('source') or meta.get('filename')
-        if not filename:
-            continue
-
-        line_start = meta.get('line_start')
-        line_end = meta.get('line_end')
-
-        if filename not in retrieved_files:
-            retrieved_files[filename] = []
-
-        if line_start is not None and line_end is not None:
-            retrieved_files[filename].append((line_start, line_end))
-
-    # Calculate line coverage
-    total_expected_lines = 0
-    covered_lines = 0
-
-    for filename, expected_ranges in expected_files.items():
-        for start, end in expected_ranges:
-            expected_line_count = end - start + 1
-            total_expected_lines += expected_line_count
-
-            if filename in retrieved_files:
-                for r_start, r_end in retrieved_files[filename]:
-                    # Calculate overlap between expected and retrieved
-                    # line ranges
-                    overlap_start = max(start, r_start)
-                    overlap_end = min(end, r_end)
-                    overlap = max(0, overlap_end - overlap_start + 1)
-                    covered_lines += overlap
-
+    expected_files = lines_by_file(expected_metadata)
+    retrieved_files = lines_by_file(retrieved_metadata)
+    total_expected_lines = sum(map(len, expected_files.values()))
     if total_expected_lines == 0:
         return 0.0
-
+    covered_lines = sum(
+        len(lines & retrieved_files.get(path, set()))
+        for path, lines in expected_files.items()
+    )
     return covered_lines / total_expected_lines
 
 

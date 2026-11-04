@@ -234,6 +234,24 @@ The provider implementations, alternate Tree-sitter splitter, summary pipeline
 and retrieval evaluation remain available for the original experiments. See
 [Historical seminar experiments](docs/experiments.md) for their scope and paths.
 
+## Retrieval benchmark
+
+The corrected [Flask benchmark](data/benchmarks/flask/README.md) retains the
+original 18 questions and pins all labels to commit
+`49943b5a94413a530761350f04e896f76e8d620e`. Its manifest checks the CSV and all
+83 indexed Python files. Use `load_benchmark` to validate your local checkout
+before evaluation; annotations are checked locally without GitHub downloads.
+
+Expected and retrieved paths are normalized to repository-relative paths such
+as `src/flask/app.py`. Coverage counts unique file/line pairs, so overlapping
+snippets cannot inflate the score. New exports record the dataset, revision and
+metric version. Save corrected runs separately from the historical result CSVs;
+no model or agent benchmark has been rerun as part of this repair.
+
+See the [benchmark instructions](data/benchmarks/flask/README.md) for loading,
+evaluation and the annotation review. These are retrieval metrics; an agent-level
+comparison and business pilot remain separate work.
+
 ## Verification
 
 ```bash
@@ -278,8 +296,9 @@ slices and breaks before operators.
   relationships and LSP integration are outside this version.
 - Automatic refresh, an index coordinator and incremental indexing are proposed
   next steps, not implemented features. Rebuild and reconnect manually today.
-- The existing line-coverage metric double-counts overlapping retrieved ranges.
-  Fix this before producing new coverage claims; historical results are retained.
+- Historical line-coverage scores could double-count overlapping ranges. The
+  current metric fixes this; historical results have not been recomputed, and
+  new labels/metrics are not directly comparable to those saved runs.
 - A working agent walkthrough demonstrates integration, not improved agent
   performance. Compare the same host with and without Codeaware on fixed tasks
   before making claims about correctness, latency, cost or tool-call savings.

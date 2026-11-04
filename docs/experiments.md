@@ -10,9 +10,12 @@ and chunking; they do not establish an improvement in coding-agent performance.
 The interpretations below are the original exploratory findings from a small
 validation set, not current embedding-model rankings.
 
-The existing line-coverage metric double-counts overlapping retrieved ranges.
-Do not use it for new coverage claims until this is fixed. Saved historical
-scores have not been recomputed. The summary-embedding plot also differs from
+The original line-coverage metric double-counted overlapping retrieved ranges.
+The current metric fixes this, and a [corrected, pinned benchmark](../data/benchmarks/flask/README.md)
+is available for new runs. Saved historical scores have not been recomputed.
+The legacy CSV contains mixed revisions and malformed labels; the experiment
+entry points still use that path by default, so follow the corrected benchmark's
+loading instructions for new evaluation. The summary-embedding plot differs from
 the original presentation because incorrect summary embeddings were fixed
 before these saved results were produced, as noted below.
 
@@ -83,7 +86,7 @@ We recommend using the MRR metric in combination with other metrics that need to
 ## Results
 Experimental results, including validation files, are stored in the `data` directory.
 The results currently provide only a rough overview of different retriever performance.
-For a comprehensive performance assessment, multiple new metrics need to be implemented (see the [Future Work](#future-work) section).
+For a comprehensive performance assessment, agent-level tasks and quality/cost measurements remain necessary.
 
 Note that our embedding model selection was based on small models (< 2 billion parameters) from the [HuggingFace MTEB Leaderboard](https://huggingface.co/spaces/mteb/leaderboard) as of May 2025.
 Since models and their capabilities evolve rapidly, these results may not represent the top models from this leaderboard.

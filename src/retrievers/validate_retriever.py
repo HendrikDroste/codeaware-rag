@@ -1,6 +1,9 @@
 import datetime
+import hashlib
+import json
 import os
 import tempfile
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import urlparse
 
@@ -9,6 +12,7 @@ import requests
 
 from src.pipelines.base_pipeline import BaseRAGPipeline
 from src.retrievers.metrics import (
+    METRIC_VERSION,
     file_match_ratio,
     line_coverage_ratio,
     mean_reciprocal_rank,
@@ -130,20 +134,120 @@ def extract_file_path_from_url(url: str) -> str:
     else:
         relative_path = os.path.basename(parsed_url.path)
 
-    if relative_path.startswith("src/"):
-        relative_path = relative_path[4:]
     return relative_path
 
 
+def normalize_source_path(source: str, repository_root) -> str:
+    """Normalize paths, including the legacy src-relative convention."""
+    root = Path(repository_root).resolve(strict=True)
+    path = Path(source.replace("\\", "/"))
+    if ".." in path.parts:
+        raise ValueError("Source paths must stay inside the repository")
+    candidate = (root / path).resolve()
+    if not path.is_absolute() and not candidate.is_file():
+        candidate = (root / "src" / path).resolve()
+    if not candidate.is_relative_to(root) or not candidate.is_file():
+        raise ValueError(
+            f"Source file is missing or outside the repository: {source}"
+        )
+    return candidate.relative_to(root).as_posix()
+
+
+def read_expected_metadata(row, repository_root=None):
+    """Read aligned, inclusive labels; reject malformed annotations."""
+    urls = extract_github_urls(row["URL"])
+    starts, ends = extract_lines(row["start_line"]), extract_lines(
+        row["end_line"]
+    )
+    if not urls or len(urls) != len(starts) or len(urls) != len(ends):
+        raise ValueError(f"Mismatched label counts for {row['Question']}")
+    labels = []
+    for url, start, end in zip(urls, starts, ends):
+        path = extract_file_path_from_url(url)
+        if start < 1 or end < start:
+            raise ValueError(f"Invalid line range in {url}")
+        if repository_root is not None:
+            path = normalize_source_path(path, repository_root)
+            count = len(
+                (Path(repository_root) / path)
+                .read_text(encoding="utf-8")
+                .splitlines()
+            )
+            if end > count:
+                raise ValueError(f"Label extends past the end of {path}")
+        elif path.startswith("src/"):
+            # Legacy experiments store paths relative to src.
+            path = path[4:]
+        label = {"filename": path, "line_start": start, "line_end": end}
+        if label not in labels:
+            labels.append(label)
+    return labels
+
+
+def load_benchmark(benchmark_dir, repository_root) -> pd.DataFrame:
+    """Load pinned labels when CSV and Python corpus hashes match."""
+    from src.index_state import file_hashes
+
+    directory, root = Path(benchmark_dir), Path(repository_root).resolve(
+        strict=True
+    )
+    manifest = json.loads((directory / "manifest.json").read_text())
+    if (
+        manifest["schema_version"] != 1
+        or manifest["path_format"] != "repository-relative"
+    ):
+        raise ValueError("Unsupported benchmark manifest format")
+    if manifest["metric_version"] != METRIC_VERSION:
+        raise ValueError(
+            "Benchmark metric version does not match this evaluator"
+        )
+    csv_path = directory / "validation.csv"
+    if (
+        hashlib.sha256(csv_path.read_bytes()).hexdigest()
+        != manifest["validation_sha256"]
+    ):
+        raise ValueError("Benchmark CSV differs from its pinned manifest")
+    if file_hashes(root) != manifest["file_hashes"]:
+        raise ValueError(
+            "Python corpus differs from pinned revision "
+            f"{manifest['revision']}"
+        )
+    data = pd.read_csv(csv_path, keep_default_na=False)
+    if len(data) != manifest["question_count"]:
+        raise ValueError("Benchmark question count differs from its manifest")
+    prefix = f"{manifest['repository_url']}/blob/{manifest['revision']}/"
+    for _, row in data.iterrows():
+        if any(
+            not url.startswith(prefix)
+            for url in extract_github_urls(row["URL"])
+        ):
+            raise ValueError(
+                "Every benchmark URL must use the pinned revision"
+            )
+        read_expected_metadata(row, root)
+    data.attrs["repository_root"] = str(root)
+    data.attrs["file_hashes"] = manifest["file_hashes"]
+    data.attrs["benchmark"] = {
+        key: manifest[key]
+        for key in ("dataset_id", "revision", "metric_version")
+    }
+    return data
+
+
 def validate_retriever(
-    pipeline: BaseRAGPipeline, validation_data: pd.DataFrame
-) -> dict[str, list[Any]] | None:
+    pipeline: BaseRAGPipeline,
+    validation_data: pd.DataFrame,
+    *,
+    repository_root=None,
+) -> dict[str, Any]:
     """
     Validate the retriever against the validation data.
 
     Args:
         pipeline: The embedding pipeline to validate
         validation_data: DataFrame containing validation data
+        repository_root: Local checkout for canonical paths and range
+            checks; inferred automatically when using load_benchmark
 
     Returns:
         Dictionary containing validation results
@@ -157,85 +261,66 @@ def validate_retriever(
         "line_coverage": [],
     }
 
-    # Create temporary directory for downloaded files
-    temp_dir = tempfile.mkdtemp()
-    downloaded_files = []
+    from src.index_state import file_hashes
 
-    try:
-        for _, row in validation_data.iterrows():
-            question = row['Question']
-            expected_urls = extract_github_urls(row['URL'])
-            end_lines = extract_lines(row['end_line'])
-            start_lines = extract_lines(row['start_line'])
+    repository_root = repository_root or validation_data.attrs.get(
+        "repository_root"
+    )
+    if repository_root is not None:
+        repository_root = Path(repository_root).resolve(strict=True)
+    pinned_hashes = validation_data.attrs.get("file_hashes")
 
-            # Download and process expected files
-            expected_metadata = []
-            for i, url in enumerate(expected_urls):
-                try:
-                    file_path, content = download_github_file(url)
-                    downloaded_files.append(file_path)
-
-                    relative_path = extract_file_path_from_url(url)
-                    start_line = start_lines[i]
-                    if start_line:
-                        end_line = (
-                            end_lines[i] if i < len(end_lines) else start_line
-                        )
-                        expected_metadata.append(
-                            {
-                                "filename": relative_path,
-                                "line_start": start_line,
-                                "line_end": end_line or start_line,
-                            }
-                        )
-                except Exception as e:
-                    print(f"Error processing {url}: {str(e)}")
-
-            # Get retrieved documents using the pipeline
-            pipeline_results = pipeline.invoke(question)
-
-            # Convert pipeline results to a format compatible with our
-            # metrics
-            retrieved_metadata = []
-            for i in range(len(pipeline_results["ids"][0])):
-                metadata = pipeline_results["metadatas"][0][i]
-                # Ensure metadata has the required keys
-                metadata_entry = {
-                    "source": metadata.get("source", ""),
-                    "filename": metadata.get("filename", ""),
-                    "line_start": metadata.get("line_start", 0),
-                    "line_end": metadata.get("line_end", 0),
-                    "content": pipeline_results["documents"][0][i],
-                }
-                retrieved_metadata.append(metadata_entry)
-
-            # calculate scores using imported metrics
-            mrr = mean_reciprocal_rank(expected_metadata, retrieved_metadata)
-            line_cov = line_coverage_ratio(
-                expected_metadata, retrieved_metadata
+    def check_corpus():
+        if (
+            pinned_hashes is not None
+            and file_hashes(repository_root) != pinned_hashes
+        ):
+            raise ValueError(
+                "Python corpus changed after loading the benchmark"
             )
-            ems = file_match_ratio(expected_metadata, retrieved_metadata)
 
-            # store results
-            results["question"].append(question)
-            results["expected_metadata"].append(expected_metadata)
-            results["retrieved_metadata"].append(retrieved_metadata)
-            results["file_match_ratio"].append(ems)
-            results["mrr"].append(mrr)
-            results["line_coverage"].append(line_cov)
-
-    finally:
-        # Clean up temporary files
-        for file_path in downloaded_files:
-            try:
-                os.remove(file_path)
-            except BaseException:
-                pass
-        try:
-            os.rmdir(temp_dir)
-        except BaseException:
-            pass
-
+    check_corpus()
+    results["benchmark"] = {"metric_version": METRIC_VERSION}
+    results["benchmark"].update(validation_data.attrs.get("benchmark", {}))
+    # Validate all labels before making expensive model calls.
+    labels = [
+        read_expected_metadata(row, repository_root)
+        for _, row in validation_data.iterrows()
+    ]
+    for (_, row), expected in zip(validation_data.iterrows(), labels):
+        question = row["Question"]
+        pipeline_results = pipeline.invoke(question)
+        retrieved = []
+        for document, metadata in zip(
+            pipeline_results["documents"][0], pipeline_results["metadatas"][0]
+        ):
+            source_path = metadata.get("source") or metadata.get(
+                "filename", ""
+            )
+            if repository_root is not None:
+                source_path = normalize_source_path(
+                    source_path, repository_root
+                )
+            retrieved.append(
+                {
+                    "source": source_path,
+                    "filename": source_path,
+                    "line_start": metadata.get("line_start"),
+                    "line_end": metadata.get("line_end"),
+                    "content": document,
+                }
+            )
+        results["question"].append(question)
+        results["expected_metadata"].append(expected)
+        results["retrieved_metadata"].append(retrieved)
+        results["mrr"].append(mean_reciprocal_rank(expected, retrieved))
+        results["line_coverage"].append(
+            line_coverage_ratio(expected, retrieved)
+        )
+        results["file_match_ratio"].append(
+            file_match_ratio(expected, retrieved)
+        )
+    check_corpus()
     return results
 
 
@@ -341,10 +426,6 @@ def save_results_to_csv(
             is_match = False
             for exp_meta in expected_metadata:
                 exp_file = exp_meta.get("filename")
-                # Remove /src/ prefix if present
-                if exp_file and exp_file.startswith("src/"):
-                    exp_file = exp_file[4:]
-
                 if exp_file == filename:
                     exp_start = exp_meta.get("line_start")
                     exp_end = exp_meta.get("line_end")
@@ -372,6 +453,7 @@ def save_results_to_csv(
                     "line_coverage": line_cov,
                     "expected_files": expected_files_str,
                     "snippet": snippet,
+                    **results.get("benchmark", {}),
                 }
             )
 
@@ -420,10 +502,16 @@ def save_model_results(
             "MRR": [avg_mrr],
             "Line Coverage": [avg_line_coverage],
             "Date": [current_datetime],
+            **{
+                key: [value]
+                for key, value in results.get("benchmark", {}).items()
+            },
         }
     )
 
-    df = pd.read_csv(output_path)
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.read_csv(path) if path.exists() else pd.DataFrame()
     df = pd.concat([df, new_row], ignore_index=True)
 
     # Save updated DataFrame
