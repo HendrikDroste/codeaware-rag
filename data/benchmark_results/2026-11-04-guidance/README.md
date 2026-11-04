@@ -44,7 +44,7 @@ The guided calls were:
 
 - Q11: `find_symbols` and three `get_inheritance` calls.
 - Q16: two `find_symbols` and two `get_callees` calls.
-- Q18: two `find_symbols` calls, followed by source inspection.
+- Q18: `find_symbols` and `get_callees`, followed by source inspection.
 
 The agent did not call `search_code`, `get_callers` or `index_status` in this
 pilot. It did not call every tool just to satisfy a fixed sequence. The Q16
@@ -53,7 +53,9 @@ its nested decorator; the agent used source reads to explain registration.
 Both guided Q11 answers identified the test-only `MyBlueprint` subclass, so
 its appearance in the Codeaware answer is not evidence of an exclusive benefit.
 The guided Q18 answer identified the current `AppContext.from_environ` path.
-No exhaustive or independent answer-quality grading was performed.
+No exhaustive or independent answer-quality grading was performed. A subsequent
+[trace and answer review](review.md) checks the three guided answer pairs
+against the source and explains the input-token increase.
 
 ## Artifacts and versions
 
