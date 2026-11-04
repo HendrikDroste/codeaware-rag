@@ -134,6 +134,9 @@ revision and metric version.
 
 Do not append corrected runs to the historical result CSVs. Label and metric
 changes mean new scores are not directly comparable to those saved experiments.
-No embedding models or host agents were rerun as part of this dataset repair.
-For a separate end-to-end comparison with host token usage, see the
+The [local run from 4 November 2026](
+../../benchmark_results/2026-11-04-local/README.md) records a subsequent
+evaluation with the original embedding model and 36 host-agent runs. It also
+records that the agent chose native search throughout the paired comparison.
+For an end-to-end comparison with host token usage, see the
 [agent baseline runner](../../../docs/agent-benchmark.md).

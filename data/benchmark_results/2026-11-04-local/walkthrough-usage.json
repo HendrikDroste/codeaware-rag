@@ -1,0 +1,18 @@
+{
+  "variant": "codeaware",
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 57.338,
+  "input_tokens": 170864,
+  "cached_input_tokens": 123136,
+  "output_tokens": 1968,
+  "reasoning_output_tokens": 31,
+  "total_tokens": 172832,
+  "uncached_input_tokens": 47728,
+  "usage_status": "reported",
+  "command_calls": 2,
+  "mcp_calls": 12,
+  "codeaware_calls": 12,
+  "question_id": 16,
+  "diagnostic_only": true
+}

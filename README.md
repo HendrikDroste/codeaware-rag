@@ -246,16 +246,19 @@ before evaluation; annotations are checked locally without GitHub downloads.
 Expected and retrieved paths are normalized to repository-relative paths such
 as `src/flask/app.py`. Coverage counts unique file/line pairs, so overlapping
 snippets cannot inflate the score. New exports record the dataset, revision and
-metric version. Save corrected runs separately from the historical result CSVs;
-no model or agent benchmark has been rerun as part of this repair.
+metric version. Save corrected runs separately from the historical result CSVs.
 
 See the [benchmark instructions](data/benchmarks/flask/README.md) for loading,
 evaluation and the annotation review. These are retrieval metrics. A separate
 [agent benchmark runner](docs/agent-benchmark.md) compares the same Codex host
 with and without Codeaware, recording input/cached/output/reasoning token usage,
 elapsed time and raw traces. The baseline uses native repository tools; the
-second condition adds MCP. Live paired runs and business validation are still
-to be performed; no token savings are claimed.
+second condition adds MCP. The [local run from 4 November 2026](
+data/benchmark_results/2026-11-04-local/README.md) includes all 18 retrieval
+questions and 36 successful agent runs. Codex used native tools in every paired
+run, so the comparison establishes a baseline without demonstrating a Codeaware
+benefit. A separate tool-directed walkthrough successfully exercised all six
+MCP tool types. No token savings or business impact are established.
 
 ## Verification
 

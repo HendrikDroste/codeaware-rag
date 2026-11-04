@@ -1,0 +1,2 @@
+Name,file_match_ratio,MRR,Line Coverage,Date,metric_version,dataset_id,revision
+Lajavaness/bilingual-embedding-large,0.41203703703703703,0.4722222222222222,0.2514043101871058,04.11.2026 23:00,unique-line-coverage-v2,flask-49943b5a-v2,49943b5a94413a530761350f04e896f76e8d620e

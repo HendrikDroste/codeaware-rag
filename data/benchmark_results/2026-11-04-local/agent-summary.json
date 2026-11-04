@@ -1,0 +1,148 @@
+{
+  "settings": {
+    "dataset_id": "flask-49943b5a-v2",
+    "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+    "metric_version": "unique-line-coverage-v2",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "medium",
+    "codex_version": "codex-cli 0.166.0-alpha.6",
+    "index_build_id": "19dddedc-b63d-4410-bdf0-79213658ea46",
+    "usage_metric_version": "codex-turn-usage-v1",
+    "timeout_seconds": 300,
+    "questions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "prompt_prefix": "Answer this question about the local repository. Cite source paths and line numbers, and state any uncertainty. You may use the available repository tools. Do not edit files, use the web, inspect other repositories, or delegate to other agents.\n\n"
+  },
+  "conditions": {
+    "baseline": {
+      "runs": 18,
+      "used_codeaware_runs": 0,
+      "input_tokens": {
+        "sum": 871979.0,
+        "mean": 48443.27777777778,
+        "median": 40878.5
+      },
+      "cached_input_tokens": {
+        "sum": 637568.0,
+        "mean": 35420.444444444445,
+        "median": 33600.0
+      },
+      "uncached_input_tokens": {
+        "sum": 234411.0,
+        "mean": 13022.833333333334,
+        "median": 11057.5
+      },
+      "output_tokens": {
+        "sum": 11897.0,
+        "mean": 660.9444444444445,
+        "median": 550.0
+      },
+      "reasoning_output_tokens": {
+        "sum": 127.0,
+        "mean": 7.055555555555555,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "sum": 883876.0,
+        "mean": 49104.22222222222,
+        "median": 41404.0
+      },
+      "elapsed_seconds": {
+        "sum": 352.684,
+        "mean": 19.593555555555554,
+        "median": 17.0285
+      },
+      "command_calls": {
+        "sum": 49.0,
+        "mean": 2.7222222222222223,
+        "median": 2.0
+      },
+      "mcp_calls": {
+        "sum": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "codeaware_calls": {
+        "sum": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      }
+    },
+    "codeaware": {
+      "runs": 18,
+      "used_codeaware_runs": 0,
+      "input_tokens": {
+        "sum": 897346.0,
+        "mean": 49852.555555555555,
+        "median": 42373.0
+      },
+      "cached_input_tokens": {
+        "sum": 691968.0,
+        "mean": 38442.666666666664,
+        "median": 33472.0
+      },
+      "uncached_input_tokens": {
+        "sum": 205378.0,
+        "mean": 11409.888888888889,
+        "median": 7063.0
+      },
+      "output_tokens": {
+        "sum": 11594.0,
+        "mean": 644.1111111111111,
+        "median": 560.5
+      },
+      "reasoning_output_tokens": {
+        "sum": 77.0,
+        "mean": 4.277777777777778,
+        "median": 0.0
+      },
+      "total_tokens": {
+        "sum": 908940.0,
+        "mean": 50496.666666666664,
+        "median": 43007.5
+      },
+      "elapsed_seconds": {
+        "sum": 351.19700000000006,
+        "mean": 19.510944444444444,
+        "median": 17.7635
+      },
+      "command_calls": {
+        "sum": 48.0,
+        "mean": 2.6666666666666665,
+        "median": 2.0
+      },
+      "mcp_calls": {
+        "sum": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "codeaware_calls": {
+        "sum": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      }
+    }
+  },
+  "all_runs_completed": true,
+  "all_usage_reported": true,
+  "quality_grading": "No exhaustive answer-quality grading; source checks and selected answer spot checks only.",
+  "interpretation": "Codeaware was available but was not called in any of the 18 Codeaware-condition runs. Token differences cannot establish a Codeaware retrieval or graph benefit."
+}

@@ -129,5 +129,9 @@ embedding work and one-time indexing are outside these host token totals.
 Wall time includes host/MCP startup and model loading for each fresh session;
 it does not isolate steady-state retrieval latency.
 
-Automated tests use simulated CLI traces and subprocess responses. No live
-paired agent evaluation has been executed as part of implementing this runner.
+Automated tests use simulated CLI traces and subprocess responses. The
+[local run from 4 November 2026](
+../data/benchmark_results/2026-11-04-local/README.md) records a separate live
+18-question paired evaluation and tool-directed diagnostic. Codex chose native
+tools in every paired run; the separate diagnostic successfully used Codeaware.
+The report preserves this distinction when interpreting token usage.
