@@ -1,0 +1,11 @@
+.venv/
+.idea/
+.DS_Store
+.env
+.env.*
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.codeaware-index/
+*.pyc

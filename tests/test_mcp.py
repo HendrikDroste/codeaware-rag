@@ -1,0 +1,699 @@
+"""
+Small fixtures exercise the real existing pipeline; no model downloads
+in unit tests.
+"""
+
+import asyncio
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock, Mock
+
+import pytest
+from mcp import Client
+from mcp.client.stdio import StdioServerParameters
+
+from src import index_repository as indexing
+from src import index_state, neo4j_connection
+from src.embeddings import build_graph as graph
+from src.embeddings.file_processor import (
+    get_all_python_files,
+    load_and_split_python_files,
+)
+from src.mcp_server import create_server
+from src.pipelines.embedding_pipeline import EmbeddingPipeline
+
+
+class Result:
+    def consume(self):
+        return None
+
+
+class RecordingDriver:
+    """
+    Capture graph writes; real Cypher is checked separately against
+    Neo4j.
+    """
+
+    def __init__(self):
+        self.writes = []
+        self.closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def verify_connectivity(self):
+        pass
+
+    def session(self, **kwargs):
+        return self
+
+    def run(self, query, **parameters):
+        self.writes.append((query, parameters))
+        return Result()
+
+    def close(self):
+        self.closed = True
+
+
+class Embeddings:
+    def embed_query(self, text):
+        return [
+            float(text.lower().count(word) + 1)
+            for word in ("first", "second", "return", "def")
+        ]
+
+    def embed_documents(self, texts):
+        return [self.embed_query(text) for text in texts]
+
+    def get_langchain_embedding_model(self):
+        return self
+
+    def get_chromadb_embedding_function(self):
+        return None
+
+
+@pytest.fixture
+def repository(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    shutil.copytree(Path(__file__).parent / "fixtures/repository", root)
+    monkeypatch.setattr(
+        graph.jedi.settings, "cache_directory", str(tmp_path / "jedi-cache")
+    )
+    return root
+
+
+@pytest.fixture
+def config(tmp_path):
+    path = tmp_path / "config.yaml"
+    path.write_text(
+        "models:\n  embeddings:\n    name: fixture\n    vendor: fixture\n    "
+        "type: fixture\n    num_documents: 5\n"
+    )
+    return path
+
+
+@pytest.fixture
+def build(repository, config, tmp_path, monkeypatch):
+    driver = RecordingDriver()
+    from src.retrievers import query_graph
+
+    monkeypatch.setattr(
+        neo4j_connection, "graph_connection", lambda: (driver, "neo4j")
+    )
+    monkeypatch.setattr(graph, "graph_connection", lambda: (driver, "neo4j"))
+    monkeypatch.setattr(
+        query_graph, "graph_connection", lambda: (driver, "neo4j")
+    )
+    monkeypatch.setattr(
+        EmbeddingPipeline,
+        "_setup_embedding_provider",
+        lambda self: Embeddings(),
+    )
+    directory = tmp_path / "index"
+    manifest = indexing.index_repository(repository, directory, config)
+    return repository, directory, config, manifest, driver
+
+
+def call(server, tool, **kwargs):
+    async def run():
+        async with Client(server) as client:
+            result = await client.call_tool(tool, kwargs)
+            return result
+
+    return asyncio.run(run())
+
+
+def data(result):
+    assert not result.is_error, result.content
+    return result.structured_content
+
+
+def test_discovery_preserves_defaults_and_respects_repository_boundaries(
+    repository, tmp_path
+):
+    (repository / ".venv").mkdir()
+    (repository / ".venv/hidden.py").write_text("pass")
+    outside = tmp_path / "outside.py"
+    outside.write_text("pass")
+    (repository / "link.py").symlink_to(outside)
+    (repository / "linked").symlink_to(tmp_path, target_is_directory=True)
+    (repository / "custom_environment").mkdir()
+    (repository / "custom_environment/pyvenv.cfg").touch()
+    (repository / "custom_environment/hidden.py").write_text("pass")
+    files = index_state.source_files(repository)
+    assert {Path(p).name for p in files} == {
+        "__init__.py",
+        "cli.py",
+        "helpers.py",
+        "worker.py",
+    }
+    # The historical discovery function still uses glob without these
+    # exclusions.
+    (
+        repository / "linked"
+    ).unlink()  # Avoid a recursive fixture symlink in legacy glob.
+    assert str(repository / "link.py") in get_all_python_files(str(repository))
+
+
+def test_splitter_reuses_baseline_and_correct_locations(repository):
+    paths = index_state.source_files(repository)
+    legacy = load_and_split_python_files(
+        paths, chunk_size=900, chunk_overlap=0
+    )
+    assert not {"__init__.py", "cli.py"} & {
+        Path(d.metadata["source"]).name for d in legacy
+    }
+    chunks = load_and_split_python_files(
+        paths, 900, 0, repository_root=str(repository)
+    )
+    assert {d.metadata["source"] for d in chunks} == {
+        "__init__.py",
+        "cli.py",
+        "helpers.py",
+        "worker.py",
+    }
+    for chunk in chunks:
+        lines = (
+            (repository / chunk.metadata["source"]).read_text().splitlines()
+        )
+        assert chunk.page_content == "\n".join(
+            lines[
+                chunk.metadata["line_start"] - 1 : chunk.metadata["line_end"]
+            ]
+        )
+
+
+def test_graph_keeps_two_passes_and_resolves_identity(repository, monkeypatch):
+    driver = RecordingDriver()
+    monkeypatch.setattr(graph, "graph_connection", lambda: (driver, "neo4j"))
+    counts = graph.build_graph(
+        str(repository),
+        file_paths=index_state.source_files(repository),
+        build_id="test",
+    )
+    symbols = [p for q, p in driver.writes if "MERGE (func:" in q]
+    calls = [p for q, p in driver.writes if "MERGE (caller)-" in q]
+    ids = {p["qualified"]: p["id"] for p in symbols}
+    assert ids["First.run"] != ids["Second.run"]
+    assert "outer.inner" in ids
+    edges = {(p["c1"], p["c2"]) for p in calls}
+    for a, b in [
+        ("entry", "first"),
+        ("methods", "First.run"),
+        ("methods", "Second.run"),
+        ("outer", "outer.inner"),
+        ("outer.inner", "first"),
+    ]:
+        assert (ids[a], ids[b]) in edges
+    assert not any(a in {ids["ambiguous"], ids["dynamic"]} for a, _ in edges)
+    unicode_call = next(p for p in calls if p["c1"] == ids["entry"])
+    assert unicode_call["col"] == (
+        repository / "worker.py"
+    ).read_text().splitlines()[4].index("renamed")
+    assert counts["ambiguous_calls"] >= 1
+    assert counts["unresolved_calls"] >= 1
+    assert counts["symbols"] == len(symbols)
+    classes = [p for p in symbols if p["kind"] == "class"]
+    assert counts["classes"] == len(classes)
+    inheritance = [p for q, p in driver.writes if "INHERITS_FROM" in q]
+    class_ids = {(p["path"], p["qualified"]): p["id"] for p in classes}
+    child_id = class_ids["worker.py", "Child"]
+    assert child_id != class_ids["helpers.py", "Child"]
+    assert {(p["child"], p["parent"], p["position"]) for p in inheritance} == {
+        (child_id, class_ids["helpers.py", "First"], 0),
+        (child_id, class_ids["helpers.py", "Second"], 1),
+        (class_ids["worker.py", "Grandchild"], child_id, 0),
+        (
+            class_ids["worker.py", "ÄChild"],
+            class_ids["helpers.py", "First"],
+            0,
+        ),
+    }
+    assert counts["inheritance_edges"] == 4 and counts["unresolved_bases"] == 4
+    assert driver.closed
+    deletion = next((q, p) for q, p in driver.writes if "DETACH DELETE" in q)
+    assert ":Codeaware" in deletion[0] and deletion[1]["repo"] == str(
+        repository
+    )
+
+
+def test_pipeline_original_query_mode_is_preserved(config, monkeypatch):
+    monkeypatch.setattr(
+        EmbeddingPipeline,
+        "_setup_embedding_provider",
+        lambda self: Embeddings(),
+    )
+    pipeline = EmbeddingPipeline(
+        config_path=str(config), collection_name="legacy_test"
+    )
+    pipeline.collection = Mock()
+    pipeline.collection.query.return_value = {
+        "documents": [[]],
+        "metadatas": [[]],
+        "distances": [[]],
+        "ids": [[]],
+    }
+    pipeline.invoke("question")
+    pipeline.collection.query.assert_called_once_with(
+        query_texts=["question"], n_results=5
+    )
+
+
+def test_index_and_semantic_tool_reuse_real_pipeline(build, monkeypatch):
+    from src.retrievers import query_graph
+
+    root, directory, config, manifest, _ = build
+    lookup = Mock(return_value=[["helpers.py:1:first"], []])
+    monkeypatch.setattr(query_graph, "find_snippet_symbols", lookup)
+    server = create_server(root, directory, config)
+    result = data(call(server, "search_code", query="first", limit=1))
+    assert result["build_id"] == manifest["build_id"]
+    assert len(result["results"]) == 1 and result["truncated"]
+    row = result["results"][0]
+    assert row["content"] and (root / row["path"]).is_file()
+    assert isinstance(row["distance"], float)
+    assert row["symbol_ids"] == ["helpers.py:1:first"]
+    assert lookup.call_args.kwargs == {
+        "repository_root": str(root),
+        "build_id": manifest["build_id"],
+    }
+    assert lookup.call_args.args[0][0]["path"] == row["path"]
+    assert data(call(server, "index_status"))["fresh"]
+    assert (directory / "chroma").is_dir()
+
+
+def test_snippet_symbol_mapping_keeps_empty_and_multiple_matches(monkeypatch):
+    from src.retrievers import query_graph
+
+    driver = MagicMock()
+    session = driver.session.return_value.__enter__.return_value
+    session.run.side_effect = [
+        Mock(single=Mock(return_value={"i": {}})),
+        [
+            {"snippet_index": 0, "symbol_id": "worker.py:8:outer"},
+            {"snippet_index": 0, "symbol_id": "worker.py:9:outer.inner"},
+            {"snippet_index": 2, "symbol_id": "helpers.py:1:first"},
+        ],
+    ]
+    monkeypatch.setattr(
+        query_graph, "graph_connection", lambda: (driver, "neo4j")
+    )
+    snippets = [
+        {"path": "worker.py", "line_start": 10, "line_end": 10},
+        {"path": "__init__.py", "line_start": 1, "line_end": 1},
+        {"path": "helpers.py", "line_start": 1, "line_end": 2},
+    ]
+    assert query_graph.find_snippet_symbols(
+        snippets, repository_root="/repo", build_id="test"
+    ) == [
+        ["worker.py:8:outer", "worker.py:9:outer.inner"],
+        [],
+        ["helpers.py:1:first"],
+    ]
+    parameters = session.run.call_args.kwargs
+    assert parameters["repo"] == "/repo"
+    assert parameters["snippets"][0] == {
+        "index": 0,
+        "path": "worker.py",
+        "start": 10,
+        "end": 10,
+    }
+
+
+@pytest.mark.parametrize("change", ["edit", "add", "delete"])
+def test_retrieval_refuses_stale_sources(build, change):
+    root, directory, config, _, _ = build
+    if change == "edit":
+        (root / "worker.py").write_text("pass\n")
+    elif change == "add":
+        (root / "added.py").write_text("pass\n")
+    else:
+        (root / "worker.py").unlink()
+    server = create_server(root, directory, config)
+    assert not data(call(server, "index_status"))["fresh"]
+    result = call(server, "find_symbols", name="first")
+    assert result.is_error and "stale" in str(result.content)
+
+
+@pytest.mark.parametrize(
+    "case", ["missing", "incomplete", "model", "graph_schema"]
+)
+def test_index_errors_are_actionable(build, case):
+    root, directory, config, manifest, _ = build
+    if case == "missing":
+        (directory / "manifest.json").unlink()
+    elif case == "incomplete":
+        manifest["state"] = "building"
+        index_state.write_manifest(directory, manifest)
+    elif case == "graph_schema":
+        manifest.pop("graph_schema")
+        index_state.write_manifest(directory, manifest)
+    else:
+        config.write_text(
+            config.read_text().replace("name: fixture", "name: changed")
+        )
+    result = call(
+        create_server(root, directory, config), "search_code", query="first"
+    )
+    assert result.is_error and "Rebuild" in str(result.content)
+
+
+def test_failed_rebuild_remains_incomplete(build, monkeypatch):
+    root, directory, config, _, _ = build
+    monkeypatch.setattr(
+        graph, "build_graph", Mock(side_effect=RuntimeError("fixture failure"))
+    )
+    with pytest.raises(RuntimeError, match="fixture failure"):
+        indexing.index_repository(root, directory, config)
+    assert (
+        json.loads((directory / "manifest.json").read_text())["state"]
+        == "building"
+    )
+
+
+def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
+    from src.retrievers import query_graph
+
+    root, directory, config, _, _ = build
+    rows = [{"symbol_id": str(i)} for i in range(3)]
+    lookup = Mock(return_value=rows)
+    monkeypatch.setattr(query_graph, "find_symbols", lookup)
+    monkeypatch.setattr(query_graph, "query_references", Mock(return_value=[]))
+    inheritance = Mock(
+        return_value=[
+            {"relation": "parent", "symbol_id": str(i)} for i in range(3)
+        ]
+    )
+    monkeypatch.setattr(query_graph, "query_inheritance", inheritance)
+    server = create_server(root, directory, config)
+    result = data(call(server, "find_symbols", name="run", limit=2))
+    assert result["truncated"] and len(result["results"]) == 2
+    assert lookup.call_args.kwargs["limit"] == 3
+    assert (
+        data(call(server, "get_callers", symbol_id="known"))["results"] == []
+    )
+    result = data(call(server, "get_inheritance", symbol_id="child", limit=2))
+    assert result["truncated"] and len(result["results"]) == 2
+    assert inheritance.call_args.kwargs["limit"] == 3
+    assert call(
+        server, "get_inheritance", symbol_id="child", limit=101
+    ).is_error
+    assert call(server, "search_code", query="first", limit=21).is_error
+    assert call(server, "get_callers", symbol_id="known", limit=101).is_error
+    assert call(
+        server, "find_symbols", name="run", path="../outside.py"
+    ).is_error
+
+
+def test_stdio_discovery_and_errors_do_not_load_models(build):
+    root, directory, config, _, _ = build
+
+    async def run():
+        params = StdioServerParameters(
+            command=sys.executable,
+            cwd=str(Path(__file__).resolve().parents[1]),
+            args=[
+                "-m",
+                "src.mcp_server",
+                "--repo",
+                str(root),
+                "--index-dir",
+                str(directory),
+                "--config",
+                str(config),
+            ],
+        )
+        async with Client(params) as client:
+            tools = await client.list_tools()
+            assert {t.name for t in tools.tools} == {
+                "search_code",
+                "find_symbols",
+                "get_callers",
+                "get_callees",
+                "get_inheritance",
+                "index_status",
+            }
+            assert all(t.annotations.read_only_hint for t in tools.tools)
+            assert data(await client.call_tool("index_status", {}))["fresh"]
+            assert (
+                await client.call_tool(
+                    "search_code", {"query": "first", "limit": 0}
+                )
+            ).is_error
+            assert (
+                await client.call_tool(
+                    "get_inheritance", {"symbol_id": "child", "limit": 0}
+                )
+            ).is_error
+
+    asyncio.run(run())
+    check = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import src.mcp_server, sys; assert 'torch' not in sys.modules",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+    )
+    assert check.returncode == 0, check.stderr
+
+
+def test_repeated_snippets_keep_their_actual_line_locations(repository):
+    path = repository / "repeated.py"
+    path.write_text(("# repeated content\n" + "x = 1\n" * 200) * 2)
+    chunks = load_and_split_python_files(
+        [str(path)], 900, 0, repository_root=str(repository)
+    )
+    starts = [d.metadata["line_start"] for d in chunks]
+    assert starts == sorted(set(starts))
+    for chunk in chunks:
+        source = path.read_text().splitlines()
+        assert chunk.page_content == "\n".join(
+            source[
+                chunk.metadata["line_start"] - 1 : chunk.metadata["line_end"]
+            ]
+        )
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(
+    os.environ.get("CODEAWARE_TEST_NEO4J") != "1",
+    reason="requires an isolated test Neo4j",
+)
+def test_real_neo4j_queries_rebuild_and_isolation(
+    repository, config, tmp_path, monkeypatch
+):
+    from uuid import uuid4
+
+    from src.neo4j_connection import graph_connection
+    from src.retrievers.query_graph import find_snippet_symbols
+
+    monkeypatch.setattr(
+        EmbeddingPipeline,
+        "_setup_embedding_provider",
+        lambda self: Embeddings(),
+    )
+    directory = tmp_path / "index"
+    marker = str(uuid4())
+    driver, database = graph_connection()
+    try:
+        with driver.session(database=database) as session:
+            session.run(
+                "CREATE (:CodeawareTestMarker {id:$id})", id=marker
+            ).consume()
+            session.run(
+                "CREATE (:Codeaware:Function {repository:$repo, "
+                "symbol_id:'foreign'})",
+                repo=marker,
+            ).consume()
+        manifest = indexing.index_repository(repository, directory, config)
+        server = create_server(repository, directory, config)
+        matches = data(call(server, "find_symbols", name="run"))["results"]
+        assert {r["qualified_name"] for r in matches} == {
+            "First.run",
+            "Second.run",
+        }
+        first = data(
+            call(server, "find_symbols", name="first", path="helpers.py")
+        )["results"][0]
+        callers = data(
+            call(server, "get_callers", symbol_id=first["symbol_id"])
+        )["results"]
+        assert {r["qualified_name"] for r in callers} == {
+            "First.run",
+            "entry",
+            "outer.inner",
+        }
+        entry = next(r for r in callers if r["qualified_name"] == "entry")
+        assert entry["call_path"] == "worker.py" and entry["call_line"] == 5
+        for row in callers:
+            lines = (
+                (repository / row["path"])
+                .read_text()
+                .splitlines(keepends=True)
+            )
+            assert row["content"] == "".join(
+                lines[row["line_start"] - 1 : row["line_end"]]
+            )
+        outgoing = data(
+            call(server, "get_callees", symbol_id=entry["symbol_id"])
+        )["results"]
+        assert [r["symbol_id"] for r in outgoing] == [first["symbol_id"]]
+        assert outgoing[0]["content"] == 'def first():\n    return "first"\n'
+        nested = data(call(server, "find_symbols", name="outer.inner"))[
+            "results"
+        ][0]
+        snippets = [
+            {
+                "path": nested["path"],
+                "line_start": nested["line_end"],
+                "line_end": nested["line_end"],
+            },
+            {"path": "worker.py", "line_start": 1, "line_end": 1},
+        ]
+        overlapping = find_snippet_symbols(
+            snippets,
+            repository_root=str(repository),
+            build_id=manifest["build_id"],
+        )
+        outer = data(call(server, "find_symbols", name="outer"))["results"][0]
+        assert overlapping == [[outer["symbol_id"], nested["symbol_id"]], []]
+        search = data(call(server, "search_code", query="first", limit=20))
+        helper = next(
+            row for row in search["results"] if row["path"] == "helpers.py"
+        )
+        assert first["symbol_id"] in helper["symbol_ids"]
+        assert {row["symbol_id"] for row in matches} <= set(
+            helper["symbol_ids"]
+        )
+        classes = data(call(server, "find_symbols", name="Child"))["results"]
+        assert len(classes) == 2 and all(
+            row["kind"] == "class" for row in classes
+        )
+        child = next(row for row in classes if row["path"] == "worker.py")
+        relatives = data(
+            call(server, "get_inheritance", symbol_id=child["symbol_id"])
+        )["results"]
+        assert [
+            (row["qualified_name"], row["relation"], row["base_index"])
+            for row in relatives
+        ] == [
+            ("First", "parent", 0),
+            ("Second", "parent", 1),
+            ("Grandchild", "subclass", 0),
+        ]
+        child_snippet = next(
+            row
+            for row in search["results"]
+            if child["symbol_id"] in row["symbol_ids"]
+        )
+        assert child_snippet["path"] == "worker.py"
+        empty = next(row for row in classes if row["path"] == "helpers.py")
+        assert (
+            data(
+                call(server, "get_inheritance", symbol_id=empty["symbol_id"])
+            )["results"]
+            == []
+        )
+        assert call(
+            server, "get_inheritance", symbol_id=first["symbol_id"]
+        ).is_error
+        assert call(server, "get_inheritance", symbol_id="unknown").is_error
+        assert call(
+            server, "get_callers", symbol_id=child["symbol_id"]
+        ).is_error
+
+        async def inheritance_over_stdio():
+            params = StdioServerParameters(
+                command=sys.executable,
+                cwd=str(Path(__file__).resolve().parents[1]),
+                env={
+                    key: value
+                    for key, value in os.environ.items()
+                    if key.startswith("NEO4J_")
+                },
+                args=[
+                    "-m",
+                    "src.mcp_server",
+                    "--repo",
+                    str(repository),
+                    "--index-dir",
+                    str(directory),
+                    "--config",
+                    str(config),
+                ],
+            )
+            async with Client(params) as client:
+                result = data(
+                    await client.call_tool(
+                        "get_inheritance", {"symbol_id": child["symbol_id"]}
+                    )
+                )
+                assert result["results"] == relatives
+
+        asyncio.run(inheritance_over_stdio())
+        unused = data(call(server, "find_symbols", name="unused"))["results"][
+            0
+        ]
+        assert (
+            data(call(server, "get_callers", symbol_id=unused["symbol_id"]))[
+                "results"
+            ]
+            == []
+        )
+        assert call(server, "get_callers", symbol_id="unknown").is_error
+        assert (
+            data(call(server, "find_symbols", name="first' RETURN f //"))[
+                "results"
+            ]
+            == []
+        )
+        indexing.index_repository(repository, directory, config)
+        assert call(
+            server, "find_symbols", name="first"
+        ).is_error  # Requires reconnect.
+        fresh = create_server(repository, directory, config)
+        assert (
+            data(call(fresh, "index_status"))["build_id"]
+            != manifest["build_id"]
+        )
+        with driver.session(database=database) as session:
+            assert (
+                session.run(
+                    "MATCH (m:CodeawareTestMarker {id:$id}) RETURN "
+                    "count(m) AS n",
+                    id=marker,
+                ).single()["n"]
+                == 1
+            )
+            assert (
+                session.run(
+                    "MATCH (f:Codeaware {repository:$repo}) RETURN "
+                    "count(f) AS n",
+                    repo=marker,
+                ).single()["n"]
+                == 1
+            )
+    finally:
+        with driver.session(database=database) as session:
+            session.run(
+                "MATCH (n:Codeaware {repository:$repo}) DETACH DELETE n",
+                repo=str(repository),
+            ).consume()
+            session.run(
+                "MATCH (n:Codeaware {repository:$repo}) DETACH DELETE n",
+                repo=marker,
+            ).consume()
+            session.run(
+                "MATCH (n:CodeawareTestMarker {id:$id}) DELETE n", id=marker
+            ).consume()
+        driver.close()

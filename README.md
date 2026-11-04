@@ -1,208 +1,289 @@
-# Codeaware RAG
+# Codeaware-RAG
 
-This project explores different retrieval and chunking approaches for code-related questions.
-We developed a RAG Evaluation System that can be extended with various retrievers and chunking strategies.
+Codeaware-RAG provides semantic code search and a partial static Python code
+graph to coding agents through a local Model Context Protocol (MCP) server.
+It started as a programming-experience seminar project at HPI comparing code
+retrieval and chunking approaches. The MCP extension reuses that implementation.
 
-## Table of Contents
-<!-- TOC -->
-* [Codeaware RAG](#codeaware-rag)
-  * [Table of Contents](#table-of-contents)
-  * [Installation](#installation)
-    * [Requirements](#requirements)
-    * [Install the project](#install-the-project)
-    * [Login to HuggingFace](#login-to-huggingface)
-  * [Usage](#usage)
-    * [Run Experiments](#run-experiments)
-    * [Create a Custom Pipeline](#create-a-custom-pipeline)
-  * [Configuration](#configuration)
-  * [Project Decisions](#project-decisions)
-    * [Datasets](#datasets)
-    * [Chunking](#chunking)
-    * [Embedding Models](#embedding-models)
-    * [Pipelines](#pipelines)
-    * [Evaluation](#evaluation)
-  * [Results](#results)
-    * [Baseline Results](#baseline-results)
-    * [Custom Chunking Results](#custom-chunking-results)
-    * [Embedding Summary Chunking Results](#embedding-summary-chunking-results)
-  * [Future Work](#future-work)
-    * [Dataset](#dataset)
-    * [Evaluation Metrics](#evaluation-metrics)
-    * [Additional Pipelines](#additional-pipelines)
-      * [Graph Pipeline](#graph-pipeline)
-      * [Search Pipeline](#search-pipeline)
-<!-- TOC -->
+Codex or Claude Code supplies the agent loop: it chooses tools, interprets the
+results and decides what to do next. Codeaware supplies repository context.
+It does not run an additional LLM, execute repository code or edit source files.
+
+## How it works
+
+```mermaid
+flowchart LR
+    User[User request] --> Host[Codex or Claude Code]
+    Host -->|Tool calls over stdio| MCP[Codeaware MCP server]
+    MCP --> Vector[Chroma: semantic search]
+    MCP --> Graph[Neo4j: symbols and relationships]
+    Vector --> Context[Code, locations and symbol IDs]
+    Graph --> Context
+    Context --> Host
+```
+
+The manual indexer processes the same Python file list for both databases:
+
+1. The existing baseline splitter creates chunks of up to 900 characters with
+   zero overlap. The configured embedding provider stores their vectors and
+   source metadata in persistent Chroma storage.
+2. Tree-sitter finds definitions and call sites. Jedi resolves call targets and
+   explicit base classes. Neo4j stores `Function`, `Class` and `File` nodes with
+   `DEFINED_IN`, `CALLS` and `INHERITS_FROM` relationships.
+3. A manifest records the repository, model settings, build identifier, file
+   hashes and counts. It is marked complete only after both backends succeed.
+4. Six Python functions expose retrieval over MCP using the official Python
+   SDK v2. Model components load lazily on the first semantic search. Logs go
+   to stderr; stdout is reserved for MCP messages.
+
+The original experiments and their results are documented in
+[Historical seminar experiments](docs/experiments.md).
 
 ## Installation
 
-### Requirements
-- Python 3.11 or higher
-- Pip
-
-### Install the project
-To install the project, run the following command:
+Use **Python 3.11**, pip and a running local Neo4j database. From this project
+directory:
 
 ```bash
-pip install -r requirements.txt
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
-### Login to HuggingFace
-To use HuggingFace models, you need to authenticate with your HuggingFace account:
+The dependencies include `mcp>=2,<3`; the implementation has been tested with
+MCP SDK 2.3.0 and Chroma 1.0.21. The requirements retain the original experiment
+dependency stack as well as the MCP dependencies.
+
+The embedding model downloads on first use. A Hugging Face login is needed only
+if your selected model requires authentication or gated access:
+
 ```bash
 huggingface-cli login
 ```
 
-## Usage
+The configured local embedding workflow needs no chat-model API key. The chat
+settings in `config/app_config.yaml` belong to the summary-embedding experiment.
 
-### Run Experiments
-To run experiments, you must first clone the Flask repository in the same directory as this repository (e.g., `~/dir/flask`, `~/dir/codeaware-rag`).
+## Build an index
 
-Then run the following command to run the experiments:
+Start your local Neo4j server and set its connection settings in the environment.
+The password is required; the other values below are the defaults.
+
 ```bash
-python src/pipelines/<pipeline_name>.py # e.g. python src/pipelines/embedding_pipeline.py
+export NEO4J_URI=bolt://localhost:7687
+export NEO4J_USER=neo4j
+export NEO4J_PASSWORD='<your-local-password>'
+export NEO4J_DATABASE=neo4j
+
+python -m src.index_repository \
+  --repo /absolute/path/to/python-repository \
+  --index-dir /absolute/path/to/codeaware-index
 ```
 
-### Create a Custom Pipeline
-To create a custom pipeline, create a new file in the `src/pipelines` directory.
-Each pipeline must inherit from the `BasePipeline` class.
-For embedding-based pipelines, you can inherit from the `EmbeddingPipeline` class.
+Run this from the Codeaware project directory. Use a dedicated index directory,
+preferably outside the repository being indexed. The command includes Python
+source and tests, including `__init__.py` and `cli.py`, while excluding Git
+metadata, virtual environments, caches and symlinks.
 
-## Configuration
-All important configuration parameters are stored in the `config.yaml` file, including parameters for embedding models and pipeline settings.
-Currently, all models from the [sentence-transformers](https://www.sbert.net/) library are supported.
+The default model comes from [`config/app_config.yaml`](config/app_config.yaml).
+To select a different model, copy that file, edit `models.embeddings` and pass
+`--config /absolute/path/model.yaml` to **both** the indexer and MCP server.
+Indexing and query vectors must use the same provider and model settings.
 
-The chat section contains parameters used when running the Streamlit app via `streamlit run src/app.py`.
-Additionally, the model is used for the EmbeddingSummaryPipeline.
+A rebuild replaces the `codeaware_mcp` Chroma collection in the chosen index
+directory and only the `Codeaware` Neo4j nodes owned by the configured repository.
+Unrelated graph data, including legacy nodes without that ownership label, is
+left untouched. Use one index and server process per repository; do not query
+the index while rebuilding it.
 
-## Project Decisions
-This section documents the key decisions made during project development.
+### Changes and failures
 
-### Datasets
-We developed a custom dataset based on the Flask repository because no existing dataset met our requirements.
-The closest alternative is the [CodeSearchNet](https://huggingface.co/datasets/sentence-transformers/codesearchnet) dataset, which focuses on finding functions for given comments.
-However, this dataset lacks coverage of important concepts like inheritance and function usage patterns.
+Updates are **manual**. After editing, adding or deleting Python files, rebuild
+with the command above and reconnect the MCP server. There is no file watcher,
+automatic refresh or incremental indexing yet.
 
-### Chunking
-For chunking Python files, we use the [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_loaders/text_splitters/character_text_splitter) from LangChain as our baseline.
-LangChain is a popular library for building RAG systems and provides a simple interface for splitting text into smaller chunks.
+Retrieval checks file hashes before and after the query and refuses stale data.
+Missing, incomplete, outdated-format or mismatched indexes produce explicit
+errors. Tree-sitter syntax errors abort indexing; a failed build is not marked
+complete. Fix the cause and rerun the indexer before querying again.
 
-We also implemented a custom splitter (see [Custom Splitter](#results) for details).
-Since we do not plan to further develop chunking approaches, we have not included the splitter in our pipelines.
-To change the chunking approach, modify the splitter in the `file_processor.py` file.
+## Connect an agent
 
-### Embedding Models
-To compare the performance of different retrievers and splitters, we use multiple embedding models.
-Our focus was on maintaining implementation simplicity while providing a variety of models for comparison.
-We therefore chose the [sentence-transformers](https://www.sbert.net/) library.
-Other providers (e.g., OpenAIProvider) are at different stages of development and not yet ready for production use.
+The host starts the server with an absolute Python executable and repository
+and index paths. To inspect the launch arguments without starting MCP:
 
-> [!TIP]
-> You can find a list of current top-performing embedding models on the [HuggingFace MTEB Leaderboard](https://huggingface.co/spaces/mteb/leaderboard).
-
-### Pipelines
-To enable rapid prototyping of different retrievers, we adopted a pipeline-based approach.
-This architecture allows us to focus on data preparation and retrieval while reusing existing implementations for data loading, chunking, model handling, and evaluation.
-
-Popular approaches like the [EmbeddingPipeline](src/pipelines/embedding_pipeline.py) can be reused to create custom pipelines, as demonstrated in the [EmbeddingSummaryPipeline](src/pipelines/embedding_summary_pipeline.py).
-
-### Evaluation
-For retriever evaluation, we use the Mean Reciprocal Rank (MRR) metric, where $`Q`$ is the set of questions and $`\text{rank}_i`$ is the rank of the first relevant code chunk for question $`i`$.
-
-```math
-\text{MRR} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}
+```bash
+python -m src.mcp_server --help
 ```
 
-We consider a chunk relevant if at least one of its lines is part of the desired code defined in the dataset.
+The following are templates. They do not modify your personal client settings.
+If using a custom embedding configuration, add the same `--config` argument
+used during indexing.
 
-A significant limitation of the MRR metric is that it only considers the first relevant code chunk found.
-This means questions requiring multiple code chunks for complete answers are not evaluated correctly.
-We recommend using the MRR metric in combination with other metrics that need to be implemented.
+### Codex
 
-## Results
-Experimental results, including validation files, are stored in the `data` directory.
-The results currently provide only a rough overview of different retriever performance.
-For a comprehensive performance assessment, multiple new metrics need to be implemented (see the [Future Work](#future-work) section).
+Adapt this entry in your Codex MCP configuration:
 
-Note that our embedding model selection was based on small models (< 2 billion parameters) from the [HuggingFace MTEB Leaderboard](https://huggingface.co/spaces/mteb/leaderboard) as of May 2025.
-Since models and their capabilities evolve rapidly, these results may not represent the top models from this leaderboard.
+```toml
+[mcp_servers.codeaware]
+command = "/absolute/path/to/codeaware-rag/.venv/bin/python"
+args = [
+  "-m", "src.mcp_server",
+  "--repo", "/absolute/path/to/python-repository",
+  "--index-dir", "/absolute/path/to/codeaware-index"
+]
+cwd = "/absolute/path/to/codeaware-rag"
+env_vars = ["NEO4J_PASSWORD", "NEO4J_URI", "NEO4J_USER", "NEO4J_DATABASE"]
+```
 
-### Baseline Results
-Baseline results are stored in the `data/baseline_results.csv` file.
-The baseline uses the LangChain [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_loaders/text_splitters/character_text_splitter) and the [EmbeddingPipeline](src/pipelines/embedding_pipeline.py).
-The `RecursiveCharacterTextSplitter` splits code into smaller chunks based on class and function definitions as well as empty lines until reaching the desired chunk size of 900 characters.
+See the [official Codex MCP documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
+for configuration locations and environment forwarding.
 
-![Baseline](data/plots/baseline_mmr.png)
+### Claude Code
 
-The baseline results show that code-specialized models (except `codesage-large-v2`) outperform models fine-tuned on English language.
-Even the best-performing models achieve scores below 0.5, indicating significant room for improvement.
+An equivalent `.mcp.json` entry uses `PYTHONPATH` to make the project importable
+regardless of the client's working directory:
 
-### Custom Chunking Results
-The custom chunking approach was to use [tree-sitter](https://tree-sitter.github.io/tree-sitter/) to create more meaningful chunks.
-Instead of defining a maximum chunk size, we create exactly one chunk for each function and method in the codebase.
-This should lead to more meaningful embeddings, as embeddings are created for single functionalities rather than multiple ones.
+```json
+{
+  "mcpServers": {
+    "codeaware": {
+      "type": "stdio",
+      "command": "/absolute/path/to/codeaware-rag/.venv/bin/python",
+      "args": [
+        "-m", "src.mcp_server",
+        "--repo", "/absolute/path/to/python-repository",
+        "--index-dir", "/absolute/path/to/codeaware-index"
+      ],
+      "env": {
+        "PYTHONPATH": "/absolute/path/to/codeaware-rag",
+        "NEO4J_PASSWORD": "${NEO4J_PASSWORD}",
+        "NEO4J_URI": "${NEO4J_URI:-bolt://localhost:7687}",
+        "NEO4J_USER": "${NEO4J_USER:-neo4j}",
+        "NEO4J_DATABASE": "${NEO4J_DATABASE:-neo4j}"
+      }
+    }
+  }
+}
+```
 
-![Custom Chunking](data/plots/custom_split_vs_baseline.png)
+See the [official Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+Both hosts must receive the password in their process environment. Exporting it
+in a terminal only affects applications launched from that terminal; configure
+GUI-host environments explicitly and keep credentials out of committed files.
 
-We observe that the `CodeRankEmbed` and `inf-retriever-v1-1.5b` models are two significant outliers in this chart.
-The reasons for this behavior are unclear, as we found no explanations in the respective model papers.
-We suspect this is due to our small dataset size.
-Our hypothesis that custom chunking leads to better embeddings is therefore not supported by these results.
+## Tools
 
-### Embedding Summary Chunking Results
-The embedding summary chunking approach uses an LLM to summarize each code chunk and uses the summary as the embedding.
-Since most embedding models are trained on text or code separately and not both, this could potentially lead to better results.
-For chunking, we use the `RecursiveCharacterTextSplitter`, as custom chunking did not yield better results.
+All six tools retrieve context without modifying source files or rebuilding the
+index. They use fixed, parameterized graph queries; arbitrary Cypher and shell
+execution are not exposed.
 
-![Embedding Summary Chunking](data/plots/llm_embedding_vs_baseline.png)
+| Tool | Result |
+|---|---|
+| `search_code(query, limit=5)` | Ranked snippets with relative paths, inclusive line ranges, retrieval distances and overlapping `symbol_ids` |
+| `find_symbols(name, path=None, limit=10)` | Exact simple or qualified function/method/class matches with IDs, definition locations and `kind` (`function` or `class`) |
+| `get_callers(symbol_id, limit=20)` | Direct resolved callers, their stored function `content` and call-site locations |
+| `get_callees(symbol_id, limit=20)` | Direct resolved callees, their stored function `content` and call-site locations |
+| `get_inheritance(symbol_id, limit=20)` | Direct class parents/subclasses with `relation`, definition locations and `base_index` |
+| `index_status()` | Repository, build identifier, model, counts, source freshness and whether reconnection is required |
 
-We observe that results (except for `bilingual-embedding-large` and `inf-retriever-v1-1.5b`) are very similar to baseline results.
-Both outliers are again unexplainable by the model papers.
-Similar to custom chunking, we suspect the small dataset is responsible for these outliers.
+Search limits are 1–20; other result-list limits are 1–100. Results include the
+build identifier and indicate truncation. Distances are retrieval scores, not
+confidence probabilities. `index_status` checks source freshness, not live
+database availability. Semantic search also requires Neo4j for symbol lookup.
 
-> [!IMPORTANT]
-> These results differ from those used in the presentation. Unfortunately, there was a bug that resulted in embedding incorrect summaries. This bug has been fixed and the results have been updated.
+Search links snippets to symbols by overlapping inclusive line ranges in the
+same file. A snippet can overlap several definitions, including nested ones, or
+have no matching symbol. Names can be ambiguous: select the intended ID from
+the returned locations. Caller/callee tools require function or method IDs;
+inheritance requires a class ID. Unknown IDs are errors; known symbols without
+resolved neighbors return empty lists.
 
-## Future Work
+For inheritance, `relation` is `parent` or `subclass`. `base_index` is the
+zero-based position in the child's written base list, not Python's method
+resolution order. Definition and call-site lines are one-based; call-site
+columns are zero-based Unicode character offsets.
 
-### Dataset
-To achieve more comprehensive evaluation, we need to create a larger dataset.
-A possible approach is using an LLM to generate questions for a given repository.
-We could use current datasets as a starting point to evaluate few-shot prompting for generating questions and answers.
-If successful, this could lead to a dataset covering multiple repositories or even enable evaluation of custom repositories.
+### Example walkthrough
 
-### Evaluation Metrics
-To obtain a complete overview of different retriever performance, we need to implement additional metrics.
-While the exact metrics needed are unclear, the following problems should be addressed:
+After connecting, try:
 
-- Questions requiring multiple code chunks for complete solutions should be evaluated correctly. Possible solutions include:
-  - Retrieving code chunks until all relevant chunks are found
-- The MRR metric does not account for the total number of created code chunks. A smaller number of total chunks would likely lead to better results. Therefore, the number total chunks has to be part of at least one evaluation metric
-- Only retrieval and chunking performance is evaluated. It is unclear how generator performance is affected by different retrievers and chunking approaches
-  - We could use [LLM-as-a-Judge](https://arxiv.org/abs/2306.05685) to evaluate end-to-end RAG system performance
+> Check the Codeaware index status. Search for code that sends a file. Select
+> the relevant function symbol ID, then inspect its callers and their code.
+> Explain what you found with file and line references. Do not change files.
 
-### Additional Pipelines
-With the [BasePipeline](src/pipelines/base_pipeline.py) as a strong foundation, we can create additional pipelines that focus on custom retrievers.
+The host chooses the tool sequence based on intermediate results. For class
+questions, use `find_symbols` to select a class and then `get_inheritance`.
+Treat retrieved code as repository data, not instructions for the agent.
 
-#### Graph Pipeline
-The graph pipeline will use a graph database to store code chunks and their relationships.
-The following relationships are partially implemented or planned:
-- Function/method definitions and their usages
-- Inheritance relationships between classes
-- Function/method calls and their usages
+## Code map
 
-For retrieval, the following steps could be used:
-1. Use an embedding model to find an anchor chunk for the query
-2. Use the graph database to find all related code chunks based on the anchor chunk
+| File | Responsibility |
+|---|---|
+| `src/index_repository.py` | Manual build orchestration and CLI |
+| `src/index_state.py` | Shared constants, file hashes and manifest/freshness checks |
+| `src/neo4j_connection.py` | Shared environment-based Neo4j connection setup |
+| `src/embeddings/file_processor.py` | File discovery, baseline splitting and embedding orchestration |
+| `src/pipelines/embedding_pipeline.py` | Existing embedding preparation, storage and query pipeline |
+| `src/embeddings/build_graph.py` | Two-pass definition extraction and call/inheritance resolution |
+| `src/retrievers/query_graph.py` | Fixed Cypher queries returning plain dictionaries |
+| `src/mcp_server.py` | Tool definitions, validation, lazy loading and result formatting |
+| `tests/test_mcp.py` | Indexing, graph, transport and optional database integration checks |
 
-This idea is currently in early stages and needs further development.
+The provider implementations, alternate Tree-sitter splitter, summary pipeline
+and retrieval evaluation remain available for the original experiments. See
+[Historical seminar experiments](docs/experiments.md) for their scope and paths.
 
-#### Search Pipeline
-The search pipeline will use text search to find relevant code chunks. Possible search approaches include:
+## Verification
 
-- Search for text in code chunks
-- Find variable definitions
-- Prioritize search results based on specific patterns (e.g., class or function definitions)
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+python -m black --check src tests data/create_plots_mmr.py
+python -m isort --check-only src tests data/create_plots_mmr.py
+python -m pycodestyle src tests data/create_plots_mmr.py
+```
 
-For retrieval, the following steps could be used:
-1. Use an LLM to extract key search terms from the query
-2. Use TF-IDF and similarity measures to find relevant code chunks
+Tests use deterministic embeddings with real Chroma storage. They cover symbol
+identity, cross-file aliases, repeated method names, nested functions, Unicode
+locations, inheritance, unresolved targets, freshness/errors, bounded results
+and MCP stdio discovery. No model download is required for the automated tests.
+
+The optional integration test runs Cypher and an MCP stdio tool call against an
+**isolated test Neo4j instance**, using the current `NEO4J_*` settings:
+
+```bash
+CODEAWARE_TEST_NEO4J=1 python -m pytest -q
+```
+
+It checks graph queries, repository-scoped rebuilding and preservation of
+unrelated data. Use a disposable test database rather than your normal instance.
+
+Style follows [PEP 8](https://peps.python.org/pep-0008/): 79-character code lines
+and 72-character prose comments/docstrings. To format, run isort and Black
+without `--check-only`/`--check`. The source fixtures in `tests/fixtures` retain
+deliberate Unicode identifiers, a semicolon and exact locations for analysis
+tests; formatters exclude them. The checker accepts Black's spacing for complex
+slices and breaks before operators.
+
+## Limitations and next steps
+
+- This is a partial static graph. Dynamic dispatch and unresolved/ambiguous
+  calls are incomplete; uncertain edges are omitted and counted. Module-level
+  calls are counted as outside the function graph. Callers are not all references.
+- Explicit, unambiguous repository-local base classes are supported, including
+  aliased/qualified imports and multiple inheritance. Dynamic, ambiguous and
+  external bases, including built-in `object`, are omitted and counted in
+  `unresolved_bases`. Inherited method resolution, `super()`, MRO, module-import
+  relationships and LSP integration are outside this version.
+- Automatic refresh, an index coordinator and incremental indexing are proposed
+  next steps, not implemented features. Rebuild and reconnect manually today.
+- The existing line-coverage metric double-counts overlapping retrieved ranges.
+  Fix this before producing new coverage claims; historical results are retained.
+- A working agent walkthrough demonstrates integration, not improved agent
+  performance. Compare the same host with and without Codeaware on fixed tasks
+  before making claims about correctness, latency, cost or tool-call savings.
+
+Original validation data, results, plots, `presentation.pdf` and `abstract.txt`
+remain available. Their historical context and evaluation caveats are documented
+in [Historical seminar experiments](docs/experiments.md).

@@ -1,16 +1,19 @@
-import os
-import pandas as pd
-import tempfile
-import requests
 import datetime
-from typing import List, Dict, Any, Tuple
+import os
+import tempfile
+from typing import Any, Dict, List, Tuple
 from urllib.parse import urlparse
+
+import pandas as pd
+import requests
+
 from src.pipelines.base_pipeline import BaseRAGPipeline
 from src.retrievers.metrics import (
-    mean_reciprocal_rank,
-    line_coverage_ratio,
     file_match_ratio,
+    line_coverage_ratio,
+    mean_reciprocal_rank,
 )
+
 
 def download_github_file(url: str) -> Tuple[str, str]:
     """
@@ -23,7 +26,9 @@ def download_github_file(url: str) -> Tuple[str, str]:
         Tuple of (file_path, content)
     """
     # Convert GitHub URL to raw content URL
-    raw_url = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/')
+    raw_url = url.replace('github.com', 'raw.githubusercontent.com').replace(
+        '/blob/', '/'
+    )
 
     # Create temporary file
     temp_dir = tempfile.mkdtemp()
@@ -41,7 +46,13 @@ def download_github_file(url: str) -> Tuple[str, str]:
     else:
         raise Exception(f"Failed to download file from {url}")
 
-def get_code_snippet(content: str, line_number: int, end_line: int = None, context_lines: int = 0) -> str:
+
+def get_code_snippet(
+    content: str,
+    line_number: int,
+    end_line: int = None,
+    context_lines: int = 0,
+) -> str:
     """
     Extract code snippet around the specified line number.
 
@@ -59,7 +70,8 @@ def get_code_snippet(content: str, line_number: int, end_line: int = None, conte
     # Convert line numbers to 0-based indices
     start_idx = max(0, line_number - 1)
 
-    # If end_line is specified, use it; otherwise, default to start_idx + 1
+    # If end_line is specified, use it; otherwise, default to start_idx
+    # + 1
     end_idx = end_line if end_line is not None else start_idx + 1
 
     # Add context lines
@@ -67,6 +79,7 @@ def get_code_snippet(content: str, line_number: int, end_line: int = None, conte
     final_end = min(len(lines), end_idx + context_lines)
 
     return '\n'.join(lines[final_start:final_end])
+
 
 def extract_github_urls(urls: str) -> List[str]:
     """
@@ -82,6 +95,7 @@ def extract_github_urls(urls: str) -> List[str]:
         return []
     return [url.strip() for url in urls.split(';')]
 
+
 def extract_lines(lines: str) -> List[int]:
     """
     Extract line numbers from a semicolon-separated string.
@@ -95,6 +109,7 @@ def extract_lines(lines: str) -> List[int]:
     if pd.isna(lines):
         return []
     return [int(line.strip()) for line in str(lines).split(';')]
+
 
 def extract_file_path_from_url(url: str) -> str:
     """
@@ -119,7 +134,10 @@ def extract_file_path_from_url(url: str) -> str:
         relative_path = relative_path[4:]
     return relative_path
 
-def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame) -> dict[str, list[Any]] | None:
+
+def validate_retriever(
+    pipeline: BaseRAGPipeline, validation_data: pd.DataFrame
+) -> dict[str, list[Any]] | None:
     """
     Validate the retriever against the validation data.
 
@@ -136,7 +154,7 @@ def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame)
         "retrieved_metadata": [],
         "file_match_ratio": [],
         "mrr": [],
-        "line_coverage": []
+        "line_coverage": [],
     }
 
     # Create temporary directory for downloaded files
@@ -160,19 +178,24 @@ def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame)
                     relative_path = extract_file_path_from_url(url)
                     start_line = start_lines[i]
                     if start_line:
-                        end_line = end_lines[i] if i < len(end_lines) else start_line
-                        expected_metadata.append({
-                            "filename": relative_path,
-                            "line_start": start_line,
-                            "line_end": end_line or start_line
-                        })
+                        end_line = (
+                            end_lines[i] if i < len(end_lines) else start_line
+                        )
+                        expected_metadata.append(
+                            {
+                                "filename": relative_path,
+                                "line_start": start_line,
+                                "line_end": end_line or start_line,
+                            }
+                        )
                 except Exception as e:
                     print(f"Error processing {url}: {str(e)}")
 
             # Get retrieved documents using the pipeline
             pipeline_results = pipeline.invoke(question)
-            
-            # Convert pipeline results to a format compatible with our metrics
+
+            # Convert pipeline results to a format compatible with our
+            # metrics
             retrieved_metadata = []
             for i in range(len(pipeline_results["ids"][0])):
                 metadata = pipeline_results["metadatas"][0][i]
@@ -182,13 +205,15 @@ def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame)
                     "filename": metadata.get("filename", ""),
                     "line_start": metadata.get("line_start", 0),
                     "line_end": metadata.get("line_end", 0),
-                    "content": pipeline_results["documents"][0][i]
+                    "content": pipeline_results["documents"][0][i],
                 }
                 retrieved_metadata.append(metadata_entry)
 
             # calculate scores using imported metrics
             mrr = mean_reciprocal_rank(expected_metadata, retrieved_metadata)
-            line_cov = line_coverage_ratio(expected_metadata, retrieved_metadata)
+            line_cov = line_coverage_ratio(
+                expected_metadata, retrieved_metadata
+            )
             ems = file_match_ratio(expected_metadata, retrieved_metadata)
 
             # store results
@@ -204,11 +229,11 @@ def validate_retriever(pipeline: BaseRAGPipeline, validation_data: pd.DataFrame)
         for file_path in downloaded_files:
             try:
                 os.remove(file_path)
-            except:
+            except BaseException:
                 pass
         try:
             os.rmdir(temp_dir)
-        except:
+        except BaseException:
             pass
 
     return results
@@ -222,9 +247,19 @@ def print_validation_results(results: Dict[str, Any]):
         results: Dictionary containing validation results
     """
     # Calculate overall metrics
-    avg_exact_match = sum(results["file_match_ratio"]) / len(results["file_match_ratio"]) if results["file_match_ratio"] else 0
-    avg_mrr = sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
-    avg_line_coverage = sum(results["line_coverage"]) / len(results["line_coverage"]) if results["line_coverage"] else 0
+    avg_exact_match = (
+        sum(results["file_match_ratio"]) / len(results["file_match_ratio"])
+        if results["file_match_ratio"]
+        else 0
+    )
+    avg_mrr = (
+        sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
+    )
+    avg_line_coverage = (
+        sum(results["line_coverage"]) / len(results["line_coverage"])
+        if results["line_coverage"]
+        else 0
+    )
 
     print("\n=== Validation Results ===")
     print(f"Average Exact Match Score: {avg_exact_match:.2f}")
@@ -240,21 +275,36 @@ def print_validation_results(results: Dict[str, Any]):
 
         print("\nExpected Files:")
         for j, metadata in enumerate(results["expected_metadata"][i]):
-            print(f"  File {j+1}: {metadata['filename']}, lines {metadata['line_start']}-{metadata['line_end']}")
+            print(
+                f"  File {j + 1}: {metadata['filename']}, "
+                f"lines {metadata['line_start']}-{metadata['line_end']}"
+            )
 
         print("\nRetrieved Files:")
-        for j, metadata in enumerate(results["retrieved_metadata"][i][:3]):  # Limit to first 3 results
-            filename = metadata.get("source", metadata.get("filename", "unknown"))
+        for j, metadata in enumerate(
+            results["retrieved_metadata"][i][:3]
+        ):  # Limit to first 3 results
+            filename = metadata.get(
+                "source", metadata.get("filename", "unknown")
+            )
             line_start = metadata.get("line_start", "?")
             line_end = metadata.get("line_end", "?")
             print(f"  File {j+1}: {filename}, lines {line_start}-{line_end}")
 
         if len(results["retrieved_metadata"][i]) > 3:
-            print(f"  ... and {len(results['retrieved_metadata'][i]) - 3} more files")
+            print(
+                f"  ... and {len(results['retrieved_metadata'][i]) - 3} "
+                "more files"
+            )
 
-def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/retrieval_results.csv"):
+
+def save_results_to_csv(
+    results: Dict[str, Any],
+    output_path: str = "../../data/retrieval_results.csv",
+):
     """
-    Save validation results to a CSV file with one row per retrieved snippet.
+    Save validation results to a CSV file with one row per retrieved
+    snippet.
 
     Args:
         results: Dictionary containing validation results
@@ -270,18 +320,24 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
         expected_metadata = results["expected_metadata"][i]
 
         # Format expected metadata for reference
-        expected_files = [f"{meta.get('filename')}:{meta.get('line_start')}-{meta.get('line_end')}"
-                         for meta in expected_metadata]
+        expected_files = [
+            f"{meta.get('filename')}:"
+            f"{meta.get('line_start')}-{meta.get('line_end')}"
+            for meta in expected_metadata
+        ]
         expected_files_str = "; ".join(expected_files)
 
         # Add rows for each retrieved snippet
         for j, metadata in enumerate(results["retrieved_metadata"][i]):
-            filename = metadata.get("source", metadata.get("filename", "unknown"))
+            filename = metadata.get(
+                "source", metadata.get("filename", "unknown")
+            )
             line_start = metadata.get("line_start", "")
             line_end = metadata.get("line_end", "")
             snippet = metadata.get("content", "")
 
-            # Check if this specific snippet matches any expected snippet
+            # Check if this specific snippet matches any expected
+            # snippet
             is_match = False
             for exp_meta in expected_metadata:
                 exp_file = exp_meta.get("filename")
@@ -294,32 +350,42 @@ def save_results_to_csv(results: Dict[str, Any], output_path: str = "../../data/
                     exp_end = exp_meta.get("line_end")
 
                     # Check for line overlap
-                    if (line_start is None or line_end is None or
-                        (line_start <= exp_end and line_end >= exp_start)):
+                    if (
+                        line_start is None
+                        or line_end is None
+                        or (line_start <= exp_end and line_end >= exp_start)
+                    ):
                         is_match = True
                         break
 
-            rows.append({
-                "question_id": i + 1,
-                "question": question,
-                "snippet_rank": j + 1,
-                "filename": filename,
-                "line_start": line_start,
-                "line_end": line_end,
-                "is_match": is_match,
-                "file_match_ratio": question_score,
-                "mrr": mrr,
-                "line_coverage": line_cov,
-                "expected_files": expected_files_str,
-                "snippet": snippet
-            })
+            rows.append(
+                {
+                    "question_id": i + 1,
+                    "question": question,
+                    "snippet_rank": j + 1,
+                    "filename": filename,
+                    "line_start": line_start,
+                    "line_end": line_end,
+                    "is_match": is_match,
+                    "file_match_ratio": question_score,
+                    "mrr": mrr,
+                    "line_coverage": line_cov,
+                    "expected_files": expected_files_str,
+                    "snippet": snippet,
+                }
+            )
 
     # Create DataFrame and save to CSV
     df = pd.DataFrame(rows)
     df.to_csv(output_path, index=False)
     print(f"Results saved to {output_path}")
 
-def save_model_results(results: Dict[str, Any], model_name: str, output_path: str = "../../data/model_results.csv"):
+
+def save_model_results(
+    results: Dict[str, Any],
+    model_name: str,
+    output_path: str = "../../data/model_results.csv",
+):
     """
     Save model validation metrics to the results CSV file.
 
@@ -329,22 +395,33 @@ def save_model_results(results: Dict[str, Any], model_name: str, output_path: st
         output_path: Path to the model_results.csv file
     """
     # Calculate overall metrics
-    avg_exact_match = sum(results["file_match_ratio"]) / len(results["file_match_ratio"]) if results["file_match_ratio"] else 0
-    avg_mrr = sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
-    avg_line_coverage = sum(results["line_coverage"]) / len(results["line_coverage"]) if results["line_coverage"] else 0
+    avg_exact_match = (
+        sum(results["file_match_ratio"]) / len(results["file_match_ratio"])
+        if results["file_match_ratio"]
+        else 0
+    )
+    avg_mrr = (
+        sum(results["mrr"]) / len(results["mrr"]) if results["mrr"] else 0
+    )
+    avg_line_coverage = (
+        sum(results["line_coverage"]) / len(results["line_coverage"])
+        if results["line_coverage"]
+        else 0
+    )
 
     # Get current date and time in a human-readable format
     current_datetime = datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
 
     # Create DataFrame with the new row
-    new_row = pd.DataFrame({
-        "Name": [model_name],
-        "file_match_ratio": [avg_exact_match],
-        "MRR": [avg_mrr],
-        "Line Coverage": [avg_line_coverage],
-        "Date": [current_datetime]
-    })
-
+    new_row = pd.DataFrame(
+        {
+            "Name": [model_name],
+            "file_match_ratio": [avg_exact_match],
+            "MRR": [avg_mrr],
+            "Line Coverage": [avg_line_coverage],
+            "Date": [current_datetime],
+        }
+    )
 
     df = pd.read_csv(output_path)
     df = pd.concat([df, new_row], ignore_index=True)

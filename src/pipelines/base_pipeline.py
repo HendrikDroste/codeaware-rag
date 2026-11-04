@@ -4,8 +4,10 @@ from typing import List
 
 class BaseRAGPipeline(ABC):
     """
-    Abstract base class for a Retrieval-Augmented Generation (RAG) pipeline.
-    This class defines the interface for embedding and querying text data.
+    Abstract base class for a Retrieval-Augmented Generation (RAG)
+    pipeline.
+    This class defines the interface for embedding and querying text
+    data.
     """
 
     @abstractmethod
@@ -34,7 +36,8 @@ class BaseRAGPipeline(ABC):
     @abstractmethod
     def invoke(self, query: str) -> str:
         """
-        Run the full RAG pipeline to process a query and return a response.
+        Run the full RAG pipeline to process a query and return a
+        response.
 
         Args:
             query (str): The input query string.
