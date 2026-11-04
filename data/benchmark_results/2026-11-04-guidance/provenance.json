@@ -1,0 +1,15 @@
+{
+  "source_commit": "b4adffbf115aa9b93f6a472da6868be598dd2107",
+  "tool_description_version": "selection-guidance-v2",
+  "tool_definitions_sha256": "78e7883be3498c89f8c3675279907ce70c250fcf8d5dda2aa05805d6dfa17d9f",
+  "index_build_id": "19dddedc-b63d-4410-bdf0-79213658ea46",
+  "source_files_sha256": {
+    "src/mcp_server.py": "ec68f3813425be540881b019f5a3c974dd3dd5c9740b870fb8a5251cb0ea9720",
+    "src/benchmark_agent.py": "5614be767347e4a584101dab5ba8db92461c59fb4a1b7c2a04f32eb5b14e371f",
+    "src/index_state.py": "f15f235f3605cef58ba314136cc2cfd3159a032906b9f4394b43ac18b72f0335"
+  },
+  "raw_directories": {
+    "auto": "data/agent_runs/2026-11-04-guidance-auto",
+    "guided": "data/agent_runs/2026-11-04-guidance-guided"
+  }
+}

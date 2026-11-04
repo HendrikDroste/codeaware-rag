@@ -265,6 +265,10 @@ Use `--tool-policy auto` (default) to measure voluntary tool selection, or
 Both conditions receive the same prompt within each mode. New runs record the
 mode, prompt version and tool-description version; see the
 [prompt-mode instructions](docs/agent-benchmark.md#tool-selection-modes).
+The [three-question guidance pilot](
+data/benchmark_results/2026-11-04-guidance/README.md) recorded MCP use in 0/3
+automatic runs and 3/3 guided runs. Guided Codeaware used more tokens than its
+guided native baseline; the pilot establishes no savings.
 
 ## Verification
 

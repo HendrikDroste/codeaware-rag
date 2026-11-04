@@ -1,0 +1,130 @@
+[
+  {
+    "mode": "guided",
+    "question_id": 11,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "Blueprint",
+      "limit": 5
+    },
+    "error": false,
+    "result_count": 2,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 11,
+    "variant": "codeaware",
+    "tool": "get_inheritance",
+    "arguments": {
+      "symbol_id": "src/flask/blueprints.py:18:Blueprint",
+      "limit": 5
+    },
+    "error": false,
+    "result_count": 2,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 11,
+    "variant": "codeaware",
+    "tool": "get_inheritance",
+    "arguments": {
+      "symbol_id": "src/flask/sansio/blueprints.py:119:Blueprint",
+      "limit": 5
+    },
+    "error": false,
+    "result_count": 2,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 11,
+    "variant": "codeaware",
+    "tool": "get_inheritance",
+    "arguments": {
+      "symbol_id": "src/flask/sansio/scaffold.py:52:Scaffold",
+      "limit": 5
+    },
+    "error": false,
+    "result_count": 2,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 16,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "add_url_rule",
+      "limit": 5
+    },
+    "error": false,
+    "result_count": 4,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 16,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "route",
+      "limit": 3
+    },
+    "error": false,
+    "result_count": 1,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 16,
+    "variant": "codeaware",
+    "tool": "get_callees",
+    "arguments": {
+      "symbol_id": "src/flask/sansio/app.py:606:App.add_url_rule"
+    },
+    "error": false,
+    "result_count": 1,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 16,
+    "variant": "codeaware",
+    "tool": "get_callees",
+    "arguments": {
+      "symbol_id": "src/flask/sansio/scaffold.py:344:Scaffold.route"
+    },
+    "error": false,
+    "result_count": 0,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 18,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "wsgi_app",
+      "limit": 3
+    },
+    "error": false,
+    "result_count": 1,
+    "truncated": false
+  },
+  {
+    "mode": "guided",
+    "question_id": 18,
+    "variant": "codeaware",
+    "tool": "get_callees",
+    "arguments": {
+      "symbol_id": "src/flask/app.py:1627:Flask.wsgi_app",
+      "limit": 5
+    },
+    "error": false,
+    "result_count": 5,
+    "truncated": false
+  }
+]

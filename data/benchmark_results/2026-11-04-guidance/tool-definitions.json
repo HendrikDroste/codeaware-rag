@@ -1,0 +1,198 @@
+[
+  {
+    "name": "search_code",
+    "description": "\n        Discover Python implementation by meaning when its file or\n        symbol name is unknown. Returns ranked snippets, relative paths,\n        inclusive line ranges, retrieval distances and overlapping\n        symbol_ids. For a known symbol name, use find_symbols instead.\n        Follow relevant symbols with graph tools or native source reads.\n        ",
+    "inputSchema": {
+      "properties": {
+        "query": {
+          "description": "Natural-language behavior or implementation to find in Python source and tests.",
+          "title": "Query",
+          "type": "string"
+        },
+        "limit": {
+          "default": 5,
+          "description": "Maximum snippets (1..20); start with 3..5.",
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "search_codeArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "additionalProperties": true,
+      "title": "search_codeDictOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "find_symbols",
+    "description": "\n        Locate a known function, method or class by exact name. Returns\n        symbol_ids, kinds, paths and definition ranges. Identical names\n        can produce distinct matches; select the intended path and kind\n        before a graph query. Use search_code when the name is unknown.\n        ",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Exact simple or qualified name, such as add_url_rule or App.add_url_rule; no fuzzy matching.",
+          "title": "Name",
+          "type": "string"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional exact repository-relative file path to disambiguate matches, e.g. src/flask/sansio/app.py.",
+          "title": "Path"
+        },
+        "limit": {
+          "default": 10,
+          "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "find_symbolsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "additionalProperties": true,
+      "title": "find_symbolsDictOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "get_callers",
+    "description": "\n        Investigate which indexed functions directly call a selected\n        function or method. Returns caller code, definition locations\n        and call sites; multiple sites can repeat a caller. These are\n        partial static call edges. Other references or runtime callers\n        can be absent.\n        Missing edges do not prove that no callers exist. Requires a\n        function ID.\n        ",
+    "inputSchema": {
+      "properties": {
+        "symbol_id": {
+          "description": "Exact symbol_id returned by find_symbols or search_code. Select the intended path and kind; do not construct an ID.",
+          "title": "Symbol Id",
+          "type": "string"
+        },
+        "limit": {
+          "default": 20,
+          "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "symbol_id"
+      ],
+      "title": "get_callersArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "additionalProperties": true,
+      "title": "get_callersDictOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "get_callees",
+    "description": "\n        Trace direct calls made by a selected function or method.\n        Returns statically resolved callee code, definition locations\n        and call sites; multiple sites can repeat a callee. External and\n        unresolved dynamic calls may be absent. Requires a function ID.\n        Use native source reads to investigate gaps in the graph.\n        ",
+    "inputSchema": {
+      "properties": {
+        "symbol_id": {
+          "description": "Exact symbol_id returned by find_symbols or search_code. Select the intended path and kind; do not construct an ID.",
+          "title": "Symbol Id",
+          "type": "string"
+        },
+        "limit": {
+          "default": 20,
+          "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "symbol_id"
+      ],
+      "title": "get_calleesArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "additionalProperties": true,
+      "title": "get_calleesDictOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "get_inheritance",
+    "description": "\n        Inspect a selected class's direct parents and subclasses.\n        Returns relation labels, symbol_ids and definition locations.\n        Requires a class ID. Follow returned IDs for further hops when\n        needed. This partial static graph does not resolve inherited\n        methods or compute Python's method resolution order (MRO).\n        ",
+    "inputSchema": {
+      "properties": {
+        "symbol_id": {
+          "description": "Exact symbol_id returned by find_symbols or search_code. Select the intended path and kind; do not construct an ID.",
+          "title": "Symbol Id",
+          "type": "string"
+        },
+        "limit": {
+          "default": 20,
+          "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "symbol_id"
+      ],
+      "title": "get_inheritanceArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "additionalProperties": true,
+      "title": "get_inheritanceDictOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "index_status",
+    "description": "\n        Inspect the indexed repository, build, embedding model, counts\n        and source freshness. Use for setup or stale-index diagnosis;\n        retrieval tools already check freshness on every call. This does\n        not verify backend connectivity or rebuild the index.\n        ",
+    "inputSchema": {
+      "properties": {},
+      "title": "index_statusArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "additionalProperties": true,
+      "title": "index_statusDictOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": false
+    }
+  }
+]

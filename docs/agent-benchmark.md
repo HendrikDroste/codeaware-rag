@@ -103,10 +103,16 @@ treat zero MCP calls as a retrieval-quality score, or an MCP call as proof of
 an improved answer. Check adoption, correctness, usage and tool errors together.
 
 Tool selection guidance lives in `src/mcp_server.py`: server instructions,
-tool docstrings and parameter descriptions. Metadata changes require a fresh
-connection to rediscover tools; they do not require rebuilding embeddings or
-the graph. The CLI starts a new server for each Codeaware turn. Keep backend
-logic and corpus fixed when testing a description change.
+tool docstrings and parameter descriptions. The SDK derives tool descriptions
+from docstrings. `Annotated[..., Field(description=...)]` adds parameter help
+to the input schema; the shared `SymbolId` and `ResultLimit` aliases avoid
+repeating that help. The existing argument validation and retrieval functions
+still handle the calls.
+
+Metadata changes require a fresh connection to rediscover tools; they do not
+require rebuilding embeddings or the graph. The CLI starts a new server for
+each Codeaware turn. Keep backend logic and corpus fixed when testing a
+description change.
 
 ## Collected data
 
@@ -187,3 +193,9 @@ Automated tests use simulated CLI traces and subprocess responses. The
 18-question paired evaluation and tool-directed diagnostic. Codex chose native
 tools in every paired run; the separate diagnostic successfully used Codeaware.
 The report preserves this distinction when interpreting token usage.
+
+A subsequent [three-question guidance pilot](
+../data/benchmark_results/2026-11-04-guidance/README.md) recorded all 12 turns
+with the versioned descriptions and both prompt modes. Automatic runs made no
+MCP calls; all three guided Codeaware runs did, with 10 successful calls. Token
+usage increased relative to the guided native baseline in that small sample.
