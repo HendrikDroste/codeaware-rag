@@ -100,8 +100,12 @@ The [rubric](rubric.json) states core facts before this batch. A manual check of
 the first repetition's six answers found that both conditions covered those
 facts. Codeaware's inheritance answer additionally included the optional
 test-only subclass. This check was neither blinded nor independent, and the
-remaining repetitions were not fully graded. No overall answer-quality
-improvement is established. See [quality-review.json](quality-review.json).
+remaining repetitions were not fully graded at initial publication. See
+[quality-review.json](quality-review.json) for that original check. A subsequent
+[full core-fact review](review.md) covers all 18 answers and documents a silent
+`include_source`/`include_code` argument mismatch in three calls. It finds
+mixed coverage benefits and omissions, with no consistent overall quality
+improvement. The original metrics and answers remain unchanged.
 
 ## Artifacts
 

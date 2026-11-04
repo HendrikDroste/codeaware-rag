@@ -1,0 +1,52 @@
+{
+  "scope": "Analysis of saved repeated guided runs; no new model calls or tool behavior changes.",
+  "input_token_increase": 164056,
+  "output_token_increase": 557,
+  "input_share_of_increase_percent": 99.66163061240607,
+  "native_tool_operations": 29,
+  "codeaware_tool_operations": 61,
+  "unknown_source_argument_calls": [
+    {
+      "repetition": 1,
+      "question_id": 18,
+      "arguments": {
+        "name": "from_environ",
+        "limit": 3,
+        "include_source": true
+      },
+      "reported_mcp_error": false,
+      "returned_excerpts": 0,
+      "issue": "Unsupported include_source was ignored; include_code remained False."
+    },
+    {
+      "repetition": 2,
+      "question_id": 16,
+      "arguments": {
+        "name": "add_url_rule",
+        "limit": 5,
+        "include_source": true
+      },
+      "reported_mcp_error": false,
+      "returned_excerpts": 0,
+      "issue": "Unsupported include_source was ignored; include_code remained False."
+    },
+    {
+      "repetition": 2,
+      "question_id": 16,
+      "arguments": {
+        "name": "route",
+        "limit": 3,
+        "include_source": true
+      },
+      "reported_mcp_error": false,
+      "returned_excerpts": 0,
+      "issue": "Unsupported include_source was ignored; include_code remained False."
+    }
+  ],
+  "local_reproduction": {
+    "method": "In-process MCP Client with graph lookup mocked; used include_source=True.",
+    "response_is_error": false,
+    "backend_include_code": false
+  },
+  "limits": "No per-model-request token breakdown; cannot assign an exact token amount to each tool, truncation or metadata. Unknown arguments are not reported MCP failures, so the historical mcp_errors=0 remains unchanged."
+}
