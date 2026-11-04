@@ -83,6 +83,17 @@ relationships. Native search remains available, including as the baseline's
 fallback when specialized tools are absent. Start with 3..5 results and expand
 when needed; neither mode requires calling every tool or mandates an MCP call.
 
+The current guided template also asks the agent to request bounded source
+excerpts when symbol lookup offers them, reuse returned code when sufficient,
+read additional source for a specific evidence gap, and stop when the answer
+and citations are supported. `auto` retains its original neutral text.
+
+These changes are recorded as `prompt_version=repository-qa-v2` and
+`tool_description_version=source-excerpts-v3`. Earlier pilot results retain
+their original versions. Excerpts and evidence reuse are intended to reduce
+duplicate inspection; their effect on quality and usage still needs a new
+controlled model-backed run.
+
 For a small pilot, run questions 11, 16 and 18 in `auto`, then repeat with
 `--tool-policy guided` and a new output directory:
 

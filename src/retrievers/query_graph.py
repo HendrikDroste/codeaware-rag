@@ -15,11 +15,26 @@ def check_graph(session, repository_root, build_id):
         )
 
 
-def find_symbols(name, *, repository_root, build_id, path=None, limit=10):
+def find_symbols(
+    name,
+    *,
+    repository_root,
+    build_id,
+    path=None,
+    limit=10,
+    include_code=False,
+    max_lines=60,
+):
     """
     Exact function/method/class names; return all matches so the agent
-    can disambiguate.
+    can disambiguate. Optionally include bounded indexed source code.
     """
+    if (
+        isinstance(max_lines, bool)
+        or not isinstance(max_lines, int)
+        or not 1 <= max_lines <= 100
+    ):
+        raise ValueError("max_lines must be an integer between 1 and 100")
     driver, database = graph_connection()
     with driver, driver.session(database=database) as session:
         check_graph(session, repository_root, build_id)
@@ -31,14 +46,32 @@ def find_symbols(name, *, repository_root, build_id, path=None, limit=10):
             "RETURN f.symbol_id AS symbol_id, f.name AS name, "
             "f.qualified_name AS qualified_name, f.kind AS kind, "
             "f.path AS path, f.start_line AS line_start, f.end_line AS "
-            "line_end "
+            "line_end, CASE WHEN $include_code THEN f.content ELSE null "
+            "END AS source_content "
             "ORDER BY f.path, f.start_line LIMIT $limit",
             repo=repository_root,
             name=name,
             path=path,
             limit=limit,
+            include_code=include_code,
         )
-        return [dict(row) for row in result]
+        rows = [dict(row) for row in result]
+        for row in rows:
+            content = row.pop("source_content", None)
+            if include_code:
+                if not content:
+                    raise ValueError(
+                        "Indexed symbol code is missing; rebuild the index"
+                    )
+                lines = content.splitlines(keepends=True)
+                excerpt = lines[:max_lines]
+                row["code_excerpt"] = {
+                    "content": "".join(excerpt),
+                    "line_start": row["line_start"],
+                    "line_end": row["line_start"] + len(excerpt) - 1,
+                    "truncated": len(lines) > max_lines,
+                }
+        return rows
 
 
 def find_snippet_symbols(snippets, *, repository_root, build_id):

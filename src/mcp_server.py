@@ -57,7 +57,11 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             "class parents/subclasses. Select the intended symbol_id when "
             "names are ambiguous. Start with 3..5 results and follow only "
             "relationships needed for the question. Use native file reads "
-            "for more context and exact text search when appropriate. "
+            "for a specific evidence gap and exact text search when "
+            "appropriate. For implementation questions, find_symbols can "
+            "include a bounded source excerpt with include_code=true. "
+            "Reuse returned code when sufficient, and stop when the "
+            "answer and citations are supported. "
             "This is a manually indexed, partial static graph; missing "
             "edges do not prove that runtime relationships are absent. "
             "Retrieval checks freshness automatically; use index_status "
@@ -235,12 +239,37 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             ),
         ] = None,
         limit: ResultLimit = 10,
+        include_code: Annotated[
+            bool,
+            Field(
+                description=(
+                    "Include indexed source excerpts for implementation "
+                    "questions, to avoid a separate source read. "
+                    "Use a small limit or path to narrow matches."
+                )
+            ),
+        ] = False,
+        max_lines: Annotated[
+            int,
+            Field(
+                ge=1,
+                le=100,
+                description=(
+                    "Maximum source lines per match (1..100), used only "
+                    "with include_code. Classes are bounded too."
+                ),
+            ),
+        ] = 60,
     ) -> dict[str, Any]:
         """
         Locate a known function, method or class by exact name. Returns
         symbol_ids, kinds, paths and definition ranges. Identical names
         can produce distinct matches; select the intended path and kind
         before a graph query. Use search_code when the name is unknown.
+        Set include_code=true to obtain source during lookup. Each
+        code_excerpt has its own inclusive line range and truncation
+        flag; definition ranges still cover the whole symbol. Reuse
+        sufficient excerpts and inspect more source only for a gap.
         """
         if not name.strip():
             raise ToolError(
@@ -255,7 +284,14 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
                     "path must be relative to the indexed repository"
                 )
             path = candidate.relative_to(repository_root).as_posix()
-        return graph_query("find_symbols", limit, name=name, path=path)
+        return graph_query(
+            "find_symbols",
+            limit,
+            name=name,
+            path=path,
+            include_code=include_code,
+            max_lines=max_lines,
+        )
 
     @server.tool(annotations=read_only)
     def get_callers(

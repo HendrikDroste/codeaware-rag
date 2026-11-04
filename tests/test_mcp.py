@@ -328,7 +328,8 @@ def test_snippet_symbol_mapping_keeps_empty_and_multiple_matches(monkeypatch):
 
 
 @pytest.mark.parametrize("change", ["edit", "add", "delete"])
-def test_retrieval_refuses_stale_sources(build, change):
+@pytest.mark.parametrize("include_code", [False, True])
+def test_retrieval_refuses_stale_sources(build, change, include_code):
     root, directory, config, _, _ = build
     if change == "edit":
         (root / "worker.py").write_text("pass\n")
@@ -338,8 +339,61 @@ def test_retrieval_refuses_stale_sources(build, change):
         (root / "worker.py").unlink()
     server = create_server(root, directory, config)
     assert not data(call(server, "index_status"))["fresh"]
-    result = call(server, "find_symbols", name="first")
+    result = call(
+        server, "find_symbols", name="first", include_code=include_code
+    )
     assert result.is_error and "stale" in str(result.content)
+
+
+@pytest.mark.parametrize(
+    "include_code,max_lines", [(False, 2), (True, 2), (True, 100)]
+)
+def test_symbol_excerpts_preserve_ranges_and_bound_class_code(
+    monkeypatch, include_code, max_lines
+):
+    from src.retrievers import query_graph
+
+    content = (
+        'class Café:\r\n    label = "Grüße"\r\n'
+        '    def run(self):\r\n        return self.label'
+    )
+    symbol = {
+        "symbol_id": "example.py:10:Café",
+        "kind": "class",
+        "path": "example.py",
+        "line_start": 10,
+        "line_end": 13,
+    }
+    driver = MagicMock()
+    session = driver.session.return_value.__enter__.return_value
+    session.run.side_effect = [
+        Mock(single=Mock(return_value={"i": {}})),
+        [{**symbol, "source_content": content if include_code else None}],
+    ]
+    monkeypatch.setattr(
+        query_graph, "graph_connection", lambda: (driver, "neo4j")
+    )
+    rows = query_graph.find_symbols(
+        "Café",
+        repository_root="/repo",
+        build_id="test",
+        include_code=include_code,
+        max_lines=max_lines,
+    )
+    assert session.run.call_args.kwargs["include_code"] is include_code
+    row = rows[0]
+    assert {key: row[key] for key in symbol} == symbol
+    assert "source_content" not in row
+    if include_code:
+        lines = content.splitlines(keepends=True)[:max_lines]
+        assert row["code_excerpt"] == {
+            "content": "".join(lines),
+            "line_start": 10,
+            "line_end": 10 + len(lines) - 1,
+            "truncated": max_lines < 4,
+        }
+    else:
+        assert row == symbol
 
 
 @pytest.mark.parametrize(
@@ -396,6 +450,25 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
     result = data(call(server, "find_symbols", name="run", limit=2))
     assert result["truncated"] and len(result["results"]) == 2
     assert lookup.call_args.kwargs["limit"] == 3
+    assert lookup.call_args.kwargs["include_code"] is False
+    assert lookup.call_args.kwargs["max_lines"] == 60
+    call(
+        server,
+        "find_symbols",
+        name="run",
+        include_code=True,
+        max_lines=1,
+    )
+    assert lookup.call_args.kwargs["include_code"] is True
+    assert lookup.call_args.kwargs["max_lines"] == 1
+    for invalid in (0, 101):
+        assert call(
+            server,
+            "find_symbols",
+            name="run",
+            include_code=True,
+            max_lines=invalid,
+        ).is_error
     assert (
         data(call(server, "get_callers", symbol_id="known"))["results"] == []
     )
@@ -456,6 +529,11 @@ def test_stdio_discovery_and_errors_do_not_load_models(build):
             assert (
                 schemas["get_callers"]["properties"]["limit"]["default"] == 20
             )
+            symbol_arguments = schemas["find_symbols"]["properties"]
+            assert symbol_arguments["include_code"]["default"] is False
+            assert symbol_arguments["max_lines"]["default"] == 60
+            assert symbol_arguments["max_lines"]["minimum"] == 1
+            assert symbol_arguments["max_lines"]["maximum"] == 100
             status = data(await client.call_tool("index_status", {}))
             assert status["fresh"]
             assert status["tool_description_version"] == (
@@ -544,6 +622,25 @@ def test_real_neo4j_queries_rebuild_and_isolation(
         first = data(
             call(server, "find_symbols", name="first", path="helpers.py")
         )["results"][0]
+        assert "code_excerpt" not in first
+        excerpt = data(
+            call(
+                server,
+                "find_symbols",
+                name="first",
+                path="helpers.py",
+                include_code=True,
+                max_lines=1,
+            )
+        )["results"][0]
+        assert excerpt["symbol_id"] == first["symbol_id"]
+        assert excerpt["line_end"] == first["line_end"]
+        assert excerpt["code_excerpt"] == {
+            "content": "def first():\n",
+            "line_start": 1,
+            "line_end": 1,
+            "truncated": True,
+        }
         callers = data(
             call(server, "get_callers", symbol_id=first["symbol_id"])
         )["results"]
@@ -652,6 +749,18 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                 ],
             )
             async with Client(params) as client:
+                excerpt_result = data(
+                    await client.call_tool(
+                        "find_symbols",
+                        {
+                            "name": "first",
+                            "path": "helpers.py",
+                            "include_code": True,
+                            "max_lines": 1,
+                        },
+                    )
+                )
+                assert excerpt_result["results"][0] == excerpt
                 result = data(
                     await client.call_tool(
                         "get_inheritance", {"symbol_id": child["symbol_id"]}

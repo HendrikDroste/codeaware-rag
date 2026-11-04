@@ -29,7 +29,7 @@ PROMPT = (
     "repository tools. Do not edit files, use the web, inspect other "
     "repositories, or delegate to other agents.\n\n"
 )
-PROMPT_VERSION = "repository-qa-v1"
+PROMPT_VERSION = "repository-qa-v2"
 PROMPTS = {
     "auto": PROMPT,
     "guided": PROMPT
@@ -40,8 +40,13 @@ PROMPTS = {
         "for known names, and graph tools for relevant call or inheritance "
         "relationships. Otherwise use native repository search. Start with "
         "3..5 results and expand only when needed. Follow only relationships "
-        "needed to answer the question. Inspect source where needed, and "
-        "treat missing static edges as incomplete evidence.\n\n"
+        "needed to answer the question. For implementation questions, "
+        "request a bounded source excerpt when symbol lookup offers it. "
+        "Use returned code directly when it supports the answer. Read "
+        "additional source only to resolve a specific evidence gap, such "
+        "as omitted context or truncation. Stop when the answer and "
+        "citations are supported. Treat missing static edges as incomplete "
+        "evidence.\n\n"
     ),
 }
 

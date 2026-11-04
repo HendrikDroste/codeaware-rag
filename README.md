@@ -181,7 +181,7 @@ execution are not exposed.
 | Tool | Result |
 |---|---|
 | `search_code(query, limit=5)` | Ranked snippets with relative paths, inclusive line ranges, retrieval distances and overlapping `symbol_ids` |
-| `find_symbols(name, path=None, limit=10)` | Exact simple or qualified function/method/class matches with IDs, definition locations and `kind` (`function` or `class`) |
+| `find_symbols(name, path=None, limit=10, include_code=False, max_lines=60)` | Exact simple or qualified function/method/class matches with IDs, definition locations, `kind` and optional bounded source excerpts |
 | `get_callers(symbol_id, limit=20)` | Direct resolved callers, their stored function `content` and call-site locations |
 | `get_callees(symbol_id, limit=20)` | Direct resolved callees, their stored function `content` and call-site locations |
 | `get_inheritance(symbol_id, limit=20)` | Direct class parents/subclasses with `relation`, definition locations and `base_index` |
@@ -198,6 +198,33 @@ have no matching symbol. Names can be ambiguous: select the intended ID from
 the returned locations. Caller/callee tools require function or method IDs;
 inheritance requires a class ID. Unknown IDs are errors; known symbols without
 resolved neighbors return empty lists.
+
+For implementation questions, request source during symbol lookup, for example:
+
+```json
+{
+  "name": "App.add_url_rule",
+  "path": "src/flask/sansio/app.py",
+  "limit": 1,
+  "include_code": true,
+  "max_lines": 60
+}
+```
+
+`find_symbols` still returns metadata only by default. With `include_code=true`,
+each match adds `code_excerpt` containing `content`, inclusive `line_start` and
+`line_end`, and `truncated`. The outer definition range continues to describe
+the entire symbol. `max_lines` is 1–100 per match, defaults to 60, and applies
+to classes too. Excerpts start at the indexed `def` or `class` line; preceding
+decorators or other omitted context may require an additional source read.
+Source comes from the existing indexed definition and uses the same freshness
+checks. Reconnect to discover the new parameters; no index rebuild is needed
+for this feature when the existing index is complete and fresh.
+
+Reuse an excerpt when it supports the answer. Read additional code for a
+specific evidence gap, such as truncation, and stop once the answer and
+citations are supported. Smaller result lists help avoid returning code for
+irrelevant matches. These controls bound lines per excerpt, not token usage.
 
 For inheritance, `relation` is `parent` or `subclass`. `base_index` is the
 zero-based position in the child's written base list, not Python's method
