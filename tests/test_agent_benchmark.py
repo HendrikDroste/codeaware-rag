@@ -81,6 +81,74 @@ def test_missing_usage_is_not_zero_and_multiple_turns_are_ambiguous():
     assert summary["reasoning_output_tokens"] is None
 
 
+@pytest.mark.parametrize("encoding", ["snake", "camel", "text"])
+def test_excerpt_usage_counts_successful_calls_and_result_rows(encoding):
+    payload = {
+        "results": [
+            {"code_excerpt": {"content": "one", "truncated": False}},
+            {"code_excerpt": {"content": "two", "truncated": True}},
+        ]
+    }
+    result = {
+        "snake": {"structured_content": payload},
+        "camel": {"structuredContent": payload},
+        "text": {"content": [{"type": "text", "text": json.dumps(payload)}]},
+    }[encoding]
+    item = {
+        "id": "mcp",
+        "type": "mcp_tool_call",
+        "server": "codeaware",
+        "status": "completed",
+        "result": result,
+    }
+    events = [
+        {"type": "item.started", "item": {**item, "status": "in_progress"}},
+        {"type": "item.completed", "item": item},
+    ]
+    summary = benchmark.summarize_events(
+        "\n".join(json.dumps(event) for event in events)
+    )
+    assert summary["mcp_calls"] == summary["code_excerpt_calls"] == 1
+    assert summary["code_excerpts"] == 2
+    assert summary["excerpt_truncations"] == 1
+    assert summary["mcp_errors"] == 0
+
+
+def test_failed_pending_and_foreign_calls_are_not_successful_excerpt_use():
+    result = {
+        "structured_content": {
+            "results": [{"code_excerpt": {"content": "code"}}]
+        }
+    }
+    events = []
+    for index, case in enumerate(
+        ("transport", "snake", "camel", "pending", "foreign")
+    ):
+        item = {
+            "id": str(index),
+            "type": "mcp_tool_call",
+            "server": "other" if case == "foreign" else "codeaware",
+            "status": "completed",
+            "result": {**result},
+        }
+        if case == "transport":
+            item.update(status="failed", error={"message": "Disconnected"})
+        elif case in {"snake", "camel"}:
+            item["result"]["is_error" if case == "snake" else "isError"] = True
+        event_type = "item.completed"
+        if case == "pending":
+            item["status"] = "in_progress"
+            event_type = "item.started"
+        events.append({"type": event_type, "item": item})
+    summary = benchmark.summarize_events(
+        "\n".join(json.dumps(event) for event in events)
+    )
+    assert summary["mcp_calls"] == 5
+    assert summary["mcp_errors"] == 3
+    assert summary["code_excerpt_calls"] == summary["code_excerpts"] == 0
+    assert summary["excerpt_truncations"] == 0
+
+
 @pytest.mark.parametrize(
     "usage",
     [
@@ -175,8 +243,9 @@ def test_run_keeps_raw_traces_and_failed_usage_unknown(
 
 @pytest.mark.parametrize("stale", [False, True])
 @pytest.mark.parametrize("tool_policy", ["auto", "guided"])
+@pytest.mark.parametrize("repeats", [1, 3])
 def test_paired_runner_exports_usage_and_alternates_order(
-    tmp_path, monkeypatch, stale, tool_policy
+    tmp_path, monkeypatch, stale, tool_policy, repeats
 ):
     repository = tmp_path / "repo"
     repository.mkdir()
@@ -230,6 +299,8 @@ def test_paired_runner_exports_usage_and_alternates_order(
         "explicit-model",
         "--tool-policy",
         tool_policy,
+        "--repeats",
+        str(repeats),
         "--questions",
         "1",
         "2",
@@ -242,11 +313,28 @@ def test_paired_runner_exports_usage_and_alternates_order(
     assert calls == (
         ["baseline"]
         if stale
-        else ["baseline", "codeaware", "codeaware", "baseline"]
+        else (
+            ["baseline", "codeaware", "codeaware", "baseline"]
+            if repeats == 1
+            else [
+                "baseline",
+                "codeaware",
+                "codeaware",
+                "baseline",
+                "codeaware",
+                "baseline",
+                "baseline",
+                "codeaware",
+                "baseline",
+                "codeaware",
+                "codeaware",
+                "baseline",
+            ]
+        )
     )
     with (output / "usage.csv").open(newline="") as stream:
         rows = list(csv.DictReader(stream))
-    assert len(rows) == (1 if stale else 4)
+    assert len(rows) == (1 if stale else 4 * repeats)
     assert {row["total_tokens"] for row in rows} == {"120"}
     if stale:
         assert rows[0]["status"] == "invalid_corpus"
@@ -255,6 +343,7 @@ def test_paired_runner_exports_usage_and_alternates_order(
     assert {row["cached_input_tokens"] for row in rows} == {""}
     settings = json.loads((output / "run.json").read_text())
     assert settings["questions"] == [1, 2]
+    assert settings["repeats"] == repeats
     assert settings["prompt_prefix"] == benchmark.PROMPTS[tool_policy]
     assert {row["tool_policy"] for row in rows} == {tool_policy}
     assert {row["prompt_version"] for row in rows} == {
@@ -267,7 +356,11 @@ def test_paired_runner_exports_usage_and_alternates_order(
         benchmark.TOOL_DESCRIPTION_VERSION
     )
     assert prompts[0] == settings["prompt_prefix"] + "first"
-    assert (output / "q01-baseline/prompt.txt").read_text() == prompts[0]
+    first = output / "repeat-01" if repeats > 1 else output
+    assert (first / "q01-baseline/prompt.txt").read_text() == prompts[0]
+    assert {row["repetition"] for row in rows} == (
+        {"1"} if stale else {str(n) for n in range(1, repeats + 1)}
+    )
     if not stale:
         assert prompts[0] == prompts[1]
         assert (

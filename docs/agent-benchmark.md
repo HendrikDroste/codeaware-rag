@@ -127,7 +127,7 @@ description change.
 
 ## Collected data
 
-`usage.csv` has one row per question/condition:
+`usage.csv` has one row per question/condition/repetition:
 
 - `input_tokens`: all input tokens reported by the host.
 - `cached_input_tokens`: the reported cached subset of input tokens.
@@ -138,10 +138,19 @@ description change.
   again to their parent counts.
 - Elapsed wall time, exit status, usage status, command/MCP call counts and
   actual Codeaware call count.
+- `mcp_errors`: calls with transport errors, failed/cancelled status, or MCP
+  `isError`/`is_error` flags. A recovered tool error is still counted even if
+  the host turn succeeds. Host startup failures are recorded by turn status.
+- `code_excerpt_calls`: completed, non-error Codeaware calls returning at
+  least one nonempty `code_excerpt`.
+- `code_excerpts`: number of those returned excerpts; `excerpt_truncations`
+  counts excerpt rows whose `truncated` flag is true. These count returned
+  rows across calls, not unique symbols or proof that the model used the text.
 - Question, model, reasoning effort, CLI version, dataset/repository revision,
   index build identifier and usage metric version.
 - `tool_policy`, `prompt_version` and `tool_description_version`, identifying
   the workflow prompt and server metadata used for the comparison.
+- `tool_metric_version` identifies the excerpt/error accounting rules.
 
 Usage comes from the single `turn.completed` event in the official
 [Codex JSONL output](https://learn.chatgpt.com/docs/non-interactive-mode).
@@ -173,6 +182,20 @@ trial-01/
 `run.json` records the common settings. The traces preserve the raw reported
 usage for inspection. `data/agent_runs/` is ignored by Git; retain selected runs
 deliberately if you want to share them.
+
+`--repeats` defaults to 1. For example, `--questions 11 16 18 --repeats 3`
+performs 18 turns when both variants are selected. All rows go into the same
+`usage.csv`, with a one-based `repetition` column. With multiple repetitions,
+raw turn directories are grouped under `repeat-01/`, `repeat-02/`, etc.; the
+single-repetition layout above remains unchanged. Pair order reverses across
+both questions and repetitions. With three repetitions each question has a
+2:1 split of which condition goes first, rather than perfect balance.
+
+Before spending model tokens, verify a fresh corpus/index and make one actual
+`find_symbols` call with `include_code=true` against the configured Neo4j.
+`index_status` alone does not check backend connectivity. Completed tool items
+are deduplicated by item ID before excerpt/error counting. Structured results
+are preferred; JSON text results are a fallback and are not counted again.
 
 The exact common prompt prefix is saved in `run.json`; each turn also keeps its
 complete `prompt.txt`. Prompt templates and `PROMPT_VERSION` live in

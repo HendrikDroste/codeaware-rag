@@ -297,6 +297,10 @@ data/benchmark_results/2026-11-04-guidance/README.md) recorded MCP use in 0/3
 automatic runs and 3/3 guided runs. Guided Codeaware used more tokens than its
 guided native baseline; the pilot establishes no savings.
 
+New benchmark exports also count successful excerpt-returning calls, excerpt
+rows, truncations and MCP errors. Use `--repeats 3` for repeated pairs with
+per-repetition traces and alternating pair order; the default remains one.
+
 ## Verification
 
 ```bash

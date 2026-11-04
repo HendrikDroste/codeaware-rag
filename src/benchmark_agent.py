@@ -97,6 +97,63 @@ def summarize_events(output):
     summary["codeaware_calls"] = sum(
         item.get("server") == "codeaware" for item in mcp
     )
+    completed_ids = {
+        event["item"]["id"]
+        for event in events
+        if event.get("type") == "item.completed"
+    }
+    summary.update(
+        mcp_errors=0,
+        code_excerpt_calls=0,
+        code_excerpts=0,
+        excerpt_truncations=0,
+    )
+    for item in mcp:
+        result = item.get("result")
+        result = result if isinstance(result, dict) else {}
+        failed = (
+            item.get("error") is not None
+            or item.get("status") in {"failed", "cancelled"}
+            or result.get("is_error") is True
+            or result.get("isError") is True
+        )
+        summary["mcp_errors"] += int(failed)
+        if (
+            failed
+            or item["id"] not in completed_ids
+            or item.get("server") != "codeaware"
+        ):
+            continue
+        payload = result.get("structured_content") or result.get(
+            "structuredContent"
+        )
+        if payload is None:
+            for block in result.get("content", []):
+                if block.get("type") != "text":
+                    continue
+                try:
+                    payload = json.loads(block["text"])
+                except (ValueError, KeyError):
+                    continue
+                if isinstance(payload, dict):
+                    break
+        if not isinstance(payload, dict):
+            continue
+        rows = payload.get("results", [])
+        if not isinstance(rows, list):
+            continue
+        excerpts = [
+            row["code_excerpt"]
+            for row in rows
+            if isinstance(row, dict)
+            and isinstance(row.get("code_excerpt"), dict)
+            and row["code_excerpt"].get("content")
+        ]
+        summary["code_excerpt_calls"] += int(bool(excerpts))
+        summary["code_excerpts"] += len(excerpts)
+        summary["excerpt_truncations"] += sum(
+            excerpt.get("truncated") is True for excerpt in excerpts
+        )
     messages = [
         event["item"].get("text", "")
         for event in events
@@ -223,6 +280,7 @@ def main(argv=None):
     parser.add_argument("--model", required=True)
     parser.add_argument("--codex", default="codex")
     parser.add_argument("--questions", nargs="+", type=int, default=[16])
+    parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument(
         "--variant", choices=("baseline", "codeaware", "both"), default="both"
     )
@@ -243,11 +301,13 @@ def main(argv=None):
     args.config = args.config.resolve(strict=True)
     args.output_dir = args.output_dir.resolve()
     data = load_benchmark(args.benchmark, args.repo)
-    if args.timeout < 1 or any(
-        not 1 <= number <= len(data) for number in args.questions
+    if (
+        args.timeout < 1
+        or args.repeats < 1
+        or any(not 1 <= number <= len(data) for number in args.questions)
     ):
         parser.error(
-            "Use a positive timeout and valid one-based question numbers"
+            "Use positive timeout/repeats and valid one-based questions"
         )
     if len(set(args.questions)) != len(args.questions):
         parser.error("Question numbers must be unique")
@@ -276,33 +336,44 @@ def main(argv=None):
         "codex_version": version,
         "index_build_id": build_id,
         "usage_metric_version": "codex-turn-usage-v1",
+        "tool_metric_version": "codeaware-tool-usage-v1",
         "tool_policy": args.tool_policy,
         "prompt_version": PROMPT_VERSION,
         "tool_description_version": TOOL_DESCRIPTION_VERSION,
         "timeout_seconds": args.timeout,
         "questions": args.questions,
+        "repeats": args.repeats,
         "prompt_prefix": PROMPTS[args.tool_policy],
     }
     (args.output_dir / "run.json").write_text(
         json.dumps(metadata, indent=2) + "\n"
     )
     rows = []
-    for pair, number in enumerate(args.questions):
+    schedule = [
+        (repeat, pair, number)
+        for repeat in range(args.repeats)
+        for pair, number in enumerate(args.questions)
+    ]
+    for repeat, pair, number in schedule:
         variants = (
             ["baseline", "codeaware"]
             if args.variant == "both"
             else [args.variant]
         )
-        if pair % 2:
-            # Alternate which condition runs first across questions.
+        if (pair + repeat) % 2:
+            # Reverse pair order across questions and repetitions.
             variants.reverse()
+        directory = args.output_dir
+        if args.repeats > 1:
+            directory = directory / f"repeat-{repeat + 1:02d}"
+            directory.mkdir(exist_ok=True)
         for variant in variants:
             load_benchmark(args.benchmark, args.repo)
             row = run_question(
                 args,
                 variant,
                 data.iloc[number - 1]["Question"],
-                args.output_dir / f"q{number:02d}-{variant}",
+                directory / f"q{number:02d}-{variant}",
             )
             try:
                 load_benchmark(args.benchmark, args.repo)
@@ -310,6 +381,7 @@ def main(argv=None):
                 row.update(status="invalid_corpus", corpus_error=str(exc))
             row.update(
                 question_id=number,
+                repetition=repeat + 1,
                 question=data.iloc[number - 1]["Question"],
                 **{
                     key: value
@@ -328,7 +400,7 @@ def main(argv=None):
             if "corpus_error" in row:
                 raise ValueError(row["corpus_error"])
             print(
-                f"Q{number} {variant}: {row['status']}, "
+                f"R{repeat + 1} Q{number} {variant}: {row['status']}, "
                 f"usage={row['usage_status']}",
                 flush=True,
             )
