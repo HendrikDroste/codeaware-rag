@@ -233,3 +233,10 @@ A subsequent [three-question guidance pilot](
 with the versioned descriptions and both prompt modes. Automatic runs made no
 MCP calls; all three guided Codeaware runs did, with 10 successful calls. Token
 usage increased relative to the guided native baseline in that small sample.
+
+The [three-repetition excerpt benchmark](
+../data/benchmark_results/2026-11-05-excerpts-guided/README.md) records 18
+successful turns on questions 11, 16 and 18 with the current prompt/tool
+versions and excerpt/error counters. Codeaware delivered 25 excerpts with
+zero MCP errors but used more total tokens overall. Its checklist, per-pair
+variation and limited quality review are preserved in that report.

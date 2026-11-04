@@ -1,0 +1,13 @@
+{
+  "source_commit": "70d58de57814cbefdc4414e077b34fd9b6923d37",
+  "recorded_at_utc": "2026-11-04T23:01:16.116769+00:00",
+  "rubric_sha256": "029bd28c92d0c6adcc4792a9c86fb6fbfea20fc2edb13672cec4476919811bfd",
+  "source_files_sha256": {
+    "src/benchmark_agent.py": "03bd30b3cca34371dc31aa59b5521d9731c72178bc99800ea0528bcea21405f2",
+    "src/mcp_server.py": "927754206e0d5ea123122062fffd37decc73424d259f7ff1c4c6ea811c2eed66",
+    "src/retrievers/query_graph.py": "2f5ea005085c7e2cad199ca00a8f373ab15241bceb680342ba354a232916cc49",
+    "src/index_state.py": "a72d46c77c18bf8935e62d151aa0712247ac30fa9d591ba165efb40fc1287959"
+  },
+  "raw_directory": "data/agent_runs/2026-11-05-excerpts-guided",
+  "scope": "Three repetitions of guided baseline/Codeaware pairs for questions 11, 16 and 18. This evaluates excerpts plus updated prompt guidance together."
+}

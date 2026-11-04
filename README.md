@@ -300,6 +300,10 @@ guided native baseline; the pilot establishes no savings.
 New benchmark exports also count successful excerpt-returning calls, excerpt
 rows, truncations and MCP errors. Use `--repeats 3` for repeated pairs with
 per-repetition traces and alternating pair order; the default remains one.
+The [repeated excerpt benchmark](
+data/benchmark_results/2026-11-05-excerpts-guided/README.md) completed 18 turns
+with zero MCP errors. Codeaware returned excerpts in six of nine turns and
+used 28.34% more total tokens overall; no overall quality gain is established.
 
 ## Verification
 

@@ -1,0 +1,51 @@
+{
+  "index_status": {
+    "repository": "/Users/hendrikdroste/PycharmProjects/flask",
+    "build_id": "19dddedc-b63d-4410-bdf0-79213658ea46",
+    "tool_description_version": "source-excerpts-v3",
+    "built_at": "2026-11-04T21:57:29.762334+00:00",
+    "embeddings": {
+      "name": "Lajavaness/bilingual-embedding-large",
+      "vendor": "huggingface",
+      "type": "sentence-transformers"
+    },
+    "counts": {
+      "files": 83,
+      "symbols": 1622,
+      "calls": 779,
+      "unresolved_calls": 1407,
+      "ambiguous_calls": 50,
+      "external_calls": 1431,
+      "out_of_scope_calls": 237,
+      "classes": 160,
+      "inheritance_edges": 76,
+      "unresolved_bases": 50,
+      "chunks": 933
+    },
+    "fresh": true,
+    "reconnect_required": false,
+    "note": "Partial static call graph. Rebuild with python -m src.index_repository, then reconnect the MCP server."
+  },
+  "symbol_lookup": {
+    "build_id": "19dddedc-b63d-4410-bdf0-79213658ea46",
+    "results": [
+      {
+        "symbol_id": "src/flask/sansio/app.py:606:App.add_url_rule",
+        "name": "add_url_rule",
+        "qualified_name": "App.add_url_rule",
+        "kind": "function",
+        "path": "src/flask/sansio/app.py",
+        "line_start": 606,
+        "line_end": 662,
+        "code_excerpt": {
+          "content": "    def add_url_rule(\n        self,\n        rule: str,\n",
+          "line_start": 606,
+          "line_end": 608,
+          "truncated": true
+        }
+      }
+    ],
+    "truncated": false
+  },
+  "source_matches": true
+}

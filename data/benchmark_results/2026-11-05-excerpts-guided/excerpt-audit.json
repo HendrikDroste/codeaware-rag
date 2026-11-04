@@ -1,0 +1,255 @@
+{
+  "checked_excerpts": 25,
+  "excerpts": [
+    {
+      "repetition": 1,
+      "question_id": 11,
+      "symbol_id": "src/flask/blueprints.py:18:Blueprint",
+      "path": "src/flask/blueprints.py",
+      "line_start": 18,
+      "line_end": 42,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 1,
+      "question_id": 11,
+      "symbol_id": "src/flask/sansio/blueprints.py:119:Blueprint",
+      "path": "src/flask/sansio/blueprints.py",
+      "line_start": 119,
+      "line_end": 143,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 1,
+      "question_id": 11,
+      "symbol_id": "src/flask/sansio/scaffold.py:52:Scaffold",
+      "path": "src/flask/sansio/scaffold.py",
+      "line_start": 52,
+      "line_end": 69,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 1,
+      "question_id": 11,
+      "symbol_id": "tests/test_blueprints.py:222:test_default_static_max_age.MyBlueprint",
+      "path": "tests/test_blueprints.py",
+      "line_start": 222,
+      "line_end": 224,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 2,
+      "question_id": 11,
+      "symbol_id": "tests/test_blueprints.py:222:test_default_static_max_age.MyBlueprint",
+      "path": "tests/test_blueprints.py",
+      "line_start": 222,
+      "line_end": 224,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 2,
+      "question_id": 11,
+      "symbol_id": "src/flask/blueprints.py:18:Blueprint",
+      "path": "src/flask/blueprints.py",
+      "line_start": 18,
+      "line_end": 42,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 2,
+      "question_id": 11,
+      "symbol_id": "src/flask/sansio/blueprints.py:119:Blueprint",
+      "path": "src/flask/sansio/blueprints.py",
+      "line_start": 119,
+      "line_end": 143,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 2,
+      "question_id": 11,
+      "symbol_id": "src/flask/sansio/scaffold.py:52:Scaffold",
+      "path": "src/flask/sansio/scaffold.py",
+      "line_start": 52,
+      "line_end": 69,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 2,
+      "question_id": 18,
+      "symbol_id": "src/flask/app.py:1562:Flask.request_context",
+      "path": "src/flask/app.py",
+      "line_start": 1562,
+      "line_end": 1576,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 2,
+      "question_id": 18,
+      "symbol_id": "src/flask/ctx.py:340:AppContext.from_environ",
+      "path": "src/flask/ctx.py",
+      "line_start": 340,
+      "line_end": 348,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 2,
+      "question_id": 18,
+      "symbol_id": "src/flask/app.py:1627:Flask.wsgi_app",
+      "path": "src/flask/app.py",
+      "line_start": 1627,
+      "line_end": 1677,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 11,
+      "symbol_id": "src/flask/blueprints.py:18:Blueprint",
+      "path": "src/flask/blueprints.py",
+      "line_start": 18,
+      "line_end": 42,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 11,
+      "symbol_id": "src/flask/sansio/blueprints.py:119:Blueprint",
+      "path": "src/flask/sansio/blueprints.py",
+      "line_start": 119,
+      "line_end": 143,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 11,
+      "symbol_id": "src/flask/sansio/scaffold.py:52:Scaffold",
+      "path": "src/flask/sansio/scaffold.py",
+      "line_start": 52,
+      "line_end": 69,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 16,
+      "symbol_id": "src/flask/sansio/app.py:606:App.add_url_rule",
+      "path": "src/flask/sansio/app.py",
+      "line_start": 606,
+      "line_end": 662,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 16,
+      "symbol_id": "src/flask/sansio/blueprints.py:87:BlueprintSetupState.add_url_rule",
+      "path": "src/flask/sansio/blueprints.py",
+      "line_start": 87,
+      "line_end": 116,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 16,
+      "symbol_id": "src/flask/sansio/blueprints.py:413:Blueprint.add_url_rule",
+      "path": "src/flask/sansio/blueprints.py",
+      "line_start": 413,
+      "line_end": 441,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 16,
+      "symbol_id": "src/flask/sansio/scaffold.py:376:Scaffold.add_url_rule",
+      "path": "src/flask/sansio/scaffold.py",
+      "line_start": 376,
+      "line_end": 441,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 16,
+      "symbol_id": "src/flask/sansio/scaffold.py:344:Scaffold.route",
+      "path": "src/flask/sansio/scaffold.py",
+      "line_start": 344,
+      "line_end": 373,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 16,
+      "symbol_id": "src/flask/sansio/scaffold.py:709:_endpoint_from_view_func",
+      "path": "src/flask/sansio/scaffold.py",
+      "line_start": 709,
+      "line_end": 714,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 16,
+      "symbol_id": "src/flask/app.py:993:Flask.dispatch_request",
+      "path": "src/flask/app.py",
+      "line_start": 993,
+      "line_end": 1021,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 18,
+      "symbol_id": "src/flask/app.py:1627:Flask.wsgi_app",
+      "path": "src/flask/app.py",
+      "line_start": 1627,
+      "line_end": 1677,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 18,
+      "symbol_id": "src/flask/app.py:1562:Flask.request_context",
+      "path": "src/flask/app.py",
+      "line_start": 1562,
+      "line_end": 1576,
+      "truncated": false,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 18,
+      "symbol_id": "src/flask/ctx.py:260:AppContext",
+      "path": "src/flask/ctx.py",
+      "line_start": 260,
+      "line_end": 359,
+      "truncated": true,
+      "matches_source": true
+    },
+    {
+      "repetition": 3,
+      "question_id": 18,
+      "symbol_id": "src/flask/app.py:1679:Flask.__call__",
+      "path": "src/flask/app.py",
+      "line_start": 1679,
+      "line_end": 1686,
+      "truncated": false,
+      "matches_source": true
+    }
+  ]
+}
