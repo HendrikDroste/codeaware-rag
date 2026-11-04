@@ -441,7 +441,26 @@ def test_stdio_discovery_and_errors_do_not_load_models(build):
                 "index_status",
             }
             assert all(t.annotations.read_only_hint for t in tools.tools)
-            assert data(await client.call_tool("index_status", {}))["fresh"]
+            schemas = {
+                t.name: t.model_dump(by_alias=True)["inputSchema"]
+                for t in tools.tools
+            }
+            for schema in schemas.values():
+                assert all(
+                    parameter.get("description")
+                    for parameter in schema.get("properties", {}).values()
+                )
+            assert (
+                schemas["search_code"]["properties"]["limit"]["default"] == 5
+            )
+            assert (
+                schemas["get_callers"]["properties"]["limit"]["default"] == 20
+            )
+            status = data(await client.call_tool("index_status", {}))
+            assert status["fresh"]
+            assert status["tool_description_version"] == (
+                index_state.TOOL_DESCRIPTION_VERSION
+            )
             assert (
                 await client.call_tool(
                     "search_code", {"query": "first", "limit": 0}

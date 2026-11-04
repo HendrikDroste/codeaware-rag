@@ -8,7 +8,11 @@ import sys
 import time
 from pathlib import Path
 
-from src.index_state import DEFAULT_CONFIG, read_manifest
+from src.index_state import (
+    DEFAULT_CONFIG,
+    TOOL_DESCRIPTION_VERSION,
+    read_manifest,
+)
 from src.retrievers.validate_retriever import load_benchmark
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -25,6 +29,21 @@ PROMPT = (
     "repository tools. Do not edit files, use the web, inspect other "
     "repositories, or delegate to other agents.\n\n"
 )
+PROMPT_VERSION = "repository-qa-v1"
+PROMPTS = {
+    "auto": PROMPT,
+    "guided": PROMPT
+    + (
+        "When specialized repository-context tools are available, prefer "
+        "them for initial discovery and relationship queries. Use semantic "
+        "search when implementation names are unknown, exact symbol lookup "
+        "for known names, and graph tools for relevant call or inheritance "
+        "relationships. Otherwise use native repository search. Start with "
+        "3..5 results and expand only when needed. Follow only relationships "
+        "needed to answer the question. Inspect source where needed, and "
+        "treat missing static edges as incomplete evidence.\n\n"
+    ),
+}
 
 
 def summarize_events(output):
@@ -138,11 +157,12 @@ def command(args, variant):
 def run_question(args, variant, question, directory):
     """Keep raw logs even if the host fails or omits token usage."""
     directory.mkdir()
+    prompt = PROMPTS[args.tool_policy] + question
     started = time.monotonic()
     try:
         process = subprocess.run(
             command(args, variant),
-            input=PROMPT + question,
+            input=prompt,
             capture_output=True,
             text=True,
             timeout=args.timeout,
@@ -169,7 +189,7 @@ def run_question(args, variant, question, directory):
         code, status = None, "timeout"
     (directory / "events.jsonl").write_text(output, encoding="utf-8")
     (directory / "stderr.log").write_text(errors, encoding="utf-8")
-    (directory / "prompt.txt").write_text(PROMPT + question, encoding="utf-8")
+    (directory / "prompt.txt").write_text(prompt, encoding="utf-8")
     try:
         summary = summarize_events(output)
     except (ValueError, KeyError, TypeError, AttributeError) as exc:
@@ -200,6 +220,12 @@ def main(argv=None):
     parser.add_argument("--questions", nargs="+", type=int, default=[16])
     parser.add_argument(
         "--variant", choices=("baseline", "codeaware", "both"), default="both"
+    )
+    parser.add_argument(
+        "--tool-policy",
+        choices=("auto", "guided"),
+        default="auto",
+        help="Neutral tool choice (auto) or conditional workflow guidance",
     )
     parser.add_argument(
         "--reasoning-effort",
@@ -245,9 +271,12 @@ def main(argv=None):
         "codex_version": version,
         "index_build_id": build_id,
         "usage_metric_version": "codex-turn-usage-v1",
+        "tool_policy": args.tool_policy,
+        "prompt_version": PROMPT_VERSION,
+        "tool_description_version": TOOL_DESCRIPTION_VERSION,
         "timeout_seconds": args.timeout,
         "questions": args.questions,
-        "prompt_prefix": PROMPT,
+        "prompt_prefix": PROMPTS[args.tool_policy],
     }
     (args.output_dir / "run.json").write_text(
         json.dumps(metadata, indent=2) + "\n"

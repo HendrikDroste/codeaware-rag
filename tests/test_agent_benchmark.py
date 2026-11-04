@@ -103,6 +103,7 @@ def args(tmp_path):
         index_dir=tmp_path / "index",
         config=tmp_path / "config.yaml",
         reasoning_effort="medium",
+        tool_policy="auto",
         timeout=1,
     )
 
@@ -173,8 +174,9 @@ def test_run_keeps_raw_traces_and_failed_usage_unknown(
 
 
 @pytest.mark.parametrize("stale", [False, True])
+@pytest.mark.parametrize("tool_policy", ["auto", "guided"])
 def test_paired_runner_exports_usage_and_alternates_order(
-    tmp_path, monkeypatch, stale
+    tmp_path, monkeypatch, stale, tool_policy
 ):
     repository = tmp_path / "repo"
     repository.mkdir()
@@ -197,6 +199,7 @@ def test_paired_runner_exports_usage_and_alternates_order(
         benchmark, "read_manifest", lambda *args: {"build_id": "build"}
     )
     calls = []
+    prompts = []
 
     def execute(command, **kwargs):
         if "--version" in command:
@@ -205,6 +208,7 @@ def test_paired_runner_exports_usage_and_alternates_order(
             value.startswith("mcp_servers.codeaware=") for value in command
         )
         calls.append("codeaware" if enhanced else "baseline")
+        prompts.append(kwargs["input"])
         return SimpleNamespace(
             stdout=trace(
                 {"input_tokens": 100, "output_tokens": 20}, mcp=enhanced
@@ -224,6 +228,8 @@ def test_paired_runner_exports_usage_and_alternates_order(
         str(output),
         "--model",
         "explicit-model",
+        "--tool-policy",
+        tool_policy,
         "--questions",
         "1",
         "2",
@@ -247,4 +253,23 @@ def test_paired_runner_exports_usage_and_alternates_order(
     assert {row["model"] for row in rows} == {"explicit-model"}
     assert {row["revision"] for row in rows} == {"pinned"}
     assert {row["cached_input_tokens"] for row in rows} == {""}
-    assert json.loads((output / "run.json").read_text())["questions"] == [1, 2]
+    settings = json.loads((output / "run.json").read_text())
+    assert settings["questions"] == [1, 2]
+    assert settings["prompt_prefix"] == benchmark.PROMPTS[tool_policy]
+    assert {row["tool_policy"] for row in rows} == {tool_policy}
+    assert {row["prompt_version"] for row in rows} == {
+        settings["prompt_version"]
+    }
+    assert {row["tool_description_version"] for row in rows} == {
+        benchmark.TOOL_DESCRIPTION_VERSION
+    }
+    assert settings["tool_description_version"] == (
+        benchmark.TOOL_DESCRIPTION_VERSION
+    )
+    assert prompts[0] == settings["prompt_prefix"] + "first"
+    assert (output / "q01-baseline/prompt.txt").read_text() == prompts[0]
+    if not stale:
+        assert prompts[0] == prompts[1]
+        assert (
+            prompts[2] == prompts[3] == (settings["prompt_prefix"] + "second")
+        )

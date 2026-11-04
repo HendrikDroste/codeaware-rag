@@ -43,6 +43,7 @@ python -m src.benchmark_agent \
   --index-dir /absolute/path/to/codeaware-index \
   --model YOUR_CODEX_MODEL \
   --questions 16 \
+  --tool-policy auto \
   --output-dir data/agent_runs/trial-01
 ```
 
@@ -68,6 +69,45 @@ running multiple questions, which condition runs first alternates across them.
 For repeats, use new directories and inspect variation rather than relying on
 one pair. This does not eliminate shared provider-cache or order effects.
 
+## Tool-selection modes
+
+`--tool-policy auto` is the default. It preserves the original neutral prompt:
+the agent may use any available repository tools. Use this mode to measure
+whether it chooses Codeaware with the current tool descriptions.
+
+`--tool-policy guided` adds the same conditional workflow guidance to both
+conditions. It asks the agent to prefer specialized repository-context tools
+when available, choose semantic search for unknown implementation names, use
+exact symbol lookup for known names, and follow relevant call or inheritance
+relationships. Native search remains available, including as the baseline's
+fallback when specialized tools are absent. Start with 3..5 results and expand
+when needed; neither mode requires calling every tool or mandates an MCP call.
+
+For a small pilot, run questions 11, 16 and 18 in `auto`, then repeat with
+`--tool-policy guided` and a new output directory:
+
+```bash
+python -m src.benchmark_agent \
+  --repo /absolute/path/to/flask \
+  --index-dir /absolute/path/to/codeaware-index \
+  --model YOUR_CODEX_MODEL \
+  --questions 11 16 18 \
+  --tool-policy guided \
+  --output-dir data/agent_runs/guided-trial-01
+```
+
+Each three-question paired run makes six model-backed turns. Compare baseline
+and Codeaware within the same mode first. Comparing modes changes the workflow
+instructions too, so it does not isolate the effect of tool metadata. Do not
+treat zero MCP calls as a retrieval-quality score, or an MCP call as proof of
+an improved answer. Check adoption, correctness, usage and tool errors together.
+
+Tool selection guidance lives in `src/mcp_server.py`: server instructions,
+tool docstrings and parameter descriptions. Metadata changes require a fresh
+connection to rediscover tools; they do not require rebuilding embeddings or
+the graph. The CLI starts a new server for each Codeaware turn. Keep backend
+logic and corpus fixed when testing a description change.
+
 ## Collected data
 
 `usage.csv` has one row per question/condition:
@@ -83,6 +123,8 @@ one pair. This does not eliminate shared provider-cache or order effects.
   actual Codeaware call count.
 - Question, model, reasoning effort, CLI version, dataset/repository revision,
   index build identifier and usage metric version.
+- `tool_policy`, `prompt_version` and `tool_description_version`, identifying
+  the workflow prompt and server metadata used for the comparison.
 
 Usage comes from the single `turn.completed` event in the official
 [Codex JSONL output](https://learn.chatgpt.com/docs/non-interactive-mode).
@@ -114,6 +156,16 @@ trial-01/
 `run.json` records the common settings. The traces preserve the raw reported
 usage for inspection. `data/agent_runs/` is ignored by Git; retain selected runs
 deliberately if you want to share them.
+
+The exact common prompt prefix is saved in `run.json`; each turn also keeps its
+complete `prompt.txt`. Prompt templates and `PROMPT_VERSION` live in
+`src/benchmark_agent.py`. `TOOL_DESCRIPTION_VERSION` lives with the shared
+constants in `src/index_state.py` and is also exposed by `index_status`.
+Increment the corresponding version when changing a template, server
+instructions, tool docstrings or parameter descriptions. Historical artifacts
+retain their original metadata; older runs without these fields are not
+silently relabelled. The description version on a baseline row identifies the
+paired setup, even though that condition has no Codeaware tools.
 
 ## Interpreting the comparison
 

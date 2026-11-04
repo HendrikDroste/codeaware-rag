@@ -25,6 +25,7 @@ EXCLUDE_DIRS = {
 }
 COLLECTION = "codeaware_mcp"
 GRAPH_SCHEMA = 2  # Class symbols and direct inheritance relationships.
+TOOL_DESCRIPTION_VERSION = "selection-guidance-v2"
 REBUILD = (
     "Rebuild with python -m src.index_repository, then reconnect the MCP "
     "server."

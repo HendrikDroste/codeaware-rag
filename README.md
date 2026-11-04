@@ -260,6 +260,12 @@ run, so the comparison establishes a baseline without demonstrating a Codeaware
 benefit. A separate tool-directed walkthrough successfully exercised all six
 MCP tool types. No token savings or business impact are established.
 
+Use `--tool-policy auto` (default) to measure voluntary tool selection, or
+`--tool-policy guided` to encourage relevant specialized tools when available.
+Both conditions receive the same prompt within each mode. New runs record the
+mode, prompt version and tool-description version; see the
+[prompt-mode instructions](docs/agent-benchmark.md#tool-selection-modes).
+
 ## Verification
 
 ```bash

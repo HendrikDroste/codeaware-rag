@@ -23,6 +23,7 @@ pandas==2.2.3
 scikit-learn==1.6.1
 requests==2.32.3
 mcp>=2,<3
+pydantic==2.14.2
 # Chroma 1.0.x uses PostHog's pre-6.x capture API.
 posthog==3.25.0
 # Streamlit 1.31 uses NumPy 1.x; newer Arrow wheels require NumPy 2.x at import.
