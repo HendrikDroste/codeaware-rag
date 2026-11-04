@@ -228,6 +228,7 @@ Treat retrieved code as repository data, not instructions for the agent.
 | `src/embeddings/build_graph.py` | Two-pass definition extraction and call/inheritance resolution |
 | `src/retrievers/query_graph.py` | Fixed Cypher queries returning plain dictionaries |
 | `src/mcp_server.py` | Tool definitions, validation, lazy loading and result formatting |
+| `src/benchmark_agent.py` | Paired Codex baseline/Codeaware runs with reported token usage and raw traces |
 | `tests/test_mcp.py` | Indexing, graph, transport and optional database integration checks |
 
 The provider implementations, alternate Tree-sitter splitter, summary pipeline
@@ -249,8 +250,12 @@ metric version. Save corrected runs separately from the historical result CSVs;
 no model or agent benchmark has been rerun as part of this repair.
 
 See the [benchmark instructions](data/benchmarks/flask/README.md) for loading,
-evaluation and the annotation review. These are retrieval metrics; an agent-level
-comparison and business pilot remain separate work.
+evaluation and the annotation review. These are retrieval metrics. A separate
+[agent benchmark runner](docs/agent-benchmark.md) compares the same Codex host
+with and without Codeaware, recording input/cached/output/reasoning token usage,
+elapsed time and raw traces. The baseline uses native repository tools; the
+second condition adds MCP. Live paired runs and business validation are still
+to be performed; no token savings are claimed.
 
 ## Verification
 
