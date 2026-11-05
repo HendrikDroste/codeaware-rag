@@ -1,0 +1,30 @@
+{
+  "source_commit": "e80f52183506e9be6d6d4145ab61dfb0961b1279",
+  "recorded_at_utc": "2026-11-05T07:32:27.893585+00:00",
+  "source_files_sha256": {
+    "src/index_repository.py": "4d859bab8d740906e1664a5e2846cb0074a722eb5ba23fc3e25bf32ee7ef3ccf",
+    "src/neo4j_connection.py": "34838511a1af2d4e63e832eddb8d0bd3f2635e3341496ff709d25967bfd30fb6",
+    "src/index_state.py": "648176e14a203c17d42937877f11948d41fd02d0e51c6f23377d2ec45c63847f",
+    "src/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/utils.py": "7dc7fc80583f1c2d8581dae80dcff6829d861a9b06a1b611f528b0b42738cf85",
+    "src/benchmark_agent.py": "e6d4d81f5f426b344c5af92e51954459a5e6f0d0fb6b66ecb775f46c39c4a132",
+    "src/mcp_server.py": "b37872e315ba915d6e08cbcb21674f618aca3bad7399f414ed050362d07cc0e9",
+    "src/retrievers/metrics.py": "2ca27b33002a28a70298a22513f47738ef4eb57cbb2036989f1753348f13ff31",
+    "src/retrievers/query_graph.py": "19fb40c2c98578190809955e2f2c5e21e5679bf420fa5e2b6929156d545d593c",
+    "src/retrievers/validate_retriever.py": "59cef1d108250722216612049027ad27a0722702667a6d5d9b745de71e9cbf95",
+    "src/retrievers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/embeddings/embedding_factory.py": "5ecbc0d0c80da68fd2ba78f55b5c9b6c7519fb17c24bd7c0e7d6445021caf2bc",
+    "src/embeddings/base_embedding_provider.py": "09b67a6251b8feec7ec0233236a3f6255f7d916e09f13e3476683ebe4817e7e9",
+    "src/embeddings/__init__.py": "9783bc9df0df72dfe2031030d6c4bc6d38f8a4c73f74f97c151e62f6f4944872",
+    "src/embeddings/build_graph.py": "218ab89036764779394191b9f4d6e241136ced772f488177bb0d7be7b74069b2",
+    "src/embeddings/file_processor.py": "f63ff31c7828c0bff1d95889f74119e5ab33e6ed11c0fa328b080955d67b6b3c",
+    "src/embeddings/providers.py": "a9d66769389944ba1797fdf273c290b549277bd166c16aa32eb152bcc4d3aff6",
+    "src/embeddings/utils.py": "1e93fb801f36cb54faf57eedbc5e31961bd78f70054e3103e4ef11612a6ac652",
+    "src/embeddings/tree_sitter_split.py": "43d0eca0e20dfbe278f350a3ac151e83f8137b109cdc9ef1baad6c236ecd1e48",
+    "src/pipelines/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/pipelines/embedding_pipeline.py": "8876fad2734d1ece7f3f57a901ab7e6c1e26a75daf879d9d16617124bead78ec",
+    "src/pipelines/base_pipeline.py": "e27e093be059eb8df8f7e5fa5751b4318a205bac4fc55d3a709c848b5f3ab772",
+    "src/pipelines/embedding_summary_pipeline.py": "2bb919b03bad8206088fd10cba2ac4f2a018b3edef02fe8882a7d00a7824ab22"
+  },
+  "scope": "All 18 questions, both conditions, low reasoning, one observation per condition. Guided prompt and index unchanged from preceding medium run."
+}

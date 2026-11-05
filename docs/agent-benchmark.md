@@ -253,3 +253,10 @@ zero native command calls but used 15.46% more total tokens than its new
 baseline. No agent selected `get_imports`; no overall answer-quality
 improvement is established. The report includes all answers, a manual review,
 source/excerpt checks and an audit of unknown tool arguments.
+
+The [full low-reasoning run](../data/benchmark_results/2026-11-05-low-full-guided/README.md)
+uses `--reasoning-effort low --repeats 1` with questions 1 through 18 in guided
+mode. All 36 turns completed and reported usage. Codeaware used 17.85% more
+total tokens and fewer tokens in 6/18 pairs, with no reported MCP errors.
+Answers remain ungraded; this is not a like-for-like aggregate comparison
+with the three-question repeated medium batch.

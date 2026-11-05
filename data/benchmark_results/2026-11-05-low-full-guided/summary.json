@@ -1,0 +1,201 @@
+{
+  "settings": {
+    "dataset_id": "flask-49943b5a-v2",
+    "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+    "metric_version": "unique-line-coverage-v2",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "low",
+    "codex_version": "codex-cli 0.166.0-alpha.6",
+    "index_build_id": "a1670bcd-c98a-48f3-9ab5-f687f093015e",
+    "usage_metric_version": "codex-turn-usage-v1",
+    "tool_metric_version": "codeaware-tool-usage-v1",
+    "tool_policy": "guided",
+    "prompt_version": "repository-qa-v3",
+    "tool_description_version": "imports-v5",
+    "timeout_seconds": 300,
+    "questions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "repeats": 1,
+    "prompt_prefix": "Answer this question about the local repository. Cite source paths and line numbers, and state any uncertainty. You may use the available repository tools. Do not edit files, use the web, inspect other repositories, or delegate to other agents.\n\nWhen specialized repository-context tools are available, prefer them for initial discovery and relationship queries. Use semantic search when implementation names are unknown, exact symbol lookup for known names, and graph tools for relevant call or inheritance relationships. Otherwise use native repository search. Start with 3..5 results and expand only when needed. Follow only relationships needed to answer the question. When implementation code is needed, request find_symbols with include_code=true in the initial lookup; the parameter is include_code, not include_source. Codeaware's returned code is indexed source with freshness checks. Use that code as evidence and cite the returned paths and line ranges directly. Do not reopen or reread source files merely to verify code already returned by Codeaware. When results contain the required facts, answer without native source reads. A truncation flag alone is not a reason to read more. Inspect additional source only when an essential fact is absent from the results or tools are unavailable; identify that specific gap before reading. Stop when the answer and citations are supported. Treat missing static edges as incomplete evidence.\n\n"
+  },
+  "conditions": {
+    "baseline": {
+      "runs": 18,
+      "completed": 18,
+      "reported_usage": 18,
+      "input_tokens": 969246,
+      "cached_input_tokens": 754048,
+      "uncached_input_tokens": 215198,
+      "output_tokens": 9948,
+      "total_tokens": 979194,
+      "command_calls": 41,
+      "mcp_calls": 0,
+      "codeaware_calls": 0,
+      "mcp_errors": 0,
+      "code_excerpt_calls": 0,
+      "code_excerpts": 0,
+      "excerpt_truncations": 0,
+      "mean_elapsed_seconds": 24.215222222222224,
+      "adoption_runs": 0
+    },
+    "codeaware": {
+      "runs": 18,
+      "completed": 18,
+      "reported_usage": 18,
+      "input_tokens": 1144742,
+      "cached_input_tokens": 880896,
+      "uncached_input_tokens": 263846,
+      "output_tokens": 9262,
+      "total_tokens": 1154004,
+      "command_calls": 3,
+      "mcp_calls": 53,
+      "codeaware_calls": 53,
+      "mcp_errors": 0,
+      "code_excerpt_calls": 27,
+      "code_excerpts": 39,
+      "excerpt_truncations": 12,
+      "mean_elapsed_seconds": 27.24088888888889,
+      "adoption_runs": 18
+    }
+  },
+  "pairs": [
+    {
+      "question_id": 1,
+      "baseline_tokens": 51891,
+      "codeaware_tokens": 45155,
+      "change_percent": -12.981056445240991
+    },
+    {
+      "question_id": 2,
+      "baseline_tokens": 50512,
+      "codeaware_tokens": 40149,
+      "change_percent": -20.51591700981945
+    },
+    {
+      "question_id": 3,
+      "baseline_tokens": 49916,
+      "codeaware_tokens": 55320,
+      "change_percent": 10.826187995832992
+    },
+    {
+      "question_id": 4,
+      "baseline_tokens": 49832,
+      "codeaware_tokens": 44892,
+      "change_percent": -9.913308717290093
+    },
+    {
+      "question_id": 5,
+      "baseline_tokens": 53351,
+      "codeaware_tokens": 64245,
+      "change_percent": 20.419486045247503
+    },
+    {
+      "question_id": 6,
+      "baseline_tokens": 51071,
+      "codeaware_tokens": 40039,
+      "change_percent": -21.6013001507705
+    },
+    {
+      "question_id": 7,
+      "baseline_tokens": 50062,
+      "codeaware_tokens": 45860,
+      "change_percent": -8.393591945986978
+    },
+    {
+      "question_id": 8,
+      "baseline_tokens": 51795,
+      "codeaware_tokens": 44212,
+      "change_percent": -14.640409305917556
+    },
+    {
+      "question_id": 9,
+      "baseline_tokens": 50648,
+      "codeaware_tokens": 65420,
+      "change_percent": 29.16600852945823
+    },
+    {
+      "question_id": 10,
+      "baseline_tokens": 53239,
+      "codeaware_tokens": 64441,
+      "change_percent": 21.040966208982148
+    },
+    {
+      "question_id": 11,
+      "baseline_tokens": 51691,
+      "codeaware_tokens": 63080,
+      "change_percent": 22.03284904528835
+    },
+    {
+      "question_id": 12,
+      "baseline_tokens": 39143,
+      "codeaware_tokens": 47347,
+      "change_percent": 20.959047594716807
+    },
+    {
+      "question_id": 13,
+      "baseline_tokens": 73342,
+      "codeaware_tokens": 92180,
+      "change_percent": 25.685146300891716
+    },
+    {
+      "question_id": 14,
+      "baseline_tokens": 76814,
+      "codeaware_tokens": 89126,
+      "change_percent": 16.02832816934412
+    },
+    {
+      "question_id": 15,
+      "baseline_tokens": 52400,
+      "codeaware_tokens": 77587,
+      "change_percent": 48.06679389312978
+    },
+    {
+      "question_id": 16,
+      "baseline_tokens": 55636,
+      "codeaware_tokens": 72601,
+      "change_percent": 30.492846358472935
+    },
+    {
+      "question_id": 17,
+      "baseline_tokens": 50916,
+      "codeaware_tokens": 85114,
+      "change_percent": 67.16552753554875
+    },
+    {
+      "question_id": 18,
+      "baseline_tokens": 66935,
+      "codeaware_tokens": 117236,
+      "change_percent": 75.14902517367597
+    }
+  ],
+  "codeaware_total_token_change_percent": 17.852437821310186,
+  "token_saving_pairs": 6,
+  "tool_counts": {
+    "search_code": 13,
+    "find_symbols": 30,
+    "get_inheritance": 6,
+    "get_imports": 1,
+    "get_callers": 1,
+    "get_callees": 2
+  },
+  "source_unchanged": true,
+  "quality_review": "Not graded in this run; successful completion and tool use are not answer-quality scores."
+}
