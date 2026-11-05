@@ -258,5 +258,7 @@ The [full low-reasoning run](../data/benchmark_results/2026-11-05-low-full-guide
 uses `--reasoning-effort low --repeats 1` with questions 1 through 18 in guided
 mode. All 36 turns completed and reported usage. Codeaware used 17.85% more
 total tokens and fewer tokens in 6/18 pairs, with no reported MCP errors.
-Answers remain ungraded; this is not a like-for-like aggregate comparison
-with the three-question repeated medium batch.
+A subsequent [quality review](../data/benchmark_results/2026-11-05-low-full-guided/quality-review.md)
+grades all 36 answers, finding 15 ties and three baseline completeness
+advantages under an unblinded retrospective rubric. This is not a like-for-like
+aggregate comparison with the three-question repeated medium batch.

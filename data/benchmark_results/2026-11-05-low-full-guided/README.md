@@ -8,7 +8,7 @@ Codeaware adds MCP to the same native tools. Pair order alternates by question.
 Codeaware used +17.85% total tokens
 relative to its new baseline. It used fewer tokens in 6/18 pairs.
 This is a single observation per question/condition, without variance estimates
-or a quality grade. No correctness or business-value improvement is established.
+or an independent quality grade. No business-value improvement is established.
 
 ## Measurements
 
@@ -75,9 +75,12 @@ repetitions. Question mix, sampling and provider-cache/order effects differ.
 Only compare matching questions when exploring reasoning-level differences,
 and do not infer causality or stable savings from one low observation.
 
-Answers are saved for review but were not graded in this batch. Exit success,
-MCP adoption and error counts do not establish answer correctness. No additional
-model-backed grading calls were made.
+Answers were ungraded at initial publication. The subsequent
+[quality review](quality-review.md) covers all 36 answers: 15 ties and three
+baseline advantages on completeness, with no substantive errors identified
+in the reviewed claims. This retrospective implementer review is unblinded;
+it does not establish a quality advantage for Codeaware. No separate grading
+API calls were made. The original usage and answers remain unchanged.
 
 ## Artifacts
 

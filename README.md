@@ -420,4 +420,6 @@ in [Historical seminar experiments](docs/experiments.md).
 The [full low-reasoning guided run](data/benchmark_results/2026-11-05-low-full-guided/README.md)
 completed all 18 questions once in both conditions (36 turns). Codeaware used
 17.85% more total tokens, with fewer tokens on 6/18 pairs and zero reported MCP
-errors. All answers are saved; answer quality was not graded in this batch.
+errors. A subsequent manual review of all 36 answers found 15 rubric ties
+and three baseline advantages on completeness, with no demonstrated Codeaware
+quality gain. The review is retrospective and unblinded.

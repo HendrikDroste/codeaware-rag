@@ -1,0 +1,1094 @@
+{
+  "rubric_version": "flask-low-full-quality-v1",
+  "reviewer": "Implementing assistant",
+  "blinded": false,
+  "retrospective": true,
+  "summary": {
+    "baseline": {
+      "answers": 18,
+      "correctness": {
+        "points": 36,
+        "maximum": 36,
+        "mean_out_of_2": 2.0
+      },
+      "completeness": {
+        "points": 36,
+        "maximum": 36,
+        "mean_out_of_2": 2.0
+      },
+      "citation_support": {
+        "points": 36,
+        "maximum": 36,
+        "mean_out_of_2": 2.0
+      },
+      "fully_complete_answers": 18
+    },
+    "codeaware": {
+      "answers": 18,
+      "correctness": {
+        "points": 36,
+        "maximum": 36,
+        "mean_out_of_2": 2.0
+      },
+      "completeness": {
+        "points": 33,
+        "maximum": 36,
+        "mean_out_of_2": 1.8333333333333333
+      },
+      "citation_support": {
+        "points": 36,
+        "maximum": 36,
+        "mean_out_of_2": 2.0
+      },
+      "fully_complete_answers": 15
+    }
+  },
+  "results": [
+    {
+      "question_id": 1,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/helpers.py",
+          "line_start": 543,
+          "line_end": 584
+        }
+      ],
+      "answer_sha256": "898fd882b5aef297b5db741e9458abdc528a4eeb59825aa422381ca535531e0e"
+    },
+    {
+      "question_id": 1,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/helpers.py",
+          "line_start": 543,
+          "line_end": 584
+        }
+      ],
+      "answer_sha256": "20c50de69b9bde0ad6479a66ae0b0d3933f8a747295fd1cb0764edb8e3f8d9aa"
+    },
+    {
+      "question_id": 2,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "line_start": 882,
+          "line_end": 882
+        }
+      ],
+      "answer_sha256": "fec2024ae3c951b385b5dfcb742bb27b6cb85f085d0c39146cc648c9631ff0c2"
+    },
+    {
+      "question_id": 2,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "line_start": 882,
+          "line_end": 882
+        }
+      ],
+      "answer_sha256": "7441eefd15ec264e87ca7f6990d90c2082775bf24a87ad67ebbb27a41c62816e"
+    },
+    {
+      "question_id": 3,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/json/__init__.py",
+          "line_start": 138,
+          "line_end": 170
+        },
+        {
+          "path": "src/flask/json/provider.py",
+          "line_start": 124,
+          "line_end": 179
+        }
+      ],
+      "answer_sha256": "5a203832d8d3df9bfb46af9ea54fbab2cbd2d8860d8b1982c5fa6e757b8fe6d8"
+    },
+    {
+      "question_id": 3,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/json/__init__.py",
+          "line_start": 138,
+          "line_end": 170
+        },
+        {
+          "path": "src/flask/json/provider.py",
+          "line_start": 124,
+          "line_end": 179
+        }
+      ],
+      "answer_sha256": "fc0a1d53bc9b002ca1d7ac3e0ec7ff9d718be4675cc1f678e0fcdfca369e0cdb"
+    },
+    {
+      "question_id": 4,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/helpers.py",
+          "line_start": 254,
+          "line_end": 278
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 940,
+          "line_end": 959
+        }
+      ],
+      "answer_sha256": "599cca5ee9a7a61590395e3095adb87b266f7a565f070302a38ece77f4b10434"
+    },
+    {
+      "question_id": 4,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/helpers.py",
+          "line_start": 254,
+          "line_end": 278
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 940,
+          "line_end": 959
+        }
+      ],
+      "answer_sha256": "395c7562941ab9fef4e6bbf18139f0abbc592ec80ba35605d86540c8527a3f91"
+    },
+    {
+      "question_id": 5,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "line_start": 18,
+          "line_end": 53
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 119,
+          "line_end": 137
+        }
+      ],
+      "answer_sha256": "e6271b915692e2e42b62a618dc40a7d9f3d6667787341b99ead07888efd785d6"
+    },
+    {
+      "question_id": 5,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "line_start": 18,
+          "line_end": 53
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 119,
+          "line_end": 137
+        }
+      ],
+      "answer_sha256": "bff4c8b8664db98136cc66fb33a2923767d694fd956081531b698e5d73a2d5f0"
+    },
+    {
+      "question_id": 6,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/wrappers.py",
+          "line_start": 222,
+          "line_end": 244
+        },
+        {
+          "path": "src/flask/app.py",
+          "line_start": 1267,
+          "line_end": 1407
+        }
+      ],
+      "answer_sha256": "6f2bab79dc4c86d68506595e45b2ea21832398cd75f1d1f164a0d9f63c144790"
+    },
+    {
+      "question_id": 6,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/wrappers.py",
+          "line_start": 222,
+          "line_end": 244
+        },
+        {
+          "path": "src/flask/app.py",
+          "line_start": 1267,
+          "line_end": 1407
+        }
+      ],
+      "answer_sha256": "4ccfca738eef8d3515101796b98a52deb2af8f4e3f34556fc24311b3bb4326e0"
+    },
+    {
+      "question_id": 7,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "line_start": 1060,
+          "line_end": 1066
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 257,
+          "line_end": 261
+        }
+      ],
+      "answer_sha256": "fa69bc1b8cb01ba0d402807dc3f216fa6825174aead76fb5145560c7687592ab"
+    },
+    {
+      "question_id": 7,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "line_start": 1060,
+          "line_end": 1066
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 257,
+          "line_end": 261
+        }
+      ],
+      "answer_sha256": "2182586114f3a05fa8ff94c5b8a502d6534228e71d6aa004196b7f7114c837f3"
+    },
+    {
+      "question_id": 8,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 606,
+          "line_end": 662
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 87,
+          "line_end": 116
+        },
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 344,
+          "line_end": 373
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 413,
+          "line_end": 441
+        }
+      ],
+      "answer_sha256": "d860ad04672824a69918c796a0bd21b9ac7b1504ddaa252df7044cad60a516b1"
+    },
+    {
+      "question_id": 8,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 606,
+          "line_end": 662
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 87,
+          "line_end": 116
+        },
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 344,
+          "line_end": 373
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 413,
+          "line_end": 441
+        }
+      ],
+      "answer_sha256": "168405a4f8b4b45fb571db46cb18d39cf39b155df8bcf79b26a3469c91eab150"
+    },
+    {
+      "question_id": 9,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/app.py",
+          "line_start": 641,
+          "line_end": 764
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "line_start": 28,
+          "line_end": 33
+        }
+      ],
+      "answer_sha256": "13eaab4bf8115d9679579bc211bea1216b3ee51aa236d4025740b6b07b45a895"
+    },
+    {
+      "question_id": 9,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/app.py",
+          "line_start": 641,
+          "line_end": 764
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "line_start": 28,
+          "line_end": 33
+        }
+      ],
+      "answer_sha256": "4e85dec693f1779e78495323df6f52b7de69ef262e7b2d996e7e056adcf4ff30"
+    },
+    {
+      "question_id": 10,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/wrappers.py",
+          "line_start": 60,
+          "line_end": 86
+        }
+      ],
+      "answer_sha256": "f57de981b52b48afac689a8587265aff2d982b9053dfc8bc63b38e83dff5e7f2"
+    },
+    {
+      "question_id": 10,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/wrappers.py",
+          "line_start": 60,
+          "line_end": 86
+        }
+      ],
+      "answer_sha256": "3cfbf07b5f802365f1735e796ce6372cf3428d6b9eaf606b423e67ec4a91ea9f"
+    },
+    {
+      "question_id": 11,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "line_start": 18,
+          "line_end": 18
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 119,
+          "line_end": 133
+        },
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 52,
+          "line_end": 54
+        }
+      ],
+      "answer_sha256": "297b581a0a2482ab7d4e35d3e59e326b6cd47c8a351bbc210f3d9dbd2b052576"
+    },
+    {
+      "question_id": 11,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 1,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "omitted"
+      ],
+      "notes": "Correct chain and alias mapping; omits explicit public flask.Blueprint export. Adds optional test-only MyBlueprint.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "line_start": 18,
+          "line_end": 18
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 119,
+          "line_end": 133
+        },
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 52,
+          "line_end": 54
+        }
+      ],
+      "answer_sha256": "30b0ff6ffeeb40b5ee29d4dc97ccc5de430c1a07e2e57825e44cd986244ff809"
+    },
+    {
+      "question_id": 12,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "line_start": 405,
+          "line_end": 411
+        },
+        {
+          "path": "src/flask/cli.py",
+          "line_start": 531,
+          "line_end": 561
+        }
+      ],
+      "answer_sha256": "012e0bedb533b54ed04d1fbd0b6b72507559d1cf3b0861a3149823ef58642e20"
+    },
+    {
+      "question_id": 12,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "line_start": 405,
+          "line_end": 411
+        },
+        {
+          "path": "src/flask/cli.py",
+          "line_start": 531,
+          "line_end": 561
+        }
+      ],
+      "answer_sha256": "0809ba42073cd54e6e9919afee971b112c3c2e554e6479dc0f0689b0e65f8a55"
+    },
+    {
+      "question_id": 13,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 52,
+          "line_end": 68
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 60,
+          "line_end": 105
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 119,
+          "line_end": 133
+        }
+      ],
+      "answer_sha256": "3cdb40b70f6a390ffe564e5a685797aafe69079784860751116d7263166cfc8c"
+    },
+    {
+      "question_id": 13,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 52,
+          "line_end": 68
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 60,
+          "line_end": 105
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 119,
+          "line_end": 133
+        }
+      ],
+      "answer_sha256": "7d641dfbc912bb56c5a3e6eb42f428b11200b92a5b40374faac8cb533c1d1ff2"
+    },
+    {
+      "question_id": 14,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/app.py",
+          "line_start": 205,
+          "line_end": 250
+        },
+        {
+          "path": "src/flask/app.py",
+          "line_start": 333,
+          "line_end": 342
+        }
+      ],
+      "answer_sha256": "1d7f1026d5efdd485dc6f721adf894dd64b5f080b7c30b6a681eeeb0e2ac5f95"
+    },
+    {
+      "question_id": 14,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/app.py",
+          "line_start": 205,
+          "line_end": 250
+        },
+        {
+          "path": "src/flask/app.py",
+          "line_start": 333,
+          "line_end": 342
+        }
+      ],
+      "answer_sha256": "b7a7836ac00096896e16ae04b3b99bf51e9f3973fc4be8f9790b1fb1c84277ca"
+    },
+    {
+      "question_id": 15,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/helpers.py",
+          "line_start": 151,
+          "line_end": 197
+        },
+        {
+          "path": "src/flask/app.py",
+          "line_start": 1267,
+          "line_end": 1407
+        }
+      ],
+      "answer_sha256": "01ec7a52f092ab0a12eb1e1098e32859a8c407422e1312dd19623eafec235f91"
+    },
+    {
+      "question_id": 15,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/helpers.py",
+          "line_start": 151,
+          "line_end": 197
+        },
+        {
+          "path": "src/flask/app.py",
+          "line_start": 1267,
+          "line_end": 1407
+        }
+      ],
+      "answer_sha256": "4fc683f26c6e4078c87badb8e2b8657b333105dfa296f0bc8a25aec9fb58524d"
+    },
+    {
+      "question_id": 16,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 344,
+          "line_end": 441
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 413,
+          "line_end": 441
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 606,
+          "line_end": 662
+        }
+      ],
+      "answer_sha256": "b205cf7e84a77c34deee8408b4b0b34c145b54649d943e56dd1935e3a7f82a4b"
+    },
+    {
+      "question_id": 16,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 344,
+          "line_end": 441
+        },
+        {
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 413,
+          "line_end": 441
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 606,
+          "line_end": 662
+        }
+      ],
+      "answer_sha256": "e6440538fdc6ecdbde5708c09a37e5ea5067618cd2e61eb597cfc7136b8eea41"
+    },
+    {
+      "question_id": 17,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/app.py",
+          "line_start": 205,
+          "line_end": 236
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 480,
+          "line_end": 494
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 314,
+          "line_end": 317
+        }
+      ],
+      "answer_sha256": "e33d585a1831e8ce65e74450df9e64a199afbbc5687517fb9fecd9429c64ebfe"
+    },
+    {
+      "question_id": 17,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 1,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "omitted"
+      ],
+      "notes": "Correctly locates the loading mechanism in App.make_config, but omits the concrete mapping in Flask.default_config.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/app.py",
+          "line_start": 205,
+          "line_end": 236
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 480,
+          "line_end": 494
+        },
+        {
+          "path": "src/flask/sansio/app.py",
+          "line_start": 314,
+          "line_end": 317
+        }
+      ],
+      "answer_sha256": "1cb743f05352d5a3c6b4fdff6360b49c5fc24c2453f18356e632787a13f1b5e7"
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "covered"
+      ],
+      "notes": "Essential facts covered; no substantive error identified in the reviewed claims.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/app.py",
+          "line_start": 1562,
+          "line_end": 1576
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "line_start": 340,
+          "line_end": 348
+        },
+        {
+          "path": "src/flask/app.py",
+          "line_start": 1653,
+          "line_end": 1657
+        }
+      ],
+      "answer_sha256": "6d60e1fa221ba0dd5a03a4178dfc0596cf2b1eee0f097960a5134509c3637c53"
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 1,
+      "citation_support": 2,
+      "essential_fact_coverage": [
+        "covered",
+        "covered",
+        "partial"
+      ],
+      "notes": "Correct request construction and customizable request class; says flask.request becomes available without explaining its context-bound LocalProxy.",
+      "reference_source_ranges": [
+        {
+          "path": "src/flask/app.py",
+          "line_start": 1562,
+          "line_end": 1576
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "line_start": 340,
+          "line_end": 348
+        },
+        {
+          "path": "src/flask/app.py",
+          "line_start": 1653,
+          "line_end": 1657
+        }
+      ],
+      "answer_sha256": "47b359f10e071f622702316292b7b3876ab88a73d199bac5a74f8a0c6e6b8648"
+    }
+  ],
+  "pair_results": [
+    {
+      "question_id": 1,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 2,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 3,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 4,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 5,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 6,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 7,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 8,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 9,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 10,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 11,
+      "result": "baseline_ahead_on_completeness"
+    },
+    {
+      "question_id": 12,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 13,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 14,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 15,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 16,
+      "result": "tie_on_rubric"
+    },
+    {
+      "question_id": 17,
+      "result": "baseline_ahead_on_completeness"
+    },
+    {
+      "question_id": 18,
+      "result": "baseline_ahead_on_completeness"
+    }
+  ],
+  "limitations": [
+    "Single observation per condition/question; no variance estimate.",
+    "Implementer review is unblinded and retrospective, not an independent quality evaluation.",
+    "Coarse two-point dimensions have ceiling effects; equal scores do not mean identical usefulness.",
+    "Citation support concerns essential assertions made; omitted assertions are penalized under completeness, not twice.",
+    "Examples were source-reviewed, not executed; no full sentence-by-sentence entailment audit."
+  ],
+  "conclusion": "No quality advantage for Codeaware on this rubric: 15 ties and three baseline advantages on completeness. Both conditions have no substantive errors identified in the reviewed claims."
+}
