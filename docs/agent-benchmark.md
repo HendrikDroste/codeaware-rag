@@ -83,16 +83,19 @@ relationships. Native search remains available, including as the baseline's
 fallback when specialized tools are absent. Start with 3..5 results and expand
 when needed; neither mode requires calling every tool or mandates an MCP call.
 
-The current guided template also asks the agent to request bounded source
-excerpts when symbol lookup offers them, reuse returned code when sufficient,
-read additional source for a specific evidence gap, and stop when the answer
-and citations are supported. `auto` retains its original neutral text.
+The current guided template explicitly treats Codeaware's returned code as
+indexed source evidence. It asks for `include_code=true` in the initial lookup
+when implementation code is needed, prohibits reopening files merely to verify
+already-returned code, and permits answering directly from returned paths and
+line ranges. Truncation alone does not require another read. A targeted source
+read is allowed only for a specific essential fact absent from results or
+unavailable tools; the agent must identify that gap first. `auto` retains its
+original neutral text.
 
-These changes are recorded as `prompt_version=repository-qa-v2` and
-`tool_description_version=source-excerpts-v3`. Earlier pilot results retain
-their original versions. Excerpts and evidence reuse are intended to reduce
-duplicate inspection; their effect on quality and usage still needs a new
-controlled model-backed run.
+These instructions are recorded as `prompt_version=repository-qa-v3` and
+`tool_description_version=source-evidence-v4`. Earlier pilot results retain
+their original versions. The latest instructions have not been benchmarked;
+they do not retroactively change the prior results or establish savings.
 
 For a small pilot, run questions 11, 16 and 18 in `auto`, then repeat with
 `--tool-policy guided` and a new output directory:

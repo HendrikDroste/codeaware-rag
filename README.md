@@ -221,10 +221,18 @@ Source comes from the existing indexed definition and uses the same freshness
 checks. Reconnect to discover the new parameters; no index rebuild is needed
 for this feature when the existing index is complete and fresh.
 
-Reuse an excerpt when it supports the answer. Read additional code for a
-specific evidence gap, such as truncation, and stop once the answer and
-citations are supported. Smaller result lists help avoid returning code for
-irrelevant matches. These controls bound lines per excerpt, not token usage.
+Treat returned code as indexed source evidence and cite its paths and ranges
+directly. Do not reopen files merely to verify code already returned. Read
+additional source only for a specific essential fact absent from the results
+or unavailable tools, and identify that gap first. A truncation flag alone
+does not require more reading if the needed facts are already present. Stop
+once the answer and citations are supported. Smaller result lists help avoid
+returning code for irrelevant matches. These controls bound lines per excerpt,
+not token usage.
+
+The [routing evidence check](docs/routing-information.md) documents one real
+gap: individual method excerpts omit preceding decorators even though the
+decorated source and setup-check functions exist in the databases.
 
 For inheritance, `relation` is `parent` or `subclass`. `base_index` is the
 zero-based position in the child's written base list, not Python's method

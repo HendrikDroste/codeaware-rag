@@ -29,7 +29,7 @@ PROMPT = (
     "repository tools. Do not edit files, use the web, inspect other "
     "repositories, or delegate to other agents.\n\n"
 )
-PROMPT_VERSION = "repository-qa-v2"
+PROMPT_VERSION = "repository-qa-v3"
 PROMPTS = {
     "auto": PROMPT,
     "guided": PROMPT
@@ -40,13 +40,19 @@ PROMPTS = {
         "for known names, and graph tools for relevant call or inheritance "
         "relationships. Otherwise use native repository search. Start with "
         "3..5 results and expand only when needed. Follow only relationships "
-        "needed to answer the question. For implementation questions, "
-        "request a bounded source excerpt when symbol lookup offers it. "
-        "Use returned code directly when it supports the answer. Read "
-        "additional source only to resolve a specific evidence gap, such "
-        "as omitted context or truncation. Stop when the answer and "
-        "citations are supported. Treat missing static edges as incomplete "
-        "evidence.\n\n"
+        "needed to answer the question. When implementation code is needed, "
+        "request find_symbols with include_code=true in the initial lookup; "
+        "the parameter is include_code, not include_source. Codeaware's "
+        "returned code is indexed source with freshness checks. Use that "
+        "code as evidence and cite the returned paths and line ranges "
+        "directly. Do not reopen or reread source files merely to verify "
+        "code already returned by Codeaware. When results contain the "
+        "required facts, answer without native source reads. A truncation "
+        "flag alone is not a reason to read more. Inspect additional source "
+        "only when an essential fact is absent from the results or tools "
+        "are unavailable; identify that specific gap before reading. Stop "
+        "when the answer and citations are supported. Treat missing static "
+        "edges as incomplete evidence.\n\n"
     ),
 }
 
