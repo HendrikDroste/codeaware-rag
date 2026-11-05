@@ -41,20 +41,6 @@ ResultLimit = Annotated[
         )
     ),
 ]
-SourcePath = Annotated[
-    str, Field(description="Exact repository-relative indexed Python file.")
-]
-SourceLine = Annotated[
-    int, Field(ge=1, strict=True, description="One-based source line.")
-]
-SourceColumn = Annotated[
-    int,
-    Field(
-        ge=0,
-        strict=True,
-        description="Zero-based Unicode character column, not bytes.",
-    ),
-]
 
 
 def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
@@ -411,114 +397,6 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             limit,
             path=relative_path(path),
             direction=direction,
-        )
-
-    def python_query(operation, path, limit, **kwargs):
-        try:
-            validate_limit(limit, 100)
-            manifest = snapshot()
-            from src.retrievers.query_python import query_python
-
-            rows, excluded = query_python(
-                operation,
-                relative_path(path),
-                repository_root=repository_root,
-                index_dir=index_dir,
-                files=manifest["file_hashes"],
-                limit=limit + 1,
-                **kwargs,
-            )
-            result = response(manifest, rows, limit)
-            result["excluded_results"] = excluded
-            if not rows:
-                result["hint"] = (
-                    "No repository-local result. Check the scope or source "
-                    "position, or use semantic/native text search. Static "
-                    "analysis may be incomplete; external targets are omitted."
-                )
-            return result
-        except ValueError as exc:
-            raise ToolError(str(exc)) from exc
-        except Exception as exc:
-            logging.exception("Jedi query failed")
-            raise ToolError(
-                "Python analysis failed; check source and the Python "
-                "environment"
-            ) from exc
-
-    @server.tool(annotations=read_only)
-    def list_symbols(
-        path: SourcePath,
-        parent: Annotated[
-            str | None,
-            Field(
-                description=(
-                    "Optional exact file-local qualified parent scope, e.g. "
-                    "Flask or Flask.__init__. Null includes all scopes."
-                )
-            ),
-        ] = None,
-        limit: ResultLimit = 20,
-    ) -> dict[str, Any]:
-        """
-        Get a compact file outline, including classes, methods, imports
-        and assignments, without fetching class docstrings. Returns
-        names, Jedi kinds, lexical parents and positions. Constructor
-        assignments remain under the constructor scope; inherited or
-        dynamically added members are not enumerated. Locations are not
-        graph symbol IDs. Use find_symbols for indexed code.
-        """
-        return python_query("symbols", path, limit, parent=parent)
-
-    @server.tool(annotations=read_only)
-    def resolve_definition(
-        path: SourcePath,
-        line: SourceLine,
-        column: SourceColumn,
-        limit: ResultLimit = 10,
-    ) -> dict[str, Any]:
-        """
-        Follow a name at a source position to local definitions,
-        including import aliases and assignments. Returns all resolved
-        candidates with locations, not graph IDs. Multiple matches may
-        be ambiguous.
-        External targets are omitted and counted in excluded_results.
-        This is static resolution, not a guarantee of runtime dispatch.
-        """
-        return python_query(
-            "definition", path, limit, line=line, column=column
-        )
-
-    @server.tool(annotations=read_only)
-    def find_references(
-        path: SourcePath,
-        line: SourceLine,
-        column: SourceColumn,
-        include_declaration: Annotated[
-            bool,
-            Field(
-                description=(
-                    "Include resolved definition locations as well as uses. "
-                    "Import bindings and writes can be references."
-                )
-            ),
-        ] = False,
-        limit: ResultLimit = 20,
-    ) -> dict[str, Any]:
-        """
-        Find repository-local uses of the symbol at a source position.
-        References are broader than CALLS: imports, reads, writes and
-        passing a callback may be included. Returns distinct locations,
-        not caller bodies or graph IDs. Jedi can stop searching early;
-        results are partial; truncated only reports the output limit.
-        """
-        return python_query(
-            "references",
-            path,
-            limit,
-            line=line,
-            column=column,
-            include_declaration=include_declaration,
         )
 
     @server.tool(annotations=read_only)

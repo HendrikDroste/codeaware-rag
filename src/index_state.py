@@ -25,15 +25,12 @@ EXCLUDE_DIRS = {
 }
 COLLECTION = "codeaware_mcp"
 GRAPH_SCHEMA = 3  # Resolved file-to-file import bindings.
-TOOL_DESCRIPTION_VERSION = "python-navigation-v8"
+TOOL_DESCRIPTION_VERSION = "focused-navigation-v9"
 CONTEXT_GUIDANCE = (
     "Choose tools by capability, including native search when it directly "
     "exposes the needed fact. Use semantic search for unknown implementation "
     "locations. find_symbols supports functions, methods and classes, not "
-    "assignments or attributes; use list_symbols for a compact outline "
-    "including assignments, or targeted text search. Use resolve_definition "
-    "for a name at a source position and find_references for broader uses "
-    "than calls. Treat "
+    "assignments or attributes; use targeted text search for those. Treat "
     "remembered names as hypotheses. After one empty exact-name lookup, "
     "switch to behavior or text search instead of trying guessed name "
     "variants. Prefer relevant methods over large class excerpts, whose "
