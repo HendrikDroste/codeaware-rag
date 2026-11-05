@@ -458,10 +458,23 @@ def test_retrieval_refuses_stale_sources(build, change, include_code):
 
 
 @pytest.mark.parametrize(
-    "include_code,max_lines", [(False, 2), (True, 2), (True, 100)]
+    "include_code,max_lines,start_line",
+    [
+        (False, 2, None),
+        (True, 2, None),
+        (True, 100, None),
+        (True, 1, 12),
+        (True, 100, 12),
+        (True, 1, 13),
+        (True, 2, 9),
+        (True, 2, 14),
+        (True, 2, 0),
+        (True, 2, True),
+        (False, 2, 12),
+    ],
 )
 def test_symbol_excerpts_preserve_ranges_and_bound_class_code(
-    monkeypatch, include_code, max_lines
+    monkeypatch, include_code, max_lines, start_line
 ):
     from src.retrievers import query_graph
 
@@ -485,24 +498,39 @@ def test_symbol_excerpts_preserve_ranges_and_bound_class_code(
     monkeypatch.setattr(
         query_graph, "graph_connection", lambda: (driver, "neo4j")
     )
-    rows = query_graph.find_symbols(
-        "Café",
+    arguments = dict(
         repository_root="/repo",
         build_id="test",
         include_code=include_code,
         max_lines=max_lines,
+        start_line=start_line,
+    )
+    if start_line is not None and (
+        not include_code
+        or isinstance(start_line, bool)
+        or not 10 <= start_line <= 13
+    ):
+        with pytest.raises(ValueError, match="start_line"):
+            query_graph.find_symbols("Café", **arguments)
+        return
+    rows = query_graph.find_symbols(
+        "Café",
+        **arguments,
     )
     assert session.run.call_args.kwargs["include_code"] is include_code
     row = rows[0]
     assert {key: row[key] for key in symbol} == symbol
     assert "source_content" not in row
     if include_code:
-        lines = content.splitlines(keepends=True)[:max_lines]
+        first = 10 if start_line is None else start_line
+        lines = content.splitlines(keepends=True)[
+            first - 10 : first - 10 + max_lines
+        ]
         assert row["code_excerpt"] == {
             "content": "".join(lines),
-            "line_start": 10,
-            "line_end": 10 + len(lines) - 1,
-            "truncated": max_lines < 4,
+            "line_start": first,
+            "line_end": first + len(lines) - 1,
+            "truncated": first > 10 or max_lines < 4,
         }
     else:
         assert row == symbol
@@ -575,6 +603,19 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
     )
     assert lookup.call_args.kwargs["include_code"] is True
     assert lookup.call_args.kwargs["max_lines"] == 1
+    call(
+        server,
+        "find_symbols",
+        name="run",
+        include_code=True,
+        start_line=12,
+        max_lines=1,
+    )
+    assert lookup.call_args.kwargs["start_line"] == 12
+    lookup.return_value = []
+    empty = data(call(server, "find_symbols", name="missing"))
+    assert empty["results"] == [] and "attributes" in empty["hint"]
+    assert "hint" not in result
     for invalid in (0, 101):
         assert call(
             server,
@@ -817,6 +858,23 @@ def test_real_neo4j_queries_rebuild_and_isolation(
             "line_end": 1,
             "truncated": True,
         }
+        later = data(
+            call(
+                server,
+                "find_symbols",
+                name="first",
+                path="helpers.py",
+                include_code=True,
+                start_line=2,
+                max_lines=1,
+            )
+        )["results"][0]
+        assert later["code_excerpt"] == {
+            "content": '    return "first"\n',
+            "line_start": 2,
+            "line_end": 2,
+            "truncated": True,
+        }
         callers = data(
             call(server, "get_callers", symbol_id=first["symbol_id"])
         )["results"]
@@ -937,6 +995,19 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                     )
                 )
                 assert excerpt_result["results"][0] == excerpt
+                later_result = data(
+                    await client.call_tool(
+                        "find_symbols",
+                        {
+                            "name": "first",
+                            "path": "helpers.py",
+                            "include_code": True,
+                            "start_line": 2,
+                            "max_lines": 1,
+                        },
+                    )
+                )
+                assert later_result["results"][0] == later
                 result = data(
                     await client.call_tool(
                         "get_inheritance", {"symbol_id": child["symbol_id"]}

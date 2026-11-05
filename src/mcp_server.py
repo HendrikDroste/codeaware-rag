@@ -267,6 +267,19 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
                 ),
             ),
         ] = 60,
+        start_line: Annotated[
+            int | None,
+            Field(
+                ge=1,
+                strict=True,
+                description=(
+                    "Optional absolute one-based file line within each "
+                    "matched definition. Requires include_code=true. "
+                    "Skip a class prefix or retrieve a later source region; "
+                    "narrow by name/path first. Defaults to definition start."
+                ),
+            ),
+        ] = None,
     ) -> dict[str, Any]:
         """
         Locate a known function, method or class by exact name. Returns
@@ -279,8 +292,9 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         sufficient excerpts and inspect more source only for a gap.
         Assignments and attributes are not indexed symbols. After an
         empty match, switch to discovery rather than guessing variants.
-        A class excerpt starts at its declaration and may contain mostly
-        documentation; prefer a relevant method when possible.
+        A class prefix may contain mostly documentation. Use start_line
+        for a known relevant region, or prefer a relevant method. With
+        an offset, truncated also indicates omitted preceding lines.
         """
         if not name.strip():
             raise ToolError(
@@ -288,14 +302,24 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             )
         if path is not None:
             path = relative_path(path)
-        return graph_query(
+        result = graph_query(
             "find_symbols",
             limit,
             name=name,
             path=path,
             include_code=include_code,
             max_lines=max_lines,
+            start_line=start_line,
         )
+        if not result["results"]:
+            result["hint"] = (
+                "No exact function, method or class match. Assignments and "
+                "attributes are not indexed symbols. Check the path filter, "
+                "then use search_code for behavior or targeted native text "
+                "search for exact names/attributes; do not retry guessed "
+                "name variants."
+            )
+        return result
 
     @server.tool(annotations=read_only)
     def get_callers(

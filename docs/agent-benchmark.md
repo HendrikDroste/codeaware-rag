@@ -96,7 +96,7 @@ and continue when essential evidence is missing. `auto` retains its original
 neutral text.
 
 These instructions are recorded as `prompt_version=repository-qa-v4` and
-`tool_description_version=capability-guidance-v6`. The shared policy lives in
+`tool_description_version=excerpt-navigation-v7`. The shared policy lives in
 `src/index_state.py` as `CONTEXT_GUIDANCE`; the guided benchmark and server
 instructions both reuse it. Both benchmark conditions still receive identical
 prompts within each mode. The update contains no Flask-specific answers.

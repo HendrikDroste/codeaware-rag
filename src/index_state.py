@@ -25,7 +25,7 @@ EXCLUDE_DIRS = {
 }
 COLLECTION = "codeaware_mcp"
 GRAPH_SCHEMA = 3  # Resolved file-to-file import bindings.
-TOOL_DESCRIPTION_VERSION = "capability-guidance-v6"
+TOOL_DESCRIPTION_VERSION = "excerpt-navigation-v7"
 CONTEXT_GUIDANCE = (
     "Choose tools by capability, including native search when it directly "
     "exposes the needed fact. Use semantic search for unknown implementation "

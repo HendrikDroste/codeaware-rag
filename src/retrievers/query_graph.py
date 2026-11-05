@@ -26,6 +26,7 @@ def find_symbols(
     limit=10,
     include_code=False,
     max_lines=60,
+    start_line=None,
 ):
     """
     Exact function/method/class names; return all matches so the agent
@@ -37,6 +38,15 @@ def find_symbols(
         or not 1 <= max_lines <= 100
     ):
         raise ValueError("max_lines must be an integer between 1 and 100")
+    if start_line is not None and (
+        isinstance(start_line, bool)
+        or not isinstance(start_line, int)
+        or start_line < 1
+        or not include_code
+    ):
+        raise ValueError(
+            "start_line must be a positive integer with include_code=true"
+        )
     driver, database = graph_connection()
     with driver, driver.session(database=database) as session:
         check_graph(session, repository_root, build_id)
@@ -66,12 +76,19 @@ def find_symbols(
                         "Indexed symbol code is missing; rebuild the index"
                     )
                 lines = content.splitlines(keepends=True)
-                excerpt = lines[:max_lines]
+                first = row["line_start"] if start_line is None else start_line
+                if not row["line_start"] <= first <= row["line_end"]:
+                    raise ValueError(
+                        "start_line must be within each matched definition; "
+                        "narrow by name/path or select another start line"
+                    )
+                offset = first - row["line_start"]
+                excerpt = lines[offset : offset + max_lines]
                 row["code_excerpt"] = {
                     "content": "".join(excerpt),
-                    "line_start": row["line_start"],
-                    "line_end": row["line_start"] + len(excerpt) - 1,
-                    "truncated": len(lines) > max_lines,
+                    "line_start": first,
+                    "line_end": first + len(excerpt) - 1,
+                    "truncated": offset > 0 or len(lines) > max_lines,
                 }
         return rows
 
