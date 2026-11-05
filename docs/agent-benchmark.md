@@ -76,28 +76,34 @@ the agent may use any available repository tools. Use this mode to measure
 whether it chooses Codeaware with the current tool descriptions.
 
 `--tool-policy guided` adds the same conditional workflow guidance to both
-conditions. It asks the agent to prefer specialized repository-context tools
-when available, choose semantic search for unknown implementation names, use
-exact symbol lookup for known names, and follow relevant call or inheritance
-relationships. Native search remains available, including as the baseline's
-fallback when specialized tools are absent. Start with 3..5 results and expand
-when needed; neither mode requires calling every tool or mandates an MCP call.
+conditions. It asks the agent to choose tools by capability: semantic search
+for unknown implementation locations, function/class lookup for those symbols,
+and targeted native text search for assignments or attributes. After one empty
+exact-name lookup, switch to discovery instead of guessing name variants.
+Prefer a relevant method over a large class prefix, which may mostly contain
+documentation. Query graph relationships only for unresolved relationship
+questions. Start with 3..5 results and narrow by path when possible; neither
+mode requires calling every tool, mandates an MCP call or sets a hard call cap.
 
 The current guided template explicitly treats Codeaware's returned code as
 indexed source evidence. It asks for `include_code=true` in the initial lookup
 when implementation code is needed, prohibits reopening files merely to verify
 already-returned code, and permits answering directly from returned paths and
 line ranges. Truncation alone does not require another read. A targeted source
-read is allowed only for a specific essential fact absent from results or
-unavailable tools; the agent must identify that gap first. `auto` retains its
-original neutral text.
+read or another query is warranted only for a specific essential missing fact
+or unavailable tool capability. Stop when the answer and citations are supported,
+and continue when essential evidence is missing. `auto` retains its original
+neutral text.
 
-These instructions are recorded as `prompt_version=repository-qa-v3` and
-`tool_description_version=imports-v5` (adds import queries to the server).
-Earlier pilot results retain their original versions. The current combination
-was measured in the [import-tracking guided rerun](
-../data/benchmark_results/2026-11-05-imports-guided/README.md); this does not
-retroactively change prior results or isolate the effects of individual changes.
+These instructions are recorded as `prompt_version=repository-qa-v4` and
+`tool_description_version=capability-guidance-v6`. The shared policy lives in
+`src/index_state.py` as `CONTEXT_GUIDANCE`; the guided benchmark and server
+instructions both reuse it. Both benchmark conditions still receive identical
+prompts within each mode. The update contains no Flask-specific answers.
+
+This combination has not been benchmarked yet. Earlier results retain their
+original versions and measurements. Reconnect clients to discover the updated
+server guidance; a prompt/description change does not require an index rebuild.
 
 For a small pilot, run questions 11, 16 and 18 in `auto`, then repeat with
 `--tool-policy guided` and a new output directory:

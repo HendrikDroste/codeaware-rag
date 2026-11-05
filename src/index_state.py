@@ -1,5 +1,5 @@
 """
-Shared index settings, source fingerprints and manifest validation.
+Shared settings, tool guidance, fingerprints and manifest validation.
 """
 
 import hashlib
@@ -25,7 +25,29 @@ EXCLUDE_DIRS = {
 }
 COLLECTION = "codeaware_mcp"
 GRAPH_SCHEMA = 3  # Resolved file-to-file import bindings.
-TOOL_DESCRIPTION_VERSION = "imports-v5"
+TOOL_DESCRIPTION_VERSION = "capability-guidance-v6"
+CONTEXT_GUIDANCE = (
+    "Choose tools by capability, including native search when it directly "
+    "exposes the needed fact. Use semantic search for unknown implementation "
+    "locations. find_symbols supports functions, methods and classes, not "
+    "assignments or attributes; use targeted text search for those. Treat "
+    "remembered names as hypotheses. After one empty exact-name lookup, "
+    "switch to behavior or text search instead of trying guessed name "
+    "variants. Prefer relevant methods over large class excerpts, whose "
+    "first lines may be mostly documentation. Start with 3..5 results and "
+    "narrow by path when possible. Query graph relationships only when they "
+    "answer an unresolved part of the question. For implementation lookup, "
+    "request include_code=true initially; the parameter is not "
+    "include_source. "
+    "Codeaware returns indexed source with freshness checks: reuse it and "
+    "cite returned paths and line ranges directly. Do not reread source "
+    "merely to verify returned code. Truncation alone does not require "
+    "another read. Make another call only to resolve a specific essential "
+    "missing fact or unavailable tool capability. Stop when the question "
+    "and citations are supported; continue when essential evidence is "
+    "missing. Missing static edges are incomplete evidence, not proof "
+    "that a runtime relationship is absent."
+)
 REBUILD = (
     "Rebuild with python -m src.index_repository, then reconnect the MCP "
     "server."

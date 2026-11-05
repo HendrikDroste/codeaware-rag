@@ -15,6 +15,7 @@ from pydantic import Field
 
 from src.index_state import (
     COLLECTION,
+    CONTEXT_GUIDANCE,
     DEFAULT_CONFIG,
     REBUILD,
     TOOL_DESCRIPTION_VERSION,
@@ -52,25 +53,14 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         instructions=(
             "Codeaware indexes Python source and tests in one repository. "
             "Use search_code when implementation names are unknown, "
-            "find_symbols for known names, get_callers/get_callees for "
+            "find_symbols for known function/class names, "
+            "get_callers/get_callees for "
             "direct call relationships, and get_inheritance for direct "
             "class parents/subclasses. Use get_imports with a file path "
             "for resolved local imports or reverse importers. "
-            "Select the intended symbol_id when "
-            "names are ambiguous. Start with 3..5 results and follow only "
-            "relationships needed for the question. When implementation "
-            "code is needed, request include_code=true in the initial "
-            "find_symbols lookup; the parameter is not include_source. "
-            "Returned code is indexed source with freshness checks: cite "
-            "its paths and line ranges directly. Do not reopen or reread "
-            "files merely to verify code already returned. Answer without "
-            "native source reads when the required facts are present. "
-            "Truncation alone does not require further reading. Use "
-            "additional reads only for a specific essential fact absent "
-            "from the results or unavailable tools, and identify the gap "
-            "first. Stop when the answer and citations are supported. "
-            "This is a manually indexed, partial static graph; missing "
-            "edges do not prove that runtime relationships are absent. "
+            "Select the intended symbol_id when names are ambiguous. "
+            + CONTEXT_GUIDANCE
+            + " "
             "Retrieval checks freshness automatically; use index_status "
             "to inspect the build or diagnose stale-index errors. "
             "After source changes ask for a manual rebuild and reconnect. "
@@ -142,8 +132,10 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         Discover Python implementation by meaning when its file or
         symbol name is unknown. Returns ranked snippets, relative paths,
         inclusive line ranges, retrieval distances and overlapping
-        symbol_ids. For a known symbol name, use find_symbols instead.
-        Follow relevant symbols with graph tools or native source reads.
+        symbol_ids. For a known function/class name, use find_symbols.
+        Follow graph relationships only for unresolved relationship
+        questions. Use targeted text search for exact assignments or
+        attributes.
         """
         nonlocal pipeline
         try:
@@ -285,6 +277,10 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         code_excerpt has its own inclusive line range and truncation
         flag; definition ranges still cover the whole symbol. Reuse
         sufficient excerpts and inspect more source only for a gap.
+        Assignments and attributes are not indexed symbols. After an
+        empty match, switch to discovery rather than guessing variants.
+        A class excerpt starts at its declaration and may contain mostly
+        documentation; prefer a relevant method when possible.
         """
         if not name.strip():
             raise ToolError(

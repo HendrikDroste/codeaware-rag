@@ -232,6 +232,13 @@ once the answer and citations are supported. Smaller result lists help avoid
 returning code for irrelevant matches. These controls bound lines per excerpt,
 not token usage.
 
+The current guidance chooses tools by capability, switches to discovery after
+one empty name lookup, and prefers relevant methods over long class prefixes.
+`find_symbols` does not index assignments or attributes; targeted native text
+search remains appropriate for those. Both the server and guided benchmark use
+the same policy from `src/index_state.py`. This prompt update requires a fresh
+client connection, not an index rebuild; its token/quality effect is unmeasured.
+
 The [routing evidence check](docs/routing-information.md) documents one real
 gap: individual method excerpts omit preceding decorators even though the
 decorated source and setup-check functions exist in the databases.
@@ -337,7 +344,7 @@ benefit. A separate tool-directed walkthrough successfully exercised all six
 MCP tool types. No token savings or business impact are established.
 
 Use `--tool-policy auto` (default) to measure voluntary tool selection, or
-`--tool-policy guided` to encourage relevant specialized tools when available.
+`--tool-policy guided` for capability-based tool selection and evidence reuse.
 Both conditions receive the same prompt within each mode. New runs record the
 mode, prompt version and tool-description version; see the
 [prompt-mode instructions](docs/agent-benchmark.md#tool-selection-modes).
