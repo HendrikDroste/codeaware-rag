@@ -6,7 +6,7 @@ queries.
 import logging
 from pathlib import Path
 from threading import Lock
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -54,7 +54,9 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             "Use search_code when implementation names are unknown, "
             "find_symbols for known names, get_callers/get_callees for "
             "direct call relationships, and get_inheritance for direct "
-            "class parents/subclasses. Select the intended symbol_id when "
+            "class parents/subclasses. Use get_imports with a file path "
+            "for resolved local imports or reverse importers. "
+            "Select the intended symbol_id when "
             "names are ambiguous. Start with 3..5 results and follow only "
             "relationships needed for the question. When implementation "
             "code is needed, request include_code=true in the initial "
@@ -111,6 +113,14 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             "results": rows[:limit],
             "truncated": len(rows) > limit,
         }
+
+    def relative_path(path):
+        candidate = (repository_root / path).resolve()
+        if Path(path).is_absolute() or not candidate.is_relative_to(
+            repository_root
+        ):
+            raise ToolError("path must be relative to the indexed repository")
+        return candidate.relative_to(repository_root).as_posix()
 
     @server.tool(annotations=read_only)
     def search_code(
@@ -281,14 +291,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
                 "name must contain a function, method or class name"
             )
         if path is not None:
-            candidate = (repository_root / path).resolve()
-            if Path(path).is_absolute() or not candidate.is_relative_to(
-                repository_root
-            ):
-                raise ToolError(
-                    "path must be relative to the indexed repository"
-                )
-            path = candidate.relative_to(repository_root).as_posix()
+            path = relative_path(path)
         return graph_query(
             "find_symbols",
             limit,
@@ -340,6 +343,41 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         methods or compute Python's method resolution order (MRO).
         """
         return graph_query("query_inheritance", limit, symbol_id=symbol_id)
+
+    @server.tool(annotations=read_only)
+    def get_imports(
+        path: Annotated[
+            str,
+            Field(
+                description="Exact repository-relative indexed Python file."
+            ),
+        ],
+        direction: Annotated[
+            Literal["imports", "importers"],
+            Field(
+                description=(
+                    "imports: dependencies of this file; importers: files "
+                    "that import from this file. One hop only."
+                )
+            ),
+        ] = "imports",
+        limit: ResultLimit = 20,
+    ) -> dict[str, Any]:
+        """
+        Inspect resolved repository-local import bindings, aliases and
+        import-site locations. Re-exports point to the ultimate defining
+        file resolved by Jedi, not every intermediate package. Includes
+        conditional and function-local imports, without proving runtime
+        execution. External, unresolved, ambiguous and wildcard imports
+        are omitted and counted. Dynamic import calls are not tracked.
+        Multiple bindings/sites can return the same neighboring file.
+        """
+        return graph_query(
+            "query_imports",
+            limit,
+            path=relative_path(path),
+            direction=direction,
+        )
 
     @server.tool(annotations=read_only)
     def index_status() -> dict[str, Any]:

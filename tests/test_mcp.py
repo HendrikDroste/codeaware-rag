@@ -244,6 +244,118 @@ def test_graph_keeps_two_passes_and_resolves_identity(repository, monkeypatch):
     )
 
 
+def add_import_fixture(repository):
+    package = repository / "package"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        "from .items import action as exported\n"
+    )
+    (package / "items.py").write_text("def action():\n    pass\nVALUE = 1\n")
+    (package / "consumer.py").write_text(
+        "from .items import action as renamed, VALUE\n"
+        "from . import items as local\n"
+        "from package import exported\n"
+        "import package.items as module, helpers\n"
+        "def local_import():\n"
+        "    label = 'ä'; from .items import action as nested\n"
+        "if False:\n"
+        "    from .items import action as conditional\n"
+        "from package.items import *\n"
+        "import sys\n"
+        "from definitely_missing_codeaware_module import missing\n"
+        "import package as pkg\n"
+    )
+
+
+@pytest.mark.parametrize("source_directory", ["", "src"])
+def test_imports_follow_jedi_bindings_and_keep_sites(
+    repository, monkeypatch, source_directory
+):
+    source_root = repository / source_directory
+    source_root.mkdir(exist_ok=True)
+    add_import_fixture(source_root)
+    driver = RecordingDriver()
+    monkeypatch.setattr(graph, "graph_connection", lambda: (driver, "neo4j"))
+    counts = graph.build_graph(
+        str(repository), file_paths=index_state.source_files(repository)
+    )
+    imports = [p for q, p in driver.writes if "[r:IMPORTS" in q]
+    consumer = [
+        p for p in imports if p["source"].endswith("package/consumer.py")
+    ]
+    assert len(consumer) == 9
+    assert {p["name"] for p in consumer} == {
+        "action",
+        "VALUE",
+        "items",
+        "exported",
+        "package.items",
+        "helpers",
+        "package",
+    }
+    assert {p["alias"] for p in consumer} == {
+        "renamed",
+        "local",
+        "module",
+        "nested",
+        "conditional",
+        "pkg",
+        None,
+    }
+    for row in consumer:
+        target = source_root / "package/items.py"
+        if row["name"] == "helpers":
+            target = repository / "helpers.py"
+        elif row["name"] == "package":
+            target = source_root / "package/__init__.py"
+        assert row["target"] == str(target)
+        source = Path(row["source"]).read_text().splitlines()[row["line"] - 1]
+        assert source[row["column"] :].startswith(row["name"])
+    nested = next(p for p in consumer if p["alias"] == "nested")
+    assert nested["line"] == 6 and nested["module"] == ".items"
+    assert counts["import_edges"] == len(imports)
+    assert counts["external_imports"] == 1
+    assert counts["unresolved_imports"] == 1
+    assert counts["wildcard_imports"] == 1
+    assert counts["imports"] == sum(
+        counts[key]
+        for key in (
+            "import_edges",
+            "external_imports",
+            "unresolved_imports",
+            "ambiguous_imports",
+            "wildcard_imports",
+        )
+    )
+
+
+def test_imports_omit_ambiguous_and_unindexed_targets(repository, monkeypatch):
+    # Only the two listed files may become targets, even when Jedi can
+    # resolve other Python files in the repository.
+    (repository / "consumer.py").write_text(
+        "from helpers import first\nimport worker\nimport excluded\n"
+    )
+    (repository / "excluded.py").write_text("pass\n")
+    original = graph.jedi.Script.goto
+
+    def ambiguous(script, *args, **kwargs):
+        definitions = original(script, *args, **kwargs)
+        return definitions * 2 if kwargs["line"] == 1 else definitions
+
+    monkeypatch.setattr(graph.jedi.Script, "goto", ambiguous)
+    driver = RecordingDriver()
+    monkeypatch.setattr(graph, "graph_connection", lambda: (driver, "neo4j"))
+    counts = graph.build_graph(
+        str(repository),
+        file_paths=[
+            str(repository / p) for p in ("consumer.py", "helpers.py")
+        ],
+    )
+    assert counts["ambiguous_imports"] == 1
+    assert counts["external_imports"] == 2
+    assert counts["import_edges"] == 0
+
+
 def test_pipeline_original_query_mode_is_preserved(config, monkeypatch):
     monkeypatch.setattr(
         EmbeddingPipeline,
@@ -446,6 +558,8 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
         ]
     )
     monkeypatch.setattr(query_graph, "query_inheritance", inheritance)
+    imports = Mock(return_value=[{"path": str(i)} for i in range(3)])
+    monkeypatch.setattr(query_graph, "query_imports", imports)
     server = create_server(root, directory, config)
     result = data(call(server, "find_symbols", name="run", limit=2))
     assert result["truncated"] and len(result["results"]) == 2
@@ -483,6 +597,28 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
     assert call(
         server, "find_symbols", name="run", path="../outside.py"
     ).is_error
+    result = data(
+        call(
+            server,
+            "get_imports",
+            path="worker.py",
+            direction="importers",
+            limit=2,
+        )
+    )
+    assert result["truncated"] and len(result["results"]) == 2
+    assert imports.call_args.kwargs["path"] == "worker.py"
+    assert imports.call_args.kwargs["direction"] == "importers"
+    assert imports.call_args.kwargs["limit"] == 3
+    for arguments in (
+        {"path": "../outside.py"},
+        {"path": str(root / "worker.py")},
+        {"path": "worker.py", "direction": "invalid"},
+        {"path": "worker.py", "limit": 101},
+    ):
+        assert call(server, "get_imports", **arguments).is_error
+    (root / "worker.py").write_text("pass\n")
+    assert call(server, "get_imports", path="worker.py").is_error
 
 
 def test_stdio_discovery_and_errors_do_not_load_models(build):
@@ -511,6 +647,7 @@ def test_stdio_discovery_and_errors_do_not_load_models(build):
                 "get_callers",
                 "get_callees",
                 "get_inheritance",
+                "get_imports",
                 "index_status",
             }
             assert all(t.annotations.read_only_hint for t in tools.tools)
@@ -594,6 +731,7 @@ def test_real_neo4j_queries_rebuild_and_isolation(
     from src.neo4j_connection import graph_connection
     from src.retrievers.query_graph import find_snippet_symbols
 
+    add_import_fixture(repository)
     monkeypatch.setattr(
         EmbeddingPipeline,
         "_setup_embedding_provider",
@@ -614,6 +752,44 @@ def test_real_neo4j_queries_rebuild_and_isolation(
             ).consume()
         manifest = indexing.index_repository(repository, directory, config)
         server = create_server(repository, directory, config)
+        imports = data(
+            call(server, "get_imports", path="package/consumer.py")
+        )["results"]
+        assert len(imports) == 9
+        assert {r["path"] for r in imports} == {
+            "helpers.py",
+            "package/items.py",
+            "package/__init__.py",
+        }
+        assert {r["import_path"] for r in imports} == {"package/consumer.py"}
+        assert (
+            next(r for r in imports if r["alias"] == "nested")["import_column"]
+            == 36
+        )
+        importers = data(
+            call(
+                server,
+                "get_imports",
+                path="package/items.py",
+                direction="importers",
+            )
+        )["results"]
+        assert len(importers) == 8
+        assert {r["path"] for r in importers} == {
+            "package/__init__.py",
+            "package/consumer.py",
+        }
+        assert (
+            data(call(server, "get_imports", path="package/items.py"))[
+                "results"
+            ]
+            == []
+        )
+        bounded = data(
+            call(server, "get_imports", path="package/consumer.py", limit=1)
+        )
+        assert bounded["truncated"] and len(bounded["results"]) == 1
+        assert call(server, "get_imports", path="missing.py").is_error
         matches = data(call(server, "find_symbols", name="run"))["results"]
         assert {r["qualified_name"] for r in matches} == {
             "First.run",
@@ -767,6 +943,12 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                     )
                 )
                 assert result["results"] == relatives
+                result = data(
+                    await client.call_tool(
+                        "get_imports", {"path": "package/consumer.py"}
+                    )
+                )
+                assert result["results"] == imports
 
         asyncio.run(inheritance_over_stdio())
         unused = data(call(server, "find_symbols", name="unused"))["results"][
@@ -790,6 +972,12 @@ def test_real_neo4j_queries_rebuild_and_isolation(
             server, "find_symbols", name="first"
         ).is_error  # Requires reconnect.
         fresh = create_server(repository, directory, config)
+        assert (
+            data(call(fresh, "get_imports", path="package/consumer.py"))[
+                "results"
+            ]
+            == imports
+        )
         assert (
             data(call(fresh, "index_status"))["build_id"]
             != manifest["build_id"]

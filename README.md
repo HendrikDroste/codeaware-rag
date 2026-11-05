@@ -27,12 +27,13 @@ The manual indexer processes the same Python file list for both databases:
 1. The existing baseline splitter creates chunks of up to 900 characters with
    zero overlap. The configured embedding provider stores their vectors and
    source metadata in persistent Chroma storage.
-2. Tree-sitter finds definitions and call sites. Jedi resolves call targets and
-   explicit base classes. Neo4j stores `Function`, `Class` and `File` nodes with
-   `DEFINED_IN`, `CALLS` and `INHERITS_FROM` relationships.
+2. Tree-sitter finds definitions, call sites and import statements. Jedi resolves
+   call targets, explicit base classes and imported names. Neo4j stores
+   `Function`, `Class` and `File` nodes with `DEFINED_IN`, `CALLS`,
+   `INHERITS_FROM` and file-to-file `IMPORTS` relationships.
 3. A manifest records the repository, model settings, build identifier, file
    hashes and counts. It is marked complete only after both backends succeed.
-4. Six Python functions expose retrieval over MCP using the official Python
+4. Seven Python functions expose retrieval over MCP using the official Python
    SDK v2. Model components load lazily on the first semantic search. Logs go
    to stderr; stdout is reserved for MCP messages.
 
@@ -174,9 +175,9 @@ GUI-host environments explicitly and keep credentials out of committed files.
 
 ## Tools
 
-All six tools retrieve context without modifying source files or rebuilding the
-index. They use fixed, parameterized graph queries; arbitrary Cypher and shell
-execution are not exposed.
+All seven tools retrieve context without modifying source files or rebuilding
+the index. They use fixed, parameterized graph queries; arbitrary Cypher and
+shell execution are not exposed.
 
 | Tool | Result |
 |---|---|
@@ -185,6 +186,7 @@ execution are not exposed.
 | `get_callers(symbol_id, limit=20)` | Direct resolved callers, their stored function `content` and call-site locations |
 | `get_callees(symbol_id, limit=20)` | Direct resolved callees, their stored function `content` and call-site locations |
 | `get_inheritance(symbol_id, limit=20)` | Direct class parents/subclasses with `relation`, definition locations and `base_index` |
+| `get_imports(path, direction="imports", limit=20)` | Resolved local import dependencies or reverse `importers`, with paths, imported names, aliases and import-site locations |
 | `index_status()` | Repository, build identifier, model, counts, source freshness and whether reconnection is required |
 
 Search limits are 1–20; other result-list limits are 1–100. Results include the
@@ -239,6 +241,43 @@ zero-based position in the child's written base list, not Python's method
 resolution order. Definition and call-site lines are one-based; call-site
 columns are zero-based Unicode character offsets.
 
+### Import dependencies
+
+Use a repository-relative Python file path; no symbol lookup is required:
+
+```json
+{"path": "src/flask/app.py", "direction": "imports", "limit": 5}
+```
+
+Set `direction` to `"importers"` to find files importing from the selected file.
+Each result contains the neighboring `path`, the importing `import_path`,
+one-based `import_line`, zero-based Unicode `import_column`, written `module`
+(`null` for plain `import`), imported `name` and optional `alias`. Locations
+point to each imported name, so one statement can yield several rows. Results
+are one hop, bounded at 100, with the usual build ID and truncation flag.
+An unknown file is an error; a known file without resolved imports returns an
+empty list.
+
+This reuses Jedi's `goto(..., follow_imports=True)` in the existing second graph
+pass. It supports explicit module, named, aliased and relative imports, including
+function-local and conditional imports. Re-exports resolve to the ultimate
+defining file: `from package import exported` may point to `package/items.py`
+rather than `package/__init__.py`. The written module/name remain on the edge.
+These edges describe resolved binding dependencies, not every intermediate
+package loaded, runtime import order or proof that a conditional import runs.
+
+`index_status().counts` reports `imports` (imported bindings, counting each
+wildcard once), `import_edges`, `unresolved_imports`, `ambiguous_imports`,
+`external_imports` and `wildcard_imports`. External/unindexed targets, ambiguous
+bindings, unresolved names and wildcard imports are counted but omitted from
+the graph. Calls to `importlib.import_module` or `__import__` are not tracked.
+Only files from the shared indexing file list can become targets.
+
+Import tracking changes the graph format to version 3. **Rebuild existing
+indexes and reconnect** before using this version; older manifests are rejected
+instead of silently returning an empty import graph. No LSP service or new
+dependency is required.
+
 ### Example walkthrough
 
 After connecting, try:
@@ -249,6 +288,8 @@ After connecting, try:
 
 The host chooses the tool sequence based on intermediate results. For class
 questions, use `find_symbols` to select a class and then `get_inheritance`.
+For dependency questions, use `get_imports` in either direction and follow only
+the files relevant to the question.
 Treat retrieved code as repository data, not instructions for the agent.
 
 ## Code map
@@ -260,7 +301,7 @@ Treat retrieved code as repository data, not instructions for the agent.
 | `src/neo4j_connection.py` | Shared environment-based Neo4j connection setup |
 | `src/embeddings/file_processor.py` | File discovery, baseline splitting and embedding orchestration |
 | `src/pipelines/embedding_pipeline.py` | Existing embedding preparation, storage and query pipeline |
-| `src/embeddings/build_graph.py` | Two-pass definition extraction and call/inheritance resolution |
+| `src/embeddings/build_graph.py` | Two-pass definition extraction and call/inheritance/import resolution |
 | `src/retrievers/query_graph.py` | Fixed Cypher queries returning plain dictionaries |
 | `src/mcp_server.py` | Tool definitions, validation, lazy loading and result formatting |
 | `src/benchmark_agent.py` | Paired Codex baseline/Codeaware runs with reported token usage and raw traces |
@@ -325,8 +366,9 @@ python -m pycodestyle src tests data/create_plots_mmr.py
 
 Tests use deterministic embeddings with real Chroma storage. They cover symbol
 identity, cross-file aliases, repeated method names, nested functions, Unicode
-locations, inheritance, unresolved targets, freshness/errors, bounded results
-and MCP stdio discovery. No model download is required for the automated tests.
+locations, inheritance, import aliases/re-exports, unresolved targets,
+freshness/errors, bounded results and MCP stdio discovery. No model download
+is required for the automated tests.
 
 The optional integration test runs Cypher and an MCP stdio tool call against an
 **isolated test Neo4j instance**, using the current `NEO4J_*` settings:
@@ -353,8 +395,8 @@ slices and breaks before operators.
 - Explicit, unambiguous repository-local base classes are supported, including
   aliased/qualified imports and multiple inheritance. Dynamic, ambiguous and
   external bases, including built-in `object`, are omitted and counted in
-  `unresolved_bases`. Inherited method resolution, `super()`, MRO, module-import
-  relationships and LSP integration are outside this version.
+  `unresolved_bases`. Inherited method resolution, `super()`, MRO and LSP
+  integration are outside this version.
 - Automatic refresh, an index coordinator and incremental indexing are proposed
   next steps, not implemented features. Rebuild and reconnect manually today.
 - Historical line-coverage scores could double-count overlapping ranges. The

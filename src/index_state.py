@@ -24,8 +24,8 @@ EXCLUDE_DIRS = {
     ".codeaware-index",
 }
 COLLECTION = "codeaware_mcp"
-GRAPH_SCHEMA = 2  # Class symbols and direct inheritance relationships.
-TOOL_DESCRIPTION_VERSION = "source-evidence-v4"
+GRAPH_SCHEMA = 3  # Resolved file-to-file import bindings.
+TOOL_DESCRIPTION_VERSION = "imports-v5"
 REBUILD = (
     "Rebuild with python -m src.index_repository, then reconnect the MCP "
     "server."

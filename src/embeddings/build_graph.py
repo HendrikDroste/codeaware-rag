@@ -33,7 +33,14 @@ def build_graph(codebase_path, *, file_paths=None, build_id="manual"):
         "classes": 0,
         "inheritance_edges": 0,
         "unresolved_bases": 0,
+        "imports": 0,
+        "import_edges": 0,
+        "unresolved_imports": 0,
+        "ambiguous_imports": 0,
+        "external_imports": 0,
+        "wildcard_imports": 0,
     }
+    indexed_files = {os.path.realpath(path) for path in file_paths}
     locations = {}
     class_locations = {}
     project = jedi.Project(
@@ -167,7 +174,7 @@ def build_graph(codebase_path, *, file_paths=None, build_id="manual"):
                         kind="class" if is_class else "function",
                     ).consume()
 
-        # Second pass: resolve calls and create CALLS edges
+        # Second pass: resolve relationships after all nodes exist.
         for files in file_paths:
             if not files.endswith(".py"):
                 continue
@@ -192,6 +199,23 @@ def build_graph(codebase_path, *, file_paths=None, build_id="manual"):
             captures = query.captures(tree.root_node)
             script = jedi.Script(
                 code=code.decode("utf8"), path=filepath, project=project
+            )
+            import_nodes = (
+                py_language.query(
+                    "[(import_statement) (import_from_statement)] @import"
+                )
+                .captures(tree.root_node)
+                .get("import", [])
+            )
+            process_imports(
+                import_nodes,
+                script,
+                session,
+                filepath,
+                codebase_path,
+                indexed_files,
+                counts,
+                code.decode("utf8").splitlines(),
             )
             class_nodes = (
                 py_language.query("(class_definition) @class")
@@ -238,6 +262,76 @@ def build_graph(codebase_path, *, file_paths=None, build_id="manual"):
                 session.close()
         finally:
             driver.close()
+
+
+def process_imports(
+    nodes,
+    script,
+    session,
+    filepath,
+    repository_root,
+    indexed_files,
+    counts,
+    source_lines,
+):
+    """
+    Resolve explicit import bindings to indexed files, following
+    re-exports. These are static dependencies, not runtime load order.
+    """
+    for node in nodes:
+        if any(c.type == "wildcard_import" for c in node.named_children):
+            counts["imports"] += 1
+            counts["wildcard_imports"] += 1
+            continue
+        module = node.child_by_field_name("module_name")
+        for binding in node.children_by_field_name("name"):
+            counts["imports"] += 1
+            name = binding
+            alias = None
+            if binding.type == "aliased_import":
+                name = binding.child_by_field_name("name")
+                alias = binding.child_by_field_name("alias").text.decode(
+                    "utf8"
+                )
+            line, column = name.end_point
+            column = len(
+                source_lines[line].encode("utf8")[:column].decode("utf8")
+            )
+            definitions = script.goto(
+                line=line + 1, column=column, follow_imports=True
+            )
+            if not definitions:
+                counts["unresolved_imports"] += 1
+                continue
+            # Do not guess even if ambiguous definitions share a file.
+            if len(definitions) != 1:
+                counts["ambiguous_imports"] += 1
+                continue
+            target = definitions[0].module_path
+            if target is None or os.path.realpath(target) not in indexed_files:
+                counts["external_imports"] += 1
+                continue
+            line, column = name.start_point
+            column = len(
+                source_lines[line].encode("utf8")[:column].decode("utf8")
+            )
+            session.run(
+                "MATCH (source:Codeaware:File {path:$source, "
+                "repository:$repo}), (target:Codeaware:File "
+                "{path:$target, repository:$repo}) "
+                "MERGE (source)-[r:IMPORTS {line:$line, column:$column}]"
+                "->(target) "
+                "SET r.module = $module, r.name = $name, r.alias = $alias",
+                source=filepath,
+                target=os.path.realpath(target),
+                repo=repository_root,
+                module=module.text.decode("utf8") if module else None,
+                name=name.text.decode("utf8"),
+                alias=alias,
+                line=line + 1,
+                column=column,
+            ).consume()
+            counts["import_edges"] += 1
 
 
 def process_inheritance(

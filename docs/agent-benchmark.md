@@ -10,7 +10,7 @@ conditions, using Codex CLI as the host:
 | Condition | Available repository tools |
 |---|---|
 | `baseline` | Native Codex tools, without Codeaware MCP |
-| `codeaware` | The same native tools plus the six Codeaware MCP tools |
+| `codeaware` | The same native tools plus the Codeaware MCP tools (currently seven) |
 
 Every question/condition starts a fresh ephemeral session. Both use the same
 model, reasoning effort, question and prompt prefix, with read-only source
@@ -93,9 +93,10 @@ unavailable tools; the agent must identify that gap first. `auto` retains its
 original neutral text.
 
 These instructions are recorded as `prompt_version=repository-qa-v3` and
-`tool_description_version=source-evidence-v4`. Earlier pilot results retain
-their original versions. The latest instructions have not been benchmarked;
-they do not retroactively change the prior results or establish savings.
+`tool_description_version=imports-v5` (adds import queries to the server).
+Earlier pilot results retain their original versions. The latest instructions
+have not been benchmarked; they do not retroactively change the prior results
+or establish savings.
 
 For a small pilot, run questions 11, 16 and 18 in `auto`, then repeat with
 `--tool-policy guided` and a new output directory:

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.neo4j_connection import graph_connection
 
 
@@ -105,6 +107,47 @@ def find_snippet_symbols(snippets, *, repository_root, build_id):
         for row in result:
             symbol_ids[row["snippet_index"]].append(row["symbol_id"])
     return symbol_ids
+
+
+def query_imports(
+    path, *, repository_root, build_id, direction="imports", limit=20
+):
+    """
+    Return one hop of resolved import bindings or reverse importers.
+    Paths and sites are relative to the configured repository.
+    """
+    patterns = {
+        "imports": "(target)-[r:IMPORTS]->(other:Codeaware:File)",
+        "importers": "(target)<-[r:IMPORTS]-(other:Codeaware:File)",
+    }
+    if direction not in patterns:
+        raise ValueError("direction must be imports or importers")
+    absolute_path = str(Path(repository_root) / path)
+    driver, database = graph_connection()
+    with driver, driver.session(database=database) as session:
+        check_graph(session, repository_root, build_id)
+        exists = session.run(
+            "MATCH (f:Codeaware:File {repository:$repo, path:$path}) RETURN f",
+            repo=repository_root,
+            path=absolute_path,
+        ).single()
+        if exists is None:
+            raise ValueError(
+                "Unknown file path; select an indexed Python file"
+            )
+        result = session.run(
+            "MATCH (target:Codeaware:File {repository:$repo, path:$path}) "
+            f"MATCH {patterns[direction]} WHERE other.repository = $repo "
+            "RETURN substring(other.path, size($repo) + 1) AS path, "
+            "substring(startNode(r).path, size($repo) + 1) AS import_path, "
+            "r.line AS import_line, r.column AS import_column, "
+            "r.module AS module, r.name AS name, r.alias AS alias "
+            "ORDER BY path, import_line, import_column LIMIT $limit",
+            repo=repository_root,
+            path=absolute_path,
+            limit=limit,
+        )
+        return [dict(row) for row in result]
 
 
 def query_inheritance(symbol_id, *, repository_root, build_id, limit=20):

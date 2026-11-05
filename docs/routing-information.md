@@ -5,6 +5,8 @@ registration and its setup restriction. However, it is not all returned or
 connected by the current method-level tools. This was checked directly in
 Neo4j and the persisted Chroma collection, with no index rebuild or new model
 calls. Both backends matched build `19dddedc-b63d-4410-bdf0-79213658ea46`.
+This records the pre-import graph format. New builds also contain `IMPORTS`
+relationships; the decorator and nested-call limitations below still apply.
 
 ## What is stored
 
