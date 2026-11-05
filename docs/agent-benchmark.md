@@ -101,7 +101,10 @@ These instructions are recorded as `prompt_version=repository-qa-v4` and
 instructions both reuse it. Both benchmark conditions still receive identical
 prompts within each mode. The update contains no Flask-specific answers.
 
-This combination has not been benchmarked yet. Earlier results retain their
+The combined changes were measured in the [navigation pilot](
+../data/benchmark_results/2026-11-05-navigation-guided/README.md) on Q11, Q17
+and Q18 with low reasoning and no repetitions. The agent used neither new
+feature; this does not isolate their effects. Earlier results retain their
 original versions and measurements. Reconnect clients to discover the updated
 server guidance; a prompt/description change does not require an index rebuild.
 

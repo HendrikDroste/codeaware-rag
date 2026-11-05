@@ -1,0 +1,118 @@
+[
+  {
+    "question_id": 11,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "Blueprint",
+      "include_code": true,
+      "limit": 3,
+      "max_lines": 12
+    },
+    "result_count": 2,
+    "hint_returned": false,
+    "status": "completed",
+    "error": null
+  },
+  {
+    "question_id": 11,
+    "variant": "codeaware",
+    "tool": "get_inheritance",
+    "arguments": {
+      "symbol_id": "src/flask/sansio/blueprints.py:119:Blueprint",
+      "limit": 5
+    },
+    "result_count": 2,
+    "hint_returned": false,
+    "status": "completed",
+    "error": null
+  },
+  {
+    "question_id": 11,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "Scaffold",
+      "include_code": true,
+      "limit": 3,
+      "max_lines": 14
+    },
+    "result_count": 1,
+    "hint_returned": false,
+    "status": "completed",
+    "error": null
+  },
+  {
+    "question_id": 17,
+    "variant": "codeaware",
+    "tool": "search_code",
+    "arguments": {
+      "query": "App initializes configuration loads default values default_config make_config",
+      "limit": 3
+    },
+    "result_count": 3,
+    "hint_returned": false,
+    "status": "completed",
+    "error": null
+  },
+  {
+    "question_id": 17,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "App.make_config",
+      "path": "src/flask/sansio/app.py",
+      "include_code": true,
+      "limit": 3,
+      "max_lines": 40
+    },
+    "result_count": 1,
+    "hint_returned": false,
+    "status": "completed",
+    "error": null
+  },
+  {
+    "question_id": 18,
+    "variant": "codeaware",
+    "tool": "search_code",
+    "arguments": {
+      "query": "create request object from WSGI environ incoming HTTP request request context",
+      "limit": 3
+    },
+    "result_count": 3,
+    "hint_returned": false,
+    "status": "completed",
+    "error": null
+  },
+  {
+    "question_id": 18,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "AppContext.from_environ",
+      "include_code": true,
+      "limit": 3,
+      "max_lines": 65
+    },
+    "result_count": 1,
+    "hint_returned": false,
+    "status": "completed",
+    "error": null
+  },
+  {
+    "question_id": 18,
+    "variant": "codeaware",
+    "tool": "find_symbols",
+    "arguments": {
+      "name": "Flask.__call__",
+      "path": "src/flask/app.py",
+      "include_code": true,
+      "limit": 3,
+      "max_lines": 25
+    },
+    "result_count": 1,
+    "hint_returned": false,
+    "status": "completed",
+    "error": null
+  }
+]

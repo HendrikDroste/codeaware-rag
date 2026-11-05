@@ -1,0 +1,255 @@
+{
+  "scope": "Structural file/line bounds, not sentence-level entailment.",
+  "checked_links": 31,
+  "invalid": 0,
+  "links": [
+    {
+      "question_id": 11,
+      "variant": "baseline",
+      "path": "src/flask/sansio/scaffold.py",
+      "line_start": 52,
+      "line_end": 52,
+      "valid": true
+    },
+    {
+      "question_id": 11,
+      "variant": "baseline",
+      "path": "src/flask/sansio/blueprints.py",
+      "line_start": 119,
+      "line_end": 119,
+      "valid": true
+    },
+    {
+      "question_id": 11,
+      "variant": "baseline",
+      "path": "src/flask/blueprints.py",
+      "line_start": 10,
+      "line_end": 10,
+      "valid": true
+    },
+    {
+      "question_id": 11,
+      "variant": "baseline",
+      "path": "src/flask/__init__.py",
+      "line_start": 3,
+      "line_end": 3,
+      "valid": true
+    },
+    {
+      "question_id": 11,
+      "variant": "baseline",
+      "path": "src/flask/sansio/blueprints.py",
+      "line_start": 34,
+      "line_end": 34,
+      "valid": true
+    },
+    {
+      "question_id": 11,
+      "variant": "codeaware",
+      "path": "src/flask/sansio/scaffold.py",
+      "line_start": 52,
+      "line_end": 52,
+      "valid": true
+    },
+    {
+      "question_id": 11,
+      "variant": "codeaware",
+      "path": "src/flask/sansio/blueprints.py",
+      "line_start": 119,
+      "line_end": 119,
+      "valid": true
+    },
+    {
+      "question_id": 11,
+      "variant": "codeaware",
+      "path": "src/flask/blueprints.py",
+      "line_start": 18,
+      "line_end": 18,
+      "valid": true
+    },
+    {
+      "question_id": 17,
+      "variant": "baseline",
+      "path": "src/flask/sansio/app.py",
+      "line_start": 317,
+      "line_end": 317,
+      "valid": true
+    },
+    {
+      "question_id": 17,
+      "variant": "baseline",
+      "path": "src/flask/sansio/app.py",
+      "line_start": 480,
+      "line_end": 480,
+      "valid": true
+    },
+    {
+      "question_id": 17,
+      "variant": "baseline",
+      "path": "src/flask/app.py",
+      "line_start": 205,
+      "line_end": 205,
+      "valid": true
+    },
+    {
+      "question_id": 17,
+      "variant": "codeaware",
+      "path": "src/flask/sansio/app.py",
+      "line_start": 317,
+      "line_end": 317,
+      "valid": true
+    },
+    {
+      "question_id": 17,
+      "variant": "codeaware",
+      "path": "src/flask/sansio/app.py",
+      "line_start": 492,
+      "line_end": 492,
+      "valid": true
+    },
+    {
+      "question_id": 17,
+      "variant": "codeaware",
+      "path": "src/flask/app.py",
+      "line_start": 205,
+      "line_end": 205,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/app.py",
+      "line_start": 1679,
+      "line_end": 1679,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/app.py",
+      "line_start": 1653,
+      "line_end": 1653,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/app.py",
+      "line_start": 1576,
+      "line_end": 1576,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/ctx.py",
+      "line_start": 340,
+      "line_end": 340,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/app.py",
+      "line_start": 239,
+      "line_end": 239,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/wrappers.py",
+      "line_start": 18,
+      "line_end": 18,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/app.py",
+      "line_start": 1657,
+      "line_end": 1657,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/ctx.py",
+      "line_start": 433,
+      "line_end": 433,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "path": "src/flask/globals.py",
+      "line_start": 57,
+      "line_end": 57,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "path": "src/flask/app.py",
+      "line_start": 1679,
+      "line_end": 1679,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "path": "src/flask/app.py",
+      "line_start": 1653,
+      "line_end": 1653,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "path": "src/flask/app.py",
+      "line_start": 1562,
+      "line_end": 1562,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "path": "src/flask/ctx.py",
+      "line_start": 340,
+      "line_end": 340,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "path": "src/flask/app.py",
+      "line_start": 1653,
+      "line_end": 1653,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "path": "src/flask/globals.py",
+      "line_start": 57,
+      "line_end": 57,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "path": "src/flask/app.py",
+      "line_start": 239,
+      "line_end": 239,
+      "valid": true
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "path": "src/flask/wrappers.py",
+      "line_start": 7,
+      "line_end": 7,
+      "valid": true
+    }
+  ]
+}

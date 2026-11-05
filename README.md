@@ -444,3 +444,10 @@ completed all 18 questions once in both conditions (36 turns). Codeaware used
 errors. A subsequent manual review of all 36 answers found 15 rubric ties
 and three baseline advantages on completeness, with no demonstrated Codeaware
 quality gain. The review is retrospective and unblinded.
+
+The [Q11/Q17/Q18 navigation pilot](data/benchmark_results/2026-11-05-navigation-guided/README.md)
+measured the updated prompts plus empty-result hints and excerpt offsets. All
+six low-reasoning turns succeeded. Codeaware used 21.79% more total tokens than
+its new baseline, versus 56.56% on the same questions previously. The agent
+used neither new feature; the observed workflow changes cannot be attributed
+to them. Q17/Q18 completeness omissions were resolved; Q11 remained.
