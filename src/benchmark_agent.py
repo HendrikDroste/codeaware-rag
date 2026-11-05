@@ -30,7 +30,7 @@ PROMPT = (
     "repository tools. Do not edit files, use the web, inspect other "
     "repositories, or delegate to other agents.\n\n"
 )
-PROMPT_VERSION = "repository-qa-v4"
+PROMPT_VERSION = "repository-qa-v5"
 PROMPTS = {
     "auto": PROMPT,
     "guided": PROMPT + CONTEXT_GUIDANCE + "\n\n",

@@ -10,7 +10,7 @@ conditions, using Codex CLI as the host:
 | Condition | Available repository tools |
 |---|---|
 | `baseline` | Native Codex tools, without Codeaware MCP |
-| `codeaware` | The same native tools plus the Codeaware MCP tools (currently seven) |
+| `codeaware` | The same native tools plus the Codeaware MCP tools (currently ten) |
 
 Every question/condition starts a fresh ephemeral session. Both use the same
 model, reasoning effort, question and prompt prefix, with read-only source
@@ -78,7 +78,9 @@ whether it chooses Codeaware with the current tool descriptions.
 `--tool-policy guided` adds the same conditional workflow guidance to both
 conditions. It asks the agent to choose tools by capability: semantic search
 for unknown implementation locations, function/class lookup for those symbols,
-and targeted native text search for assignments or attributes. After one empty
+and compact `list_symbols` outlines or native text search for assignments and
+attributes. `resolve_definition` follows a name at a known source position;
+`find_references` locates broader uses than calls. After one empty
 exact-name lookup, switch to discovery instead of guessing name variants.
 Prefer a relevant method over a large class prefix, which may mostly contain
 documentation. Query graph relationships only for unresolved relationship
@@ -95,18 +97,17 @@ or unavailable tool capability. Stop when the answer and citations are supported
 and continue when essential evidence is missing. `auto` retains its original
 neutral text.
 
-These instructions are recorded as `prompt_version=repository-qa-v4` and
-`tool_description_version=excerpt-navigation-v7`. The shared policy lives in
+These instructions are recorded as `prompt_version=repository-qa-v5` and
+`tool_description_version=python-navigation-v8`. The shared policy lives in
 `src/index_state.py` as `CONTEXT_GUIDANCE`; the guided benchmark and server
 instructions both reuse it. Both benchmark conditions still receive identical
 prompts within each mode. The update contains no Flask-specific answers.
 
-The combined changes were measured in the [navigation pilot](
-../data/benchmark_results/2026-11-05-navigation-guided/README.md) on Q11, Q17
-and Q18 with low reasoning and no repetitions. The agent used neither new
-feature; this does not isolate their effects. Earlier results retain their
-original versions and measurements. Reconnect clients to discover the updated
-server guidance; a prompt/description change does not require an index rebuild.
+The current three Jedi navigation tools and prompt v5 have not been benchmarked.
+The previous [navigation pilot](
+../data/benchmark_results/2026-11-05-navigation-guided/README.md) used v4 and
+excerpt-navigation-v7; its measurements remain unchanged. Reconnect clients
+to discover the updated server guidance; no index rebuild is required.
 
 For a small pilot, run questions 11, 16 and 18 in `auto`, then repeat with
 `--tool-policy guided` and a new output directory:

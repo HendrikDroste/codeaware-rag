@@ -689,9 +689,34 @@ def test_stdio_discovery_and_errors_do_not_load_models(build):
                 "get_callees",
                 "get_inheritance",
                 "get_imports",
+                "list_symbols",
+                "resolve_definition",
+                "find_references",
                 "index_status",
             }
             assert all(t.annotations.read_only_hint for t in tools.tools)
+            outline = data(
+                await client.call_tool(
+                    "list_symbols", {"path": "helpers.py", "parent": "First"}
+                )
+            )
+            assert [r["qualified_name"] for r in outline["results"]] == [
+                "First.run"
+            ]
+            definition = data(
+                await client.call_tool(
+                    "resolve_definition",
+                    {"path": "worker.py", "line": 5, "column": 25},
+                )
+            )
+            assert definition["results"][0]["path"] == "helpers.py"
+            references = data(
+                await client.call_tool(
+                    "find_references",
+                    {"path": "helpers.py", "line": 1, "column": 5},
+                )
+            )
+            assert any(r["path"] == "worker.py" for r in references["results"])
             schemas = {
                 t.name: t.model_dump(by_alias=True)["inputSchema"]
                 for t in tools.tools
@@ -740,6 +765,75 @@ def test_stdio_discovery_and_errors_do_not_load_models(build):
         text=True,
     )
     assert check.returncode == 0, check.stderr
+
+
+def test_jedi_attributes_aliases_and_reference_boundaries(
+    repository, tmp_path
+):
+    from src.retrievers.query_python import query_python
+
+    (repository / "attributes.py").write_text(
+        "class Settings:\n    limit = 1\n"
+        "    def __init__(self):\n        self.value = 2\n"
+    )
+    (repository / "uses.py").write_text(
+        "from attributes import Settings as Config\n"
+        "label = 'ä'; result = Config.limit\nimport sys\n"
+    )
+    files = index_state.file_hashes(repository)
+
+    def query(operation, path, **kwargs):
+        return query_python(
+            operation,
+            path,
+            repository_root=repository,
+            index_dir=tmp_path / "cache",
+            files=files,
+            **kwargs,
+        )
+
+    outline, _ = query("symbols", "attributes.py", parent="Settings")
+    assert {r["qualified_name"] for r in outline} == {
+        "Settings.limit",
+        "Settings.__init__",
+    }
+    usage = (repository / "uses.py").read_text().splitlines()[1].index("limit")
+    target, _ = query("definition", "uses.py", line=2, column=usage)
+    assert [(r["path"], r["line"], r["column"]) for r in target] == [
+        ("attributes.py", 2, 4)
+    ]
+    refs, _ = query("references", "attributes.py", line=2, column=5)
+    assert [(r["path"], r["line"]) for r in refs] == [("uses.py", 2)]
+    declared, _ = query(
+        "references",
+        "attributes.py",
+        line=2,
+        column=5,
+        include_declaration=True,
+    )
+    assert {r["path"] for r in declared} == {"attributes.py", "uses.py"}
+    external, excluded = query("definition", "uses.py", line=3, column=9)
+    assert external == [] and excluded == 1
+
+
+def test_python_tools_limits_positions_and_freshness(build):
+    root, directory, config, manifest, _ = build
+    server = create_server(root, directory, config)
+    outline = data(call(server, "list_symbols", path="helpers.py", limit=1))
+    assert outline["build_id"] == manifest["build_id"]
+    assert outline["truncated"] and len(outline["results"]) == 1
+    for tool, arguments in (
+        ("list_symbols", {"path": "../outside.py"}),
+        ("list_symbols", {"path": "missing.py"}),
+        ("list_symbols", {"path": "helpers.py", "limit": 101}),
+        ("resolve_definition", {"path": "helpers.py", "line": 0, "column": 0}),
+        ("find_references", {"path": "helpers.py", "line": 1, "column": 99}),
+    ):
+        assert call(server, tool, **arguments).is_error
+    (root / "helpers.py").write_text("pass\n")
+    for tool in ("list_symbols", "resolve_definition", "find_references"):
+        arguments = {} if tool == "list_symbols" else {"line": 1, "column": 0}
+        assert call(server, tool, path="helpers.py", **arguments).is_error
 
 
 def test_repeated_snippets_keep_their_actual_line_locations(repository):
