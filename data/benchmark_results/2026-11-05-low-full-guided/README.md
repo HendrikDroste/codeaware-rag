@@ -94,3 +94,9 @@ API calls were made. The original usage and answers remain unchanged.
 Unmodified raw events, prompts, answers and stderr remain in the ignored
 `data/agent_runs/2026-11-05-low-full-guided/q*-{baseline,codeaware}/`.
 The previous medium results remain unchanged. No runtime code was changed.
+
+The [token-overhead investigation](token-analysis.md) examines every saved
+trace. Additional discovery operations, unsupported attribute lookups and
+docstring-heavy class prefixes explain specific wasted steps; larger returned
+text or native verification rereads do not explain the aggregate increase.
+Exact per-model-request token attribution is unavailable.

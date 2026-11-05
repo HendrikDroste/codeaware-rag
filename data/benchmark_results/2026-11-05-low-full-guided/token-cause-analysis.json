@@ -1,0 +1,2121 @@
+{
+  "scope": "Offline trace analysis; no new model calls, runtime changes or paid grading.",
+  "measurement_notes": [
+    "Logical MCP payload serialized once with json.dumps, ensure_ascii=False. These character counts are proxies, not model input tokens. Host serialization is not observed.",
+    "Structured/text duplicate representations are not counted twice. Whether the host feeds both representations to the model is unknown.",
+    "Native output measured from aggregated_output. Formatting differs from MCP JSON; character totals are not directly equivalent token counts.",
+    "Returned source-location overlap is deduplicated within each call, then counted as repeated when delivered again in another call. It does not prove repeated model use.",
+    "Turn-level traces do not expose per-model-request input usage or full model requests; exact causal attribution to schemas, results and round trips is unavailable.",
+    "Tool operations can run in parallel or batch; operation count is not a count of model requests."
+  ],
+  "aggregate": {
+    "baseline": {
+      "input_tokens": 969246,
+      "cached_input_tokens": 754048,
+      "uncached_input_tokens": 215198,
+      "output_tokens": 9948,
+      "reasoning_output_tokens": 44,
+      "total_tokens": 979194,
+      "command_calls": 41,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 170271,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0
+    },
+    "codeaware": {
+      "input_tokens": 1144742,
+      "cached_input_tokens": 880896,
+      "uncached_input_tokens": 263846,
+      "output_tokens": 9262,
+      "reasoning_output_tokens": 82,
+      "total_tokens": 1154004,
+      "command_calls": 3,
+      "mcp_calls": 53,
+      "logical_mcp_result_characters": 135568,
+      "native_output_characters": 5993,
+      "source_content_characters": 102127,
+      "source_locations_delivered_across_calls": 2517,
+      "repeated_source_locations_across_calls": 56
+    }
+  },
+  "by_tool": {
+    "find_symbols": {
+      "calls": 30,
+      "logical_result_characters": 83341
+    },
+    "get_callees": {
+      "calls": 2,
+      "logical_result_characters": 5524
+    },
+    "get_callers": {
+      "calls": 1,
+      "logical_result_characters": 4006
+    },
+    "get_imports": {
+      "calls": 1,
+      "logical_result_characters": 1008
+    },
+    "get_inheritance": {
+      "calls": 6,
+      "logical_result_characters": 3217
+    },
+    "search_code": {
+      "calls": 13,
+      "logical_result_characters": 38472
+    }
+  },
+  "pairs": [
+    {
+      "question_id": 1,
+      "delta_tokens": -6736,
+      "baseline_operations": 2,
+      "codeaware_operations": 1,
+      "baseline_output_characters": 8653,
+      "codeaware_output_characters": 3099
+    },
+    {
+      "question_id": 2,
+      "delta_tokens": -10363,
+      "baseline_operations": 2,
+      "codeaware_operations": 1,
+      "baseline_output_characters": 4535,
+      "codeaware_output_characters": 3257
+    },
+    {
+      "question_id": 3,
+      "delta_tokens": 5404,
+      "baseline_operations": 2,
+      "codeaware_operations": 2,
+      "baseline_output_characters": 3913,
+      "codeaware_output_characters": 4045
+    },
+    {
+      "question_id": 4,
+      "delta_tokens": -4940,
+      "baseline_operations": 2,
+      "codeaware_operations": 1,
+      "baseline_output_characters": 3867,
+      "codeaware_output_characters": 2733
+    },
+    {
+      "question_id": 5,
+      "delta_tokens": 10894,
+      "baseline_operations": 2,
+      "codeaware_operations": 2,
+      "baseline_output_characters": 12346,
+      "codeaware_output_characters": 5771
+    },
+    {
+      "question_id": 6,
+      "delta_tokens": -11032,
+      "baseline_operations": 2,
+      "codeaware_operations": 1,
+      "baseline_output_characters": 7076,
+      "codeaware_output_characters": 3407
+    },
+    {
+      "question_id": 7,
+      "delta_tokens": -4202,
+      "baseline_operations": 2,
+      "codeaware_operations": 2,
+      "baseline_output_characters": 4273,
+      "codeaware_output_characters": 3540
+    },
+    {
+      "question_id": 8,
+      "delta_tokens": -7583,
+      "baseline_operations": 2,
+      "codeaware_operations": 1,
+      "baseline_output_characters": 7503,
+      "codeaware_output_characters": 1487
+    },
+    {
+      "question_id": 9,
+      "delta_tokens": 14772,
+      "baseline_operations": 2,
+      "codeaware_operations": 3,
+      "baseline_output_characters": 3816,
+      "codeaware_output_characters": 8969
+    },
+    {
+      "question_id": 10,
+      "delta_tokens": 11202,
+      "baseline_operations": 2,
+      "codeaware_operations": 2,
+      "baseline_output_characters": 8583,
+      "codeaware_output_characters": 5452
+    },
+    {
+      "question_id": 11,
+      "delta_tokens": 11389,
+      "baseline_operations": 3,
+      "codeaware_operations": 4,
+      "baseline_output_characters": 6850,
+      "codeaware_output_characters": 4943
+    },
+    {
+      "question_id": 12,
+      "delta_tokens": 8204,
+      "baseline_operations": 1,
+      "codeaware_operations": 2,
+      "baseline_output_characters": 8484,
+      "codeaware_output_characters": 6301
+    },
+    {
+      "question_id": 13,
+      "delta_tokens": 18838,
+      "baseline_operations": 5,
+      "codeaware_operations": 8,
+      "baseline_output_characters": 23825,
+      "codeaware_output_characters": 14244
+    },
+    {
+      "question_id": 14,
+      "delta_tokens": 12312,
+      "baseline_operations": 3,
+      "codeaware_operations": 4,
+      "baseline_output_characters": 20541,
+      "codeaware_output_characters": 14479
+    },
+    {
+      "question_id": 15,
+      "delta_tokens": 25187,
+      "baseline_operations": 2,
+      "codeaware_operations": 3,
+      "baseline_output_characters": 13320,
+      "codeaware_output_characters": 11761
+    },
+    {
+      "question_id": 16,
+      "delta_tokens": 16965,
+      "baseline_operations": 2,
+      "codeaware_operations": 4,
+      "baseline_output_characters": 13699,
+      "codeaware_output_characters": 13388
+    },
+    {
+      "question_id": 17,
+      "delta_tokens": 34198,
+      "baseline_operations": 2,
+      "codeaware_operations": 6,
+      "baseline_output_characters": 5227,
+      "codeaware_output_characters": 16832
+    },
+    {
+      "question_id": 18,
+      "delta_tokens": 50301,
+      "baseline_operations": 3,
+      "codeaware_operations": 9,
+      "baseline_output_characters": 13760,
+      "codeaware_output_characters": 17853
+    }
+  ],
+  "runs": [
+    {
+      "question_id": 1,
+      "variant": "baseline",
+      "input_tokens": 51422,
+      "cached_input_tokens": 43008,
+      "uncached_input_tokens": 8414,
+      "output_tokens": 469,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 51891,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 8653,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'def send_file|def send_from_directory|send_file\\\\(' src/flask/helpers.py | head -n 5\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/helpers.py | sed -n '417,598p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 1,
+      "variant": "codeaware",
+      "input_tokens": 44766,
+      "cached_input_tokens": 36736,
+      "uncached_input_tokens": 8030,
+      "output_tokens": 389,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 45155,
+      "command_calls": 0,
+      "mcp_calls": 1,
+      "logical_mcp_result_characters": 3099,
+      "native_output_characters": 0,
+      "source_content_characters": 2436,
+      "source_locations_delivered_across_calls": 52,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 1,
+          "item_id": "item_1",
+          "tool": "search_code",
+          "arguments": {
+            "query": "send a file to client as download response",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 3099,
+          "source_content_characters": 2436,
+          "unique_source_locations_in_call": 52
+        }
+      ]
+    },
+    {
+      "question_id": 2,
+      "variant": "baseline",
+      "input_tokens": 50082,
+      "cached_input_tokens": 36096,
+      "uncached_input_tokens": 13986,
+      "output_tokens": 430,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 50512,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 4535,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n -m 5 '0\\\\.0\\\\.0\\\\.0|externally visible|Externally Visible' docs src/flask\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba docs/quickstart.rst | sed -n '48,86p'\nnl -ba src/flask/app.py | sed -n '670,689p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 2,
+      "variant": "codeaware",
+      "input_tokens": 39837,
+      "cached_input_tokens": 21376,
+      "uncached_input_tokens": 18461,
+      "output_tokens": 312,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 40149,
+      "command_calls": 0,
+      "mcp_calls": 1,
+      "logical_mcp_result_characters": 3257,
+      "native_output_characters": 0,
+      "source_content_characters": 2548,
+      "source_locations_delivered_across_calls": 68,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 2,
+          "item_id": "item_1",
+          "tool": "search_code",
+          "arguments": {
+            "query": "development server host externally visible network 0.0.0.0",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 3257,
+          "source_content_characters": 2548,
+          "unique_source_locations_in_call": 68
+        }
+      ]
+    },
+    {
+      "question_id": 3,
+      "variant": "baseline",
+      "input_tokens": 49498,
+      "cached_input_tokens": 42752,
+      "uncached_input_tokens": 6746,
+      "output_tokens": 418,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 49916,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 3913,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'def jsonify|def dumps|jsonify\\\\(' src/flask/json tests/test_json.py\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/json/__init__.py | sed -n '13,44p;138,170p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 3,
+      "variant": "codeaware",
+      "input_tokens": 54911,
+      "cached_input_tokens": 41344,
+      "uncached_input_tokens": 13567,
+      "output_tokens": 409,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 55320,
+      "command_calls": 0,
+      "mcp_calls": 2,
+      "logical_mcp_result_characters": 4045,
+      "native_output_characters": 0,
+      "source_content_characters": 2872,
+      "source_locations_delivered_across_calls": 71,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 3,
+          "item_id": "item_1",
+          "tool": "search_code",
+          "arguments": {
+            "query": "convert list or dict to JSON string or JSON response",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 2592,
+          "source_content_characters": 1821,
+          "unique_source_locations_in_call": 39
+        },
+        {
+          "kind": "mcp",
+          "question_id": 3,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "dumps",
+            "path": "src/flask/json/__init__.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 40
+          },
+          "result_count": 1,
+          "logical_result_characters": 1453,
+          "source_content_characters": 1051,
+          "unique_source_locations_in_call": 32
+        }
+      ]
+    },
+    {
+      "question_id": 4,
+      "variant": "baseline",
+      "input_tokens": 49506,
+      "cached_input_tokens": 47360,
+      "uncached_input_tokens": 2146,
+      "output_tokens": 326,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 49832,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 3867,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'def redirect|redirect\\\\(url_for|redirect\\\\(\\\"https?://' src tests docs | head -45\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/helpers.py | sed -n '254,285p'\nnl -ba docs/quickstart.rst | sed -n '590,615p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 4,
+      "variant": "codeaware",
+      "input_tokens": 44640,
+      "cached_input_tokens": 36736,
+      "uncached_input_tokens": 7904,
+      "output_tokens": 252,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 44892,
+      "command_calls": 0,
+      "mcp_calls": 1,
+      "logical_mcp_result_characters": 2733,
+      "native_output_characters": 0,
+      "source_content_characters": 1690,
+      "source_locations_delivered_across_calls": 47,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 4,
+          "item_id": "item_1",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "redirect",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 65
+          },
+          "result_count": 3,
+          "logical_result_characters": 2733,
+          "source_content_characters": 1690,
+          "unique_source_locations_in_call": 47
+        }
+      ]
+    },
+    {
+      "question_id": 5,
+      "variant": "baseline",
+      "input_tokens": 52653,
+      "cached_input_tokens": 34048,
+      "uncached_input_tokens": 18605,
+      "output_tokens": 698,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 53351,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 12346,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n -m 5 'larger applications|application factories|multiple modules|into packages' docs\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc 'nl -ba docs/patterns/packages.rst | head -145\nnl -ba docs/patterns/appfactories.rst | head -100\nnl -ba docs/tutorial/views.rst | head -65'"
+        }
+      ]
+    },
+    {
+      "question_id": 5,
+      "variant": "codeaware",
+      "input_tokens": 63666,
+      "cached_input_tokens": 53760,
+      "uncached_input_tokens": 9906,
+      "output_tokens": 579,
+      "reasoning_output_tokens": 17,
+      "total_tokens": 64245,
+      "command_calls": 0,
+      "mcp_calls": 2,
+      "logical_mcp_result_characters": 5771,
+      "native_output_characters": 0,
+      "source_content_characters": 3694,
+      "source_locations_delivered_across_calls": 107,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 5,
+          "item_id": "item_1",
+          "tool": "search_code",
+          "arguments": {
+            "query": "split application multiple modules files blueprint application factory register blueprint",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 2766,
+          "source_content_characters": 1801,
+          "unique_source_locations_in_call": 42
+        },
+        {
+          "kind": "mcp",
+          "question_id": 5,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "create_app",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 65
+          },
+          "result_count": 3,
+          "logical_result_characters": 3005,
+          "source_content_characters": 1893,
+          "unique_source_locations_in_call": 65
+        }
+      ]
+    },
+    {
+      "question_id": 6,
+      "variant": "baseline",
+      "input_tokens": 50631,
+      "cached_input_tokens": 38272,
+      "uncached_input_tokens": 12359,
+      "output_tokens": 440,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 51071,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 7076,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'content_type|mimetype' src/flask/wrappers.py src/flask/helpers.py tests/test_basic.py | head -60\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'response.headers|Content-Type|make_response\\\\(' docs/quickstart.rst src/flask/helpers.py | head -35; nl -ba src/flask/wrappers.py | sed -n '220,242p'; nl -ba src/flask/helpers.py | sed -n '139,190p'; nl -ba tests/test_basic.py | sed -n '1180,1220p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 6,
+      "variant": "codeaware",
+      "input_tokens": 39774,
+      "cached_input_tokens": 26880,
+      "uncached_input_tokens": 12894,
+      "output_tokens": 265,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 40039,
+      "command_calls": 0,
+      "mcp_calls": 1,
+      "logical_mcp_result_characters": 3407,
+      "native_output_characters": 0,
+      "source_content_characters": 2365,
+      "source_locations_delivered_across_calls": 54,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 6,
+          "item_id": "item_1",
+          "tool": "search_code",
+          "arguments": {
+            "query": "set response content type mimetype content_type headers",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 3407,
+          "source_content_characters": 2365,
+          "unique_source_locations_in_call": 54
+        }
+      ]
+    },
+    {
+      "question_id": 7,
+      "variant": "baseline",
+      "input_tokens": 49672,
+      "cached_input_tokens": 43136,
+      "uncached_input_tokens": 6536,
+      "output_tokens": 390,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 50062,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 4273,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'def iter_rules|url_map|def routes' src/flask/app.py src/flask/cli.py tests/test_basic.py\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/cli.py | sed -n '1030,1115p'\nrg -n 'url_map:|url_map =|self.url_map.add|def add_url_rule' src/flask/sansio/app.py\""
+        }
+      ]
+    },
+    {
+      "question_id": 7,
+      "variant": "codeaware",
+      "input_tokens": 45467,
+      "cached_input_tokens": 30976,
+      "uncached_input_tokens": 14491,
+      "output_tokens": 393,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 45860,
+      "command_calls": 1,
+      "mcp_calls": 1,
+      "logical_mcp_result_characters": 2993,
+      "native_output_characters": 547,
+      "source_content_characters": 1959,
+      "source_locations_delivered_across_calls": 66,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"pwd; rg --files -g 'AGENTS.md' -g '*app*.py' -g '*cli*.py' -g '*routing*' -g 'README*' -g 'pyproject.toml'\""
+        },
+        {
+          "kind": "mcp",
+          "question_id": 7,
+          "item_id": "item_2",
+          "tool": "search_code",
+          "arguments": {
+            "query": "list all registered application routes CLI routes command url_map iter_rules",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 2993,
+          "source_content_characters": 1959,
+          "unique_source_locations_in_call": 66
+        }
+      ]
+    },
+    {
+      "question_id": 8,
+      "variant": "baseline",
+      "input_tokens": 51321,
+      "cached_input_tokens": 24576,
+      "uncached_input_tokens": 26745,
+      "output_tokens": 474,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 51795,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 7503,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n '(@app.route|add_url_rule|def route\\\\()' docs/quickstart.rst src/flask/sansio/scaffold.py src/flask/sansio/app.py\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/sansio/scaffold.py | sed -n '344,410p'\nnl -ba docs/quickstart.rst | sed -n '10,25p;176,195p;296,317p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 8,
+      "variant": "codeaware",
+      "input_tokens": 43888,
+      "cached_input_tokens": 36736,
+      "uncached_input_tokens": 7152,
+      "output_tokens": 324,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 44212,
+      "command_calls": 0,
+      "mcp_calls": 1,
+      "logical_mcp_result_characters": 1487,
+      "native_output_characters": 0,
+      "source_content_characters": 1054,
+      "source_locations_delivered_across_calls": 30,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 8,
+          "item_id": "item_1",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "route",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 70
+          },
+          "result_count": 1,
+          "logical_result_characters": 1487,
+          "source_content_characters": 1054,
+          "unique_source_locations_in_call": 30
+        }
+      ]
+    },
+    {
+      "question_id": 9,
+      "variant": "baseline",
+      "input_tokens": 50250,
+      "cached_input_tokens": 47488,
+      "uncached_input_tokens": 2762,
+      "output_tokens": 398,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 50648,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 3816,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n -m 5 'flask --app|--debug|FLASK_DEBUG|app.run\\\\(debug' docs/quickstart.rst docs/server.rst docs/debugging.rst\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba docs/quickstart.rst | sed -n '40,62p;85,119p'\nnl -ba docs/debugging.rst | sed -n '30,56p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 9,
+      "variant": "codeaware",
+      "input_tokens": 65019,
+      "cached_input_tokens": 46336,
+      "uncached_input_tokens": 18683,
+      "output_tokens": 401,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 65420,
+      "command_calls": 0,
+      "mcp_calls": 3,
+      "logical_mcp_result_characters": 8969,
+      "native_output_characters": 0,
+      "source_content_characters": 7331,
+      "source_locations_delivered_across_calls": 194,
+      "repeated_source_locations_across_calls": 7,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 9,
+          "item_id": "item_1",
+          "tool": "search_code",
+          "arguments": {
+            "query": "run Flask app development server debug mode FLASK_DEBUG --debug",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 2163,
+          "source_content_characters": 1437,
+          "unique_source_locations_in_call": 35
+        },
+        {
+          "kind": "mcp",
+          "question_id": 9,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Flask.run",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 4721,
+          "source_content_characters": 4241,
+          "unique_source_locations_in_call": 100
+        },
+        {
+          "kind": "mcp",
+          "question_id": 9,
+          "item_id": "item_3",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "run_command",
+            "path": "src/flask/cli.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 2085,
+          "source_content_characters": 1653,
+          "unique_source_locations_in_call": 59
+        }
+      ]
+    },
+    {
+      "question_id": 10,
+      "variant": "baseline",
+      "input_tokens": 52697,
+      "cached_input_tokens": 46720,
+      "uncached_input_tokens": 5977,
+      "output_tokens": 542,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 53239,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 8583,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n '413|MAX_CONTENT_LENGTH|MAX_FORM_MEMORY_SIZE|MAX_FORM_PARTS' docs src tests\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba docs/config.rst | sed -n '320,370p'\nnl -ba docs/web-security.rst | sed -n '20,48p'\nnl -ba tests/test_request.py | sed -n '1,42p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 10,
+      "variant": "codeaware",
+      "input_tokens": 63952,
+      "cached_input_tokens": 48512,
+      "uncached_input_tokens": 15440,
+      "output_tokens": 489,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 64441,
+      "command_calls": 0,
+      "mcp_calls": 2,
+      "logical_mcp_result_characters": 5452,
+      "native_output_characters": 0,
+      "source_content_characters": 3599,
+      "source_locations_delivered_across_calls": 73,
+      "repeated_source_locations_across_calls": 5,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 10,
+          "item_id": "item_1",
+          "tool": "search_code",
+          "arguments": {
+            "query": "413 RequestEntityTooLarge request upload size limits configuration",
+            "limit": 4
+          },
+          "result_count": 4,
+          "logical_result_characters": 3641,
+          "source_content_characters": 2534,
+          "unique_source_locations_in_call": 50
+        },
+        {
+          "kind": "mcp",
+          "question_id": 10,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Request.max_form_parts",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 40
+          },
+          "result_count": 2,
+          "logical_result_characters": 1811,
+          "source_content_characters": 1065,
+          "unique_source_locations_in_call": 23
+        }
+      ]
+    },
+    {
+      "question_id": 11,
+      "variant": "baseline",
+      "input_tokens": 51112,
+      "cached_input_tokens": 43008,
+      "uncached_input_tokens": 8104,
+      "output_tokens": 579,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 51691,
+      "command_calls": 3,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 6850,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n '\"'^class .*'\"\\\\b(Blueprint|Scaffold)\\\\b|\"'^class Blueprint|''^class Scaffold'\"' src tests\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'SansioBlueprint|from .* import Blueprint|from .* import Scaffold|\"'^class |def make_setup_state|def register_blueprint'\"' src/flask/blueprints.py src/flask/sansio/blueprints.py src/flask/sansio/scaffold.py src/flask/__init__.py\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/blueprints.py | head -n 55; nl -ba src/flask/sansio/blueprints.py | sed -n '110,145p'; nl -ba src/flask/sansio/scaffold.py | sed -n '45,85p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 11,
+      "variant": "codeaware",
+      "input_tokens": 62486,
+      "cached_input_tokens": 48000,
+      "uncached_input_tokens": 14486,
+      "output_tokens": 594,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 63080,
+      "command_calls": 0,
+      "mcp_calls": 4,
+      "logical_mcp_result_characters": 4943,
+      "native_output_characters": 0,
+      "source_content_characters": 2787,
+      "source_locations_delivered_across_calls": 70,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [
+        {
+          "name": "Blueprint",
+          "path": "src/flask/blueprints.py",
+          "line_start": 18,
+          "line_end": 42,
+          "lines": 25,
+          "docstring_lines": 0,
+          "truncated": true
+        },
+        {
+          "name": "Blueprint",
+          "path": "src/flask/sansio/blueprints.py",
+          "line_start": 119,
+          "line_end": 143,
+          "lines": 25,
+          "docstring_lines": 24,
+          "truncated": true
+        },
+        {
+          "name": "Scaffold",
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 52,
+          "line_end": 71,
+          "lines": 20,
+          "docstring_lines": 16,
+          "truncated": true
+        }
+      ],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 11,
+          "item_id": "item_1",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Blueprint",
+            "include_code": true,
+            "limit": 5,
+            "max_lines": 25
+          },
+          "result_count": 2,
+          "logical_result_characters": 2685,
+          "source_content_characters": 1969,
+          "unique_source_locations_in_call": 50
+        },
+        {
+          "kind": "mcp",
+          "question_id": 11,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Scaffold",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 20
+          },
+          "result_count": 1,
+          "logical_result_characters": 1216,
+          "source_content_characters": 818,
+          "unique_source_locations_in_call": 20
+        },
+        {
+          "kind": "mcp",
+          "question_id": 11,
+          "item_id": "item_3",
+          "tool": "get_inheritance",
+          "arguments": {
+            "symbol_id": "src/flask/blueprints.py:18:Blueprint",
+            "limit": 5
+          },
+          "result_count": 2,
+          "logical_result_characters": 557,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 11,
+          "item_id": "item_4",
+          "tool": "get_inheritance",
+          "arguments": {
+            "symbol_id": "src/flask/sansio/blueprints.py:119:Blueprint",
+            "limit": 5
+          },
+          "result_count": 2,
+          "logical_result_characters": 485,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        }
+      ]
+    },
+    {
+      "question_id": 12,
+      "variant": "baseline",
+      "input_tokens": 38770,
+      "cached_input_tokens": 31232,
+      "uncached_input_tokens": 7538,
+      "output_tokens": 373,
+      "reasoning_output_tokens": 17,
+      "total_tokens": 39143,
+      "command_calls": 1,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 8484,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n -A 100 '\"'^class (AppGroup|FlaskGroup)'\"' src/flask/cli.py\""
+        }
+      ]
+    },
+    {
+      "question_id": 12,
+      "variant": "codeaware",
+      "input_tokens": 46942,
+      "cached_input_tokens": 36992,
+      "uncached_input_tokens": 9950,
+      "output_tokens": 405,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 47347,
+      "command_calls": 0,
+      "mcp_calls": 2,
+      "logical_mcp_result_characters": 6301,
+      "native_output_characters": 0,
+      "source_content_characters": 5410,
+      "source_locations_delivered_across_calls": 133,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [
+        {
+          "name": "FlaskGroup",
+          "path": "src/flask/cli.py",
+          "line_start": 531,
+          "line_end": 630,
+          "lines": 100,
+          "docstring_lines": 30,
+          "truncated": true
+        },
+        {
+          "name": "AppGroup",
+          "path": "src/flask/cli.py",
+          "line_start": 405,
+          "line_end": 437,
+          "lines": 33,
+          "docstring_lines": 14,
+          "truncated": false
+        }
+      ],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 12,
+          "item_id": "item_1",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "FlaskGroup",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 4447,
+          "source_content_characters": 3964,
+          "unique_source_locations_in_call": 100
+        },
+        {
+          "kind": "mcp",
+          "question_id": 12,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "AppGroup",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 1854,
+          "source_content_characters": 1446,
+          "unique_source_locations_in_call": 33
+        }
+      ]
+    },
+    {
+      "question_id": 13,
+      "variant": "baseline",
+      "input_tokens": 72235,
+      "cached_input_tokens": 38656,
+      "uncached_input_tokens": 33579,
+      "output_tokens": 1107,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 73342,
+      "command_calls": 5,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 23825,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n -m 5 '\\\\bScaffold\\\\b' src/flask\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n '\"'^class |''^    def |''^    @|Scaffold|self'\"\\\\.[a-z_]+.*=' src/flask/sansio/scaffold.py\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n '\\\\bScaffold\\\\b|\"'^class (Flask|Blueprint)|def _iter_loaders'\"' src tests docs\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/sansio/scaffold.py | sed -n '35,225p;271,294p;344,378p;430,442p;480,516p;540,566p'\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/templating.py | sed -n '90,110p'\nnl -ba src/flask/debughelpers.py | sed -n '118,145p'\nrg -n 'super\\\\(\\\\).__init__|_check_setup_finished|def add_url_rule|scaffold|sansio.*import' src/flask/sansio/app.py src/flask/sansio/blueprints.py src/flask/app.py src/flask/blueprints.py\""
+        }
+      ]
+    },
+    {
+      "question_id": 13,
+      "variant": "codeaware",
+      "input_tokens": 91334,
+      "cached_input_tokens": 65024,
+      "uncached_input_tokens": 26310,
+      "output_tokens": 846,
+      "reasoning_output_tokens": 13,
+      "total_tokens": 92180,
+      "command_calls": 0,
+      "mcp_calls": 8,
+      "logical_mcp_result_characters": 14244,
+      "native_output_characters": 0,
+      "source_content_characters": 9416,
+      "source_locations_delivered_across_calls": 248,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [
+        {
+          "name": "Scaffold",
+          "path": "src/flask/sansio/scaffold.py",
+          "line_start": 52,
+          "line_end": 151,
+          "lines": 100,
+          "docstring_lines": 16,
+          "truncated": true
+        }
+      ],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 13,
+          "item_id": "item_1",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Scaffold",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 4760,
+          "source_content_characters": 4281,
+          "unique_source_locations_in_call": 100
+        },
+        {
+          "kind": "mcp",
+          "question_id": 13,
+          "item_id": "item_2",
+          "tool": "get_imports",
+          "arguments": {
+            "path": "src/flask/sansio/scaffold.py",
+            "direction": "importers",
+            "limit": 5
+          },
+          "result_count": 5,
+          "logical_result_characters": 1008,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 13,
+          "item_id": "item_3",
+          "tool": "get_inheritance",
+          "arguments": {
+            "symbol_id": "src/flask/sansio/scaffold.py:52:Scaffold",
+            "limit": 5
+          },
+          "result_count": 2,
+          "logical_result_characters": 484,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 13,
+          "item_id": "item_4",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Scaffold.route",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 60
+          },
+          "result_count": 1,
+          "logical_result_characters": 1487,
+          "source_content_characters": 1054,
+          "unique_source_locations_in_call": 30
+        },
+        {
+          "kind": "mcp",
+          "question_id": 13,
+          "item_id": "item_5",
+          "tool": "get_inheritance",
+          "arguments": {
+            "symbol_id": "src/flask/sansio/app.py:60:App",
+            "limit": 3
+          },
+          "result_count": 2,
+          "logical_result_characters": 466,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 13,
+          "item_id": "item_6",
+          "tool": "search_code",
+          "arguments": {
+            "query": "Scaffold debughelpers explain template loading attempts",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 3241,
+          "source_content_characters": 2247,
+          "unique_source_locations_in_call": 63
+        },
+        {
+          "kind": "mcp",
+          "question_id": 13,
+          "item_id": "item_7",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Scaffold.add_url_rule",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 55
+          },
+          "result_count": 1,
+          "logical_result_characters": 2313,
+          "source_content_characters": 1834,
+          "unique_source_locations_in_call": 55
+        },
+        {
+          "kind": "mcp",
+          "question_id": 13,
+          "item_id": "item_8",
+          "tool": "get_inheritance",
+          "arguments": {
+            "symbol_id": "src/flask/sansio/blueprints.py:119:Blueprint",
+            "limit": 3
+          },
+          "result_count": 2,
+          "logical_result_characters": 485,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        }
+      ]
+    },
+    {
+      "question_id": 14,
+      "variant": "baseline",
+      "input_tokens": 76068,
+      "cached_input_tokens": 52608,
+      "uncached_input_tokens": 23460,
+      "output_tokens": 746,
+      "reasoning_output_tokens": 27,
+      "total_tokens": 76814,
+      "command_calls": 3,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 20541,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n '\"'^class Flask|''^class App|''^class Scaffold'\"' src/flask; rg --files -g AGENTS.md -g '*app*.py' -g '*scaffold*.py' | head -20\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/app.py | sed -n '108,390p'; rg -n '\"'^    (async )?def |''^    [a-zA-Z_][a-zA-Z_0-9]*.*='\"' src/flask/app.py\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'default_config|request_class|response_class|session_interface|\\\\bcli\\\\b|self\\\\.[A-Za-z_]+\\\\s*=' src/flask/app.py src/flask/sansio/app.py src/flask/sansio/scaffold.py\""
+        }
+      ]
+    },
+    {
+      "question_id": 14,
+      "variant": "codeaware",
+      "input_tokens": 88442,
+      "cached_input_tokens": 69248,
+      "uncached_input_tokens": 19194,
+      "output_tokens": 684,
+      "reasoning_output_tokens": 18,
+      "total_tokens": 89126,
+      "command_calls": 1,
+      "mcp_calls": 3,
+      "logical_mcp_result_characters": 9325,
+      "native_output_characters": 5154,
+      "source_content_characters": 7380,
+      "source_locations_delivered_across_calls": 156,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [
+        {
+          "name": "Flask",
+          "path": "src/flask/app.py",
+          "line_start": 108,
+          "line_end": 207,
+          "lines": 100,
+          "docstring_lines": 95,
+          "truncated": true
+        },
+        {
+          "name": "test_custom_config_class.Flask",
+          "path": "tests/test_config.py",
+          "line_start": 202,
+          "line_end": 203,
+          "lines": 2,
+          "docstring_lines": 0,
+          "truncated": false
+        }
+      ],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 14,
+          "item_id": "item_1",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Flask",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 2,
+          "logical_result_characters": 5779,
+          "source_content_characters": 5006,
+          "unique_source_locations_in_call": 102
+        },
+        {
+          "kind": "mcp",
+          "question_id": 14,
+          "item_id": "item_2",
+          "tool": "get_inheritance",
+          "arguments": {
+            "symbol_id": "src/flask/app.py:108:Flask",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 740,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 14,
+          "item_id": "item_3",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Flask.__init__",
+            "path": "src/flask/app.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 2806,
+          "source_content_characters": 2374,
+          "unique_source_locations_in_call": 54
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"sed -n '205,307{=;p;}' src/flask/app.py\nrg -n '\"'^    ('\"\\\\w+.*=|@.*property)|self\\\\.[A-Za-z_]+\\\\s*=' src/flask/app.py\""
+        }
+      ]
+    },
+    {
+      "question_id": 15,
+      "variant": "baseline",
+      "input_tokens": 51946,
+      "cached_input_tokens": 42752,
+      "uncached_input_tokens": 9194,
+      "output_tokens": 454,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 52400,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 13320,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'def (make_response|finalize_request|full_dispatch_request|dispatch_request)' src/flask/app.py\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/app.py | sed -n '993,1095p;1267,1430p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 15,
+      "variant": "codeaware",
+      "input_tokens": 77160,
+      "cached_input_tokens": 63232,
+      "uncached_input_tokens": 13928,
+      "output_tokens": 427,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 77587,
+      "command_calls": 0,
+      "mcp_calls": 3,
+      "logical_mcp_result_characters": 11761,
+      "native_output_characters": 0,
+      "source_content_characters": 9744,
+      "source_locations_delivered_across_calls": 246,
+      "repeated_source_locations_across_calls": 44,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 15,
+          "item_id": "item_1",
+          "tool": "search_code",
+          "arguments": {
+            "query": "convert view function return value into Response object",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 3210,
+          "source_content_characters": 2433,
+          "unique_source_locations_in_call": 64
+        },
+        {
+          "kind": "mcp",
+          "question_id": 15,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Flask.make_response",
+            "include_code": true,
+            "max_lines": 100,
+            "limit": 3
+          },
+          "result_count": 1,
+          "logical_result_characters": 4545,
+          "source_content_characters": 4040,
+          "unique_source_locations_in_call": 100
+        },
+        {
+          "kind": "mcp",
+          "question_id": 15,
+          "item_id": "item_3",
+          "tool": "get_callers",
+          "arguments": {
+            "symbol_id": "src/flask/app.py:1267:Flask.make_response",
+            "limit": 3
+          },
+          "result_count": 2,
+          "logical_result_characters": 4006,
+          "source_content_characters": 3271,
+          "unique_source_locations_in_call": 82
+        }
+      ]
+    },
+    {
+      "question_id": 16,
+      "variant": "baseline",
+      "input_tokens": 54702,
+      "cached_input_tokens": 45184,
+      "uncached_input_tokens": 9518,
+      "output_tokens": 934,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 55636,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 13699,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'def (add_url_rule|route|dispatch_request)|def _endpoint_from_view_func' src/flask\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/sansio/app.py | sed -n '600,670p'\nnl -ba src/flask/sansio/scaffold.py | sed -n '335,440p;709,720p'\nnl -ba src/flask/app.py | sed -n '993,1028p'\nnl -ba src/flask/sansio/blueprints.py | sed -n '87,119p;410,440p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 16,
+      "variant": "codeaware",
+      "input_tokens": 71528,
+      "cached_input_tokens": 57728,
+      "uncached_input_tokens": 13800,
+      "output_tokens": 1073,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 72601,
+      "command_calls": 0,
+      "mcp_calls": 4,
+      "logical_mcp_result_characters": 13388,
+      "native_output_characters": 0,
+      "source_content_characters": 10125,
+      "source_locations_delivered_across_calls": 257,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 16,
+          "item_id": "item_1",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "route",
+            "include_code": true,
+            "limit": 4,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 1487,
+          "source_content_characters": 1054,
+          "unique_source_locations_in_call": 30
+        },
+        {
+          "kind": "mcp",
+          "question_id": 16,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "add_url_rule",
+            "include_code": true,
+            "limit": 4,
+            "max_lines": 100
+          },
+          "result_count": 4,
+          "logical_result_characters": 8479,
+          "source_content_characters": 6821,
+          "unique_source_locations_in_call": 182
+        },
+        {
+          "kind": "mcp",
+          "question_id": 16,
+          "item_id": "item_3",
+          "tool": "get_callees",
+          "arguments": {
+            "symbol_id": "src/flask/sansio/scaffold.py:344:Scaffold.route",
+            "limit": 3
+          },
+          "result_count": 0,
+          "logical_result_characters": 87,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 16,
+          "item_id": "item_4",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "dispatch_request",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 65
+          },
+          "result_count": 3,
+          "logical_result_characters": 3335,
+          "source_content_characters": 2250,
+          "unique_source_locations_in_call": 45
+        }
+      ]
+    },
+    {
+      "question_id": 17,
+      "variant": "baseline",
+      "input_tokens": 50551,
+      "cached_input_tokens": 45824,
+      "uncached_input_tokens": 4727,
+      "output_tokens": 365,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 50916,
+      "command_calls": 2,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 5227,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'class App\\\\b|class Flask\\\\b|default_config|def make_config' src flask 2>/dev/null\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/sansio/app.py | sed -n '310,325p;475,499p'\nnl -ba src/flask/app.py | sed -n '200,255p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 17,
+      "variant": "codeaware",
+      "input_tokens": 84645,
+      "cached_input_tokens": 71424,
+      "uncached_input_tokens": 13221,
+      "output_tokens": 469,
+      "reasoning_output_tokens": 23,
+      "total_tokens": 85114,
+      "command_calls": 0,
+      "mcp_calls": 6,
+      "logical_mcp_result_characters": 16832,
+      "native_output_characters": 0,
+      "source_content_characters": 13768,
+      "source_locations_delivered_across_calls": 323,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [
+        {
+          "name": "Flask.default_config",
+          "path": "src/flask/app.py",
+          "include_code": true,
+          "limit": 3,
+          "max_lines": 100
+        }
+      ],
+      "class_lookups": [
+        {
+          "name": "App",
+          "path": "src/flask/sansio/app.py",
+          "line_start": 60,
+          "line_end": 159,
+          "lines": 100,
+          "docstring_lines": 95,
+          "truncated": true
+        }
+      ],
+      "operations": [
+        {
+          "kind": "mcp",
+          "question_id": 17,
+          "item_id": "item_1",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "App",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 5493,
+          "source_content_characters": 5038,
+          "unique_source_locations_in_call": 100
+        },
+        {
+          "kind": "mcp",
+          "question_id": 17,
+          "item_id": "item_2",
+          "tool": "search_code",
+          "arguments": {
+            "query": "application load default configuration values make_config default_config",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 2473,
+          "source_content_characters": 1733,
+          "unique_source_locations_in_call": 41
+        },
+        {
+          "kind": "mcp",
+          "question_id": 17,
+          "item_id": "item_3",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "App.__init__",
+            "path": "src/flask/sansio/app.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 4703,
+          "source_content_characters": 4212,
+          "unique_source_locations_in_call": 100
+        },
+        {
+          "kind": "mcp",
+          "question_id": 17,
+          "item_id": "item_4",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "App.make_config",
+            "path": "src/flask/sansio/app.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 1103,
+          "source_content_characters": 693,
+          "unique_source_locations_in_call": 15
+        },
+        {
+          "kind": "mcp",
+          "question_id": 17,
+          "item_id": "item_5",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Flask.default_config",
+            "path": "src/flask/app.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 0,
+          "logical_result_characters": 87,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 17,
+          "item_id": "item_6",
+          "tool": "search_code",
+          "arguments": {
+            "query": "default_config = ImmutableDict DEBUG TESTING SECRET_KEY default configuration Flask",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 2973,
+          "source_content_characters": 2092,
+          "unique_source_locations_in_call": 67
+        }
+      ]
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "input_tokens": 66130,
+      "cached_input_tokens": 51328,
+      "uncached_input_tokens": 14802,
+      "output_tokens": 805,
+      "reasoning_output_tokens": 0,
+      "total_tokens": 66935,
+      "command_calls": 3,
+      "mcp_calls": 0,
+      "logical_mcp_result_characters": 0,
+      "native_output_characters": 13760,
+      "source_content_characters": 0,
+      "source_locations_delivered_across_calls": 0,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [],
+      "class_lookups": [],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'def (wsgi_app|__call__|request_context)|request_class =|class RequestContext|class Request\\\\(' src/flask\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"rg -n 'request_class|class AppContext|def __init__|def push|request =' src/flask/ctx.py src/flask/app.py src/flask/wrappers.py src/flask/globals.py\""
+        },
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"nl -ba src/flask/app.py | sed -n '230,241p;1562,1583p;1627,1701p'\nnl -ba src/flask/ctx.py | sed -n '300,362p;416,444p'\nnl -ba src/flask/globals.py | sed -n '1,65p'\nnl -ba src/flask/wrappers.py | sed -n '1,40p'\""
+        }
+      ]
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "input_tokens": 116285,
+      "cached_input_tokens": 89856,
+      "uncached_input_tokens": 26429,
+      "output_tokens": 951,
+      "reasoning_output_tokens": 11,
+      "total_tokens": 117236,
+      "command_calls": 1,
+      "mcp_calls": 8,
+      "logical_mcp_result_characters": 17561,
+      "native_output_characters": 292,
+      "source_content_characters": 13949,
+      "source_locations_delivered_across_calls": 322,
+      "repeated_source_locations_across_calls": 0,
+      "empty_lookups": [
+        {
+          "name": "RequestContext.__init__",
+          "path": "src/flask/ctx.py",
+          "include_code": true,
+          "limit": 3,
+          "max_lines": 65
+        },
+        {
+          "name": "RequestContext",
+          "path": "src/flask/ctx.py",
+          "include_code": true,
+          "limit": 3,
+          "max_lines": 75
+        }
+      ],
+      "class_lookups": [
+        {
+          "name": "Flask",
+          "path": "src/flask/app.py",
+          "line_start": 108,
+          "line_end": 207,
+          "lines": 100,
+          "docstring_lines": 95,
+          "truncated": true
+        }
+      ],
+      "operations": [
+        {
+          "kind": "native",
+          "command": "/bin/zsh -lc \"pwd; rg --files -g 'AGENTS.md' -g '*app.py' -g '*ctx.py' -g '*wrappers.py' -g '*globals.py'\""
+        },
+        {
+          "kind": "mcp",
+          "question_id": 18,
+          "item_id": "item_2",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "wsgi_app",
+            "path": "src/flask/app.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 85
+          },
+          "result_count": 1,
+          "logical_result_characters": 2318,
+          "source_content_characters": 1884,
+          "unique_source_locations_in_call": 51
+        },
+        {
+          "kind": "mcp",
+          "question_id": 18,
+          "item_id": "item_3",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "RequestContext.__init__",
+            "path": "src/flask/ctx.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 65
+          },
+          "result_count": 0,
+          "logical_result_characters": 87,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 18,
+          "item_id": "item_4",
+          "tool": "get_callees",
+          "arguments": {
+            "symbol_id": "src/flask/app.py:1627:Flask.wsgi_app",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 5437,
+          "source_content_characters": 4373,
+          "unique_source_locations_in_call": 103
+        },
+        {
+          "kind": "mcp",
+          "question_id": 18,
+          "item_id": "item_5",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "RequestContext",
+            "path": "src/flask/ctx.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 75
+          },
+          "result_count": 0,
+          "logical_result_characters": 87,
+          "source_content_characters": 0,
+          "unique_source_locations_in_call": 0
+        },
+        {
+          "kind": "mcp",
+          "question_id": 18,
+          "item_id": "item_6",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "__call__",
+            "path": "src/flask/app.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 30
+          },
+          "result_count": 1,
+          "logical_result_characters": 746,
+          "source_content_characters": 359,
+          "unique_source_locations_in_call": 8
+        },
+        {
+          "kind": "mcp",
+          "question_id": 18,
+          "item_id": "item_7",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "from_environ",
+            "path": "src/flask/ctx.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 70
+          },
+          "result_count": 1,
+          "logical_result_characters": 829,
+          "source_content_characters": 424,
+          "unique_source_locations_in_call": 9
+        },
+        {
+          "kind": "mcp",
+          "question_id": 18,
+          "item_id": "item_8",
+          "tool": "find_symbols",
+          "arguments": {
+            "name": "Flask",
+            "path": "src/flask/app.py",
+            "include_code": true,
+            "limit": 3,
+            "max_lines": 100
+          },
+          "result_count": 1,
+          "logical_result_characters": 5400,
+          "source_content_characters": 4946,
+          "unique_source_locations_in_call": 100
+        },
+        {
+          "kind": "mcp",
+          "question_id": 18,
+          "item_id": "item_9",
+          "tool": "search_code",
+          "arguments": {
+            "query": "request_class default Request class Flask",
+            "limit": 3
+          },
+          "result_count": 3,
+          "logical_result_characters": 2657,
+          "source_content_characters": 1963,
+          "unique_source_locations_in_call": 51
+        }
+      ]
+    }
+  ],
+  "raw_trace_sha256": {
+    "data/agent_runs/2026-11-05-low-full-guided/q05-codeaware/events.jsonl": "ff165a5c62558d1911aa8164e358397d7addf92054a1d3a5da91d0e65f50bf33",
+    "data/agent_runs/2026-11-05-low-full-guided/q11-codeaware/events.jsonl": "4b8829953312ecac99a511442d5e40adf951aa35a1dd5feb4ec5f2eb09fd0f00",
+    "data/agent_runs/2026-11-05-low-full-guided/q03-baseline/events.jsonl": "9994f2ad7be677c9d8fb14197693d20c525cdb680ef875de4098ca590039467f",
+    "data/agent_runs/2026-11-05-low-full-guided/q02-baseline/events.jsonl": "1d66c40a6da5f0a294a21761f0cb92ad073aa1c56b2a062cc84ba7f62cfe12f2",
+    "data/agent_runs/2026-11-05-low-full-guided/q08-codeaware/events.jsonl": "1ac056325122e31fd59990b03e5eb474530dadf5000631ffe2cc7c5120945239",
+    "data/agent_runs/2026-11-05-low-full-guided/q09-baseline/events.jsonl": "5f867f428dbb99ef23893f2d81582e89f453d8ef3427aee3a87e561cbd3047e0",
+    "data/agent_runs/2026-11-05-low-full-guided/q08-baseline/events.jsonl": "be81c9c520c78016ca1f1ac1368879380996590c175cb79fe3f8b18f1c19353f",
+    "data/agent_runs/2026-11-05-low-full-guided/q03-codeaware/events.jsonl": "fec365be58deb10fc3501dbb46665c6f74b19f9de7cad42a35f4db79c5fc109a",
+    "data/agent_runs/2026-11-05-low-full-guided/q14-baseline/events.jsonl": "19186663bed49dd8518dffa38a1bd07e7d3e8c4ed174055c6b3e7054c949e0ba",
+    "data/agent_runs/2026-11-05-low-full-guided/q15-baseline/events.jsonl": "a8596008d6bb059e76268ed9d7352238ed37cfc27bb46c8b0387709193d97367",
+    "data/agent_runs/2026-11-05-low-full-guided/q17-codeaware/events.jsonl": "8a31ac9579d587ecdf707a330c4e828b35907c4a8c61349f4133249cf7f248b9",
+    "data/agent_runs/2026-11-05-low-full-guided/q10-codeaware/events.jsonl": "135d2305909bd27950f7ef65c086b2d8fdff0967debb907ccdc732294a22691e",
+    "data/agent_runs/2026-11-05-low-full-guided/q04-codeaware/events.jsonl": "4c72be97621ed80e8d73370091daece4ca1b0e8510d90b6509e8f834b6748368",
+    "data/agent_runs/2026-11-05-low-full-guided/q13-baseline/events.jsonl": "edb2a6c78e3d1f4fd309a2ce63fb01a776a342a9ae43ee004342e218ef53f15a",
+    "data/agent_runs/2026-11-05-low-full-guided/q12-baseline/events.jsonl": "e80e72ed743c586cbd61372437043ad84d176fa631a434afe06204b36eb4acf1",
+    "data/agent_runs/2026-11-05-low-full-guided/q09-codeaware/events.jsonl": "a6fcb3fed3fc077232779505fdfa1d8d61fedcb7ec50fc24d8bd59107b458b4f",
+    "data/agent_runs/2026-11-05-low-full-guided/q18-baseline/events.jsonl": "6558cea400fa68fcb32697b9a41f769a414fa4107efe8e2eef9c543ec04d1de7",
+    "data/agent_runs/2026-11-05-low-full-guided/q16-codeaware/events.jsonl": "498e4e6292f9cea14d568bd2e9d07676df6805cc5ab9385ccfd84346b4ce5c39",
+    "data/agent_runs/2026-11-05-low-full-guided/q02-codeaware/events.jsonl": "b3324e3075d7cc63de742460e596d738754b53bd3e036868aa6f2dab7267b880",
+    "data/agent_runs/2026-11-05-low-full-guided/q04-baseline/events.jsonl": "f70e75741fe9b190fe6279c52974f6ac680e8207a2f16429f1150dabbf3e48dc",
+    "data/agent_runs/2026-11-05-low-full-guided/q05-baseline/events.jsonl": "6625079c6aa54f5025c33885d8a22b4f3a95c744fe7cd5974b9d2b5cde4ac9c7",
+    "data/agent_runs/2026-11-05-low-full-guided/q07-codeaware/events.jsonl": "7d5b1aa1925886ed39f253f20acf5648db2b691e2e5b90194a9462fdd80f2e5d",
+    "data/agent_runs/2026-11-05-low-full-guided/q13-codeaware/events.jsonl": "f1287e1493d856dff79e94d7d086378fee30ce0d14cdc23e3da54e6347e86b5c",
+    "data/agent_runs/2026-11-05-low-full-guided/q17-baseline/events.jsonl": "241fd0a4ac3376a8d242c1f24c945e4d6618aeedafc57ad69e83c1548707d38c",
+    "data/agent_runs/2026-11-05-low-full-guided/q16-baseline/events.jsonl": "02cc0b54207697550a424b0835c2554fe3658b5179d3c95cdda08781ce6ac4b1",
+    "data/agent_runs/2026-11-05-low-full-guided/q01-codeaware/events.jsonl": "0466e7f682d3238be1f5485ca27d62a7beede55597098976ee81e11b8ed37293",
+    "data/agent_runs/2026-11-05-low-full-guided/q15-codeaware/events.jsonl": "fc23ee4de952452caa65ca400a22a8529a1808c8c1ac2032c67eb3ec46ae5e53",
+    "data/agent_runs/2026-11-05-low-full-guided/q18-codeaware/events.jsonl": "0ed793f29bc6b920b86fd67db69ffb902bf05ee643046b23798b3485f54f9040",
+    "data/agent_runs/2026-11-05-low-full-guided/q01-baseline/events.jsonl": "53a5e8c66067cd2cb71b751f4b1c21bef08e9ac20b6539aef6106ec8122f293c",
+    "data/agent_runs/2026-11-05-low-full-guided/q12-codeaware/events.jsonl": "614b9393fd9c5ed7bed646e00653cfc95f1662f506e919583317ec220e42b9cc",
+    "data/agent_runs/2026-11-05-low-full-guided/q06-codeaware/events.jsonl": "68c4e3a8f5047489c8e3d56eb57ddfa9434e1fd564395734347002d54cc897c1",
+    "data/agent_runs/2026-11-05-low-full-guided/q07-baseline/events.jsonl": "e89a58982839a66cf35c1aa8e34089c4172c1209855672fb69804fe24e0010da",
+    "data/agent_runs/2026-11-05-low-full-guided/q06-baseline/events.jsonl": "3f6d94705f9a5a2444c9b21b9b792e65de83876049a15ae18b444c518e6e74c9",
+    "data/agent_runs/2026-11-05-low-full-guided/q14-codeaware/events.jsonl": "cc909bead5736f9653d3cb76e214907426a475231870e3693417a660e9f478e0",
+    "data/agent_runs/2026-11-05-low-full-guided/q10-baseline/events.jsonl": "a62285b656a26f5d7dd62ef4eec93d8eda96137709cb33f2569b300a82c4a9f8",
+    "data/agent_runs/2026-11-05-low-full-guided/q11-baseline/events.jsonl": "c17370c280f6c1bd4bc24867cf0860e447e7f9a832d8d515242716e93b900140"
+  }
+}
