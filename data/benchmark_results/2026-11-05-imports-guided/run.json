@@ -1,0 +1,22 @@
+{
+  "dataset_id": "flask-49943b5a-v2",
+  "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+  "metric_version": "unique-line-coverage-v2",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "codex_version": "codex-cli 0.166.0-alpha.6",
+  "index_build_id": "a1670bcd-c98a-48f3-9ab5-f687f093015e",
+  "usage_metric_version": "codex-turn-usage-v1",
+  "tool_metric_version": "codeaware-tool-usage-v1",
+  "tool_policy": "guided",
+  "prompt_version": "repository-qa-v3",
+  "tool_description_version": "imports-v5",
+  "timeout_seconds": 300,
+  "questions": [
+    11,
+    16,
+    18
+  ],
+  "repeats": 3,
+  "prompt_prefix": "Answer this question about the local repository. Cite source paths and line numbers, and state any uncertainty. You may use the available repository tools. Do not edit files, use the web, inspect other repositories, or delegate to other agents.\n\nWhen specialized repository-context tools are available, prefer them for initial discovery and relationship queries. Use semantic search when implementation names are unknown, exact symbol lookup for known names, and graph tools for relevant call or inheritance relationships. Otherwise use native repository search. Start with 3..5 results and expand only when needed. Follow only relationships needed to answer the question. When implementation code is needed, request find_symbols with include_code=true in the initial lookup; the parameter is include_code, not include_source. Codeaware's returned code is indexed source with freshness checks. Use that code as evidence and cite the returned paths and line ranges directly. Do not reopen or reread source files merely to verify code already returned by Codeaware. When results contain the required facts, answer without native source reads. A truncation flag alone is not a reason to read more. Inspect additional source only when an essential fact is absent from the results or tools are unavailable; identify that specific gap before reading. Stop when the answer and citations are supported. Treat missing static edges as incomplete evidence.\n\n"
+}

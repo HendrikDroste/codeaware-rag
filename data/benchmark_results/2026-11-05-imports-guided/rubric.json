@@ -1,0 +1,47 @@
+{
+  "version": "flask-core-facts-v1",
+  "scope": "Development questions 11, 16 and 18; criteria recorded before this batch. No claim of independent or blinded grading.",
+  "general": [
+    "Core facts agree with the pinned Flask source.",
+    "Citations support the stated claims, beyond merely naming existing files.",
+    "Missing static edges are not treated as proof that runtime calls are absent.",
+    "Extra detail and answer length alone are not counted as improvements."
+  ],
+  "questions": {
+    "11": {
+      "required": [
+        "The core chain is object -> Scaffold -> flask.sansio.blueprints.Blueprint -> flask.blueprints.Blueprint.",
+        "SansioBlueprint is the alias used by the public Blueprint class for its base.",
+        "The public class is exported as flask.Blueprint."
+      ],
+      "optional": [
+        "The test-only MyBlueprint subclass.",
+        "The distinction between class inheritance and nested-blueprint registration."
+      ]
+    },
+    "16": {
+      "required": [
+        "route returns a decorator that calls self.add_url_rule and returns the original function.",
+        "The endpoint defaults to the view function name; URL rules and endpoint-to-view mappings are stored separately.",
+        "Methods default to GET and automatic OPTIONS depends on the explicit option, view attributes and configuration.",
+        "Registration is distinguished from request-time dispatch; endpoint collisions with different view functions are rejected."
+      ],
+      "optional": [
+        "Setup guard after the first request.",
+        "Blueprint deferred registration and prefixes.",
+        "Registering an endpoint before binding a view."
+      ]
+    },
+    "18": {
+      "required": [
+        "WSGI entry leads through wsgi_app and request_context to AppContext.from_environ in this revision.",
+        "The request is constructed with app.request_class(environ), assigned the app JSON provider and stored in a context.",
+        "The default request class is replaceable; flask.request is a context-bound proxy rather than a shared request object."
+      ],
+      "optional": [
+        "ContextVar binding when the context is pushed.",
+        "The current merge of request and app contexts."
+      ]
+    }
+  }
+}

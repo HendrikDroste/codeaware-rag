@@ -94,9 +94,10 @@ original neutral text.
 
 These instructions are recorded as `prompt_version=repository-qa-v3` and
 `tool_description_version=imports-v5` (adds import queries to the server).
-Earlier pilot results retain their original versions. The latest instructions
-have not been benchmarked; they do not retroactively change the prior results
-or establish savings.
+Earlier pilot results retain their original versions. The current combination
+was measured in the [import-tracking guided rerun](
+../data/benchmark_results/2026-11-05-imports-guided/README.md); this does not
+retroactively change prior results or isolate the effects of individual changes.
 
 For a small pilot, run questions 11, 16 and 18 in `auto`, then repeat with
 `--tool-policy guided` and a new output directory:
@@ -240,7 +241,15 @@ usage increased relative to the guided native baseline in that small sample.
 
 The [three-repetition excerpt benchmark](
 ../data/benchmark_results/2026-11-05-excerpts-guided/README.md) records 18
-successful turns on questions 11, 16 and 18 with the current prompt/tool
+successful turns on questions 11, 16 and 18 with its recorded prompt/tool
 versions and excerpt/error counters. Codeaware delivered 25 excerpts with
 zero MCP errors but used more total tokens overall. Its checklist, per-pair
 variation and limited quality review are preserved in that report.
+
+The [subsequent import-tracking rerun](
+../data/benchmark_results/2026-11-05-imports-guided/README.md) records another
+18 successful turns with prompt v3 and imports-v5 metadata. Codeaware made
+zero native command calls but used 15.46% more total tokens than its new
+baseline. No agent selected `get_imports`; no overall answer-quality
+improvement is established. The report includes all answers, a manual review,
+source/excerpt checks and an audit of unknown tool arguments.

@@ -354,6 +354,13 @@ data/benchmark_results/2026-11-05-excerpts-guided/README.md) completed 18 turns
 with zero MCP errors. Codeaware returned excerpts in six of nine turns and
 used 28.34% more total tokens overall; no overall quality gain is established.
 
+The [guided rerun with import tracking](
+data/benchmark_results/2026-11-05-imports-guided/README.md) completed another
+18 turns with the stronger evidence-reuse prompt. Codeaware made no native
+command calls, but used 15.46% more total tokens than its new baseline. The
+import tool was available but unused; no overall answer-quality improvement
+is established. These separate batches do not isolate individual changes.
+
 ## Verification
 
 ```bash
