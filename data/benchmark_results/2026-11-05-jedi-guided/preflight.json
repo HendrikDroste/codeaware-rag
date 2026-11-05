@@ -1,0 +1,628 @@
+{
+  "transport": "stdio",
+  "fresh": true,
+  "excerpt_matches_source": true,
+  "graph_excerpt": {
+    "build_id": "a1670bcd-c98a-48f3-9ab5-f687f093015e",
+    "results": [
+      {
+        "symbol_id": "src/flask/app.py:1562:Flask.request_context",
+        "name": "request_context",
+        "qualified_name": "Flask.request_context",
+        "kind": "function",
+        "path": "src/flask/app.py",
+        "line_start": 1562,
+        "line_end": 1576,
+        "code_excerpt": {
+          "content": "    def request_context(self, environ: WSGIEnvironment) -> AppContext:\n        \"\"\"Create an :class:`.AppContext` with request information representing\n        the given WSGI environment. A context is automatically pushed when\n",
+          "line_start": 1562,
+          "line_end": 1564,
+          "truncated": true
+        }
+      }
+    ],
+    "truncated": false
+  },
+  "outline": {
+    "build_id": "a1670bcd-c98a-48f3-9ab5-f687f093015e",
+    "results": [
+      {
+        "name": "default_config",
+        "kind": "statement",
+        "parent": "Flask",
+        "qualified_name": "Flask.default_config",
+        "path": "src/flask/app.py",
+        "line": 205,
+        "column": 4
+      },
+      {
+        "name": "request_class",
+        "kind": "statement",
+        "parent": "Flask",
+        "qualified_name": "Flask.request_class",
+        "path": "src/flask/app.py",
+        "line": 239,
+        "column": 4
+      },
+      {
+        "name": "response_class",
+        "kind": "statement",
+        "parent": "Flask",
+        "qualified_name": "Flask.response_class",
+        "path": "src/flask/app.py",
+        "line": 243,
+        "column": 4
+      },
+      {
+        "name": "session_interface",
+        "kind": "statement",
+        "parent": "Flask",
+        "qualified_name": "Flask.session_interface",
+        "path": "src/flask/app.py",
+        "line": 249,
+        "column": 4
+      },
+      {
+        "name": "__init_subclass__",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.__init_subclass__",
+        "path": "src/flask/app.py",
+        "line": 251,
+        "column": 8
+      },
+      {
+        "name": "__init__",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.__init__",
+        "path": "src/flask/app.py",
+        "line": 308,
+        "column": 8
+      },
+      {
+        "name": "get_send_file_max_age",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.get_send_file_max_age",
+        "path": "src/flask/app.py",
+        "line": 363,
+        "column": 8
+      },
+      {
+        "name": "send_static_file",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.send_static_file",
+        "path": "src/flask/app.py",
+        "line": 390,
+        "column": 8
+      },
+      {
+        "name": "open_resource",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.open_resource",
+        "path": "src/flask/app.py",
+        "line": 412,
+        "column": 8
+      },
+      {
+        "name": "open_instance_resource",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.open_instance_resource",
+        "path": "src/flask/app.py",
+        "line": 445,
+        "column": 8
+      },
+      {
+        "name": "create_jinja_environment",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.create_jinja_environment",
+        "path": "src/flask/app.py",
+        "line": 467,
+        "column": 8
+      },
+      {
+        "name": "create_url_adapter",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.create_url_adapter",
+        "path": "src/flask/app.py",
+        "line": 507,
+        "column": 8
+      },
+      {
+        "name": "raise_routing_exception",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.raise_routing_exception",
+        "path": "src/flask/app.py",
+        "line": 566,
+        "column": 8
+      },
+      {
+        "name": "update_template_context",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.update_template_context",
+        "path": "src/flask/app.py",
+        "line": 594,
+        "column": 8
+      },
+      {
+        "name": "make_shell_context",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.make_shell_context",
+        "path": "src/flask/app.py",
+        "line": 629,
+        "column": 8
+      },
+      {
+        "name": "run",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.run",
+        "path": "src/flask/app.py",
+        "line": 641,
+        "column": 8
+      },
+      {
+        "name": "test_client",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.test_client",
+        "path": "src/flask/app.py",
+        "line": 766,
+        "column": 8
+      },
+      {
+        "name": "test_cli_runner",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.test_cli_runner",
+        "path": "src/flask/app.py",
+        "line": 824,
+        "column": 8
+      },
+      {
+        "name": "handle_http_exception",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.handle_http_exception",
+        "path": "src/flask/app.py",
+        "line": 841,
+        "column": 8
+      },
+      {
+        "name": "handle_user_exception",
+        "kind": "function",
+        "parent": "Flask",
+        "qualified_name": "Flask.handle_user_exception",
+        "path": "src/flask/app.py",
+        "line": 880,
+        "column": 8
+      }
+    ],
+    "truncated": true,
+    "excluded_results": 0
+  },
+  "tools": [
+    {
+      "name": "search_code",
+      "description": "\n        Discover Python implementation by meaning when its file or\n        symbol name is unknown. Returns ranked snippets, relative paths,\n        inclusive line ranges, retrieval distances and overlapping\n        symbol_ids. For a known function/class name, use find_symbols.\n        Follow graph relationships only for unresolved relationship\n        questions. Use targeted text search for exact assignments or\n        attributes.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "description": "Natural-language behavior or implementation to find in Python source and tests.",
+            "title": "Query",
+            "type": "string"
+          },
+          "limit": {
+            "default": 5,
+            "description": "Maximum snippets (1..20); start with 3..5.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "search_codeArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "search_codeDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "find_symbols",
+      "description": "\n        Locate a known function, method or class by exact name. Returns\n        symbol_ids, kinds, paths and definition ranges. Identical names\n        can produce distinct matches; select the intended path and kind\n        before a graph query. Use search_code when the name is unknown.\n        Set include_code=true to obtain source during lookup. Each\n        code_excerpt has its own inclusive line range and truncation\n        flag; definition ranges still cover the whole symbol. Reuse\n        sufficient excerpts and inspect more source only for a gap.\n        Assignments and attributes are not indexed symbols. After an\n        empty match, switch to discovery rather than guessing variants.\n        A class prefix may contain mostly documentation. Use start_line\n        for a known relevant region, or prefer a relevant method. With\n        an offset, truncated also indicates omitted preceding lines.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Exact simple or qualified name, such as add_url_rule or App.add_url_rule; no fuzzy matching.",
+            "title": "Name",
+            "type": "string"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional exact repository-relative file path to disambiguate matches, e.g. src/flask/sansio/app.py.",
+            "title": "Path"
+          },
+          "limit": {
+            "default": 10,
+            "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+            "title": "Limit",
+            "type": "integer"
+          },
+          "include_code": {
+            "default": false,
+            "description": "Include indexed source excerpts for implementation questions, to avoid a separate source read. Use a small limit or path to narrow matches.",
+            "title": "Include Code",
+            "type": "boolean"
+          },
+          "max_lines": {
+            "default": 60,
+            "description": "Maximum source lines per match (1..100), used only with include_code. Classes are bounded too.",
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Max Lines",
+            "type": "integer"
+          },
+          "start_line": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional absolute one-based file line within each matched definition. Requires include_code=true. Skip a class prefix or retrieve a later source region; narrow by name/path first. Defaults to definition start.",
+            "title": "Start Line"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "find_symbolsArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "find_symbolsDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_callers",
+      "description": "\n        Investigate which indexed functions directly call a selected\n        function or method. Returns caller code, definition locations\n        and call sites; multiple sites can repeat a caller. These are\n        partial static call edges. Other references or runtime callers\n        can be absent.\n        Missing edges do not prove that no callers exist. Requires a\n        function ID.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol_id": {
+            "description": "Exact symbol_id returned by find_symbols or search_code. Select the intended path and kind; do not construct an ID.",
+            "title": "Symbol Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 20,
+            "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "symbol_id"
+        ],
+        "title": "get_callersArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "get_callersDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_callees",
+      "description": "\n        Trace direct calls made by a selected function or method.\n        Returns statically resolved callee code, definition locations\n        and call sites; multiple sites can repeat a callee. External and\n        unresolved dynamic calls may be absent. Requires a function ID.\n        Use native source reads to investigate gaps in the graph.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol_id": {
+            "description": "Exact symbol_id returned by find_symbols or search_code. Select the intended path and kind; do not construct an ID.",
+            "title": "Symbol Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 20,
+            "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "symbol_id"
+        ],
+        "title": "get_calleesArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "get_calleesDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_inheritance",
+      "description": "\n        Inspect a selected class's direct parents and subclasses.\n        Returns relation labels, symbol_ids and definition locations.\n        Requires a class ID. Follow returned IDs for further hops when\n        needed. This partial static graph does not resolve inherited\n        methods or compute Python's method resolution order (MRO).\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "symbol_id": {
+            "description": "Exact symbol_id returned by find_symbols or search_code. Select the intended path and kind; do not construct an ID.",
+            "title": "Symbol Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 20,
+            "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "symbol_id"
+        ],
+        "title": "get_inheritanceArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "get_inheritanceDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_imports",
+      "description": "\n        Inspect resolved repository-local import bindings, aliases and\n        import-site locations. Re-exports point to the ultimate defining\n        file resolved by Jedi, not every intermediate package. Includes\n        conditional and function-local imports, without proving runtime\n        execution. External, unresolved, ambiguous and wildcard imports\n        are omitted and counted. Dynamic import calls are not tracked.\n        Multiple bindings/sites can return the same neighboring file.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "description": "Exact repository-relative indexed Python file.",
+            "title": "Path",
+            "type": "string"
+          },
+          "direction": {
+            "default": "imports",
+            "description": "imports: dependencies of this file; importers: files that import from this file. One hop only.",
+            "enum": [
+              "imports",
+              "importers"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "limit": {
+            "default": 20,
+            "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "get_importsArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "get_importsDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_symbols",
+      "description": "\n        Get a compact file outline, including classes, methods, imports\n        and assignments, without fetching class docstrings. Returns\n        names, Jedi kinds, lexical parents and positions. Constructor\n        assignments remain under the constructor scope; inherited or\n        dynamically added members are not enumerated. Locations are not\n        graph symbol IDs. Use find_symbols for indexed code.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "description": "Exact repository-relative indexed Python file.",
+            "title": "Path",
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional exact file-local qualified parent scope, e.g. Flask or Flask.__init__. Null includes all scopes.",
+            "title": "Parent"
+          },
+          "limit": {
+            "default": 20,
+            "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "list_symbolsArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "list_symbolsDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "resolve_definition",
+      "description": "\n        Follow a name at a source position to local definitions,\n        including import aliases and assignments. Returns all resolved\n        candidates with locations, not graph IDs. Multiple matches may\n        be ambiguous.\n        External targets are omitted and counted in excluded_results.\n        This is static resolution, not a guarantee of runtime dispatch.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "description": "Exact repository-relative indexed Python file.",
+            "title": "Path",
+            "type": "string"
+          },
+          "line": {
+            "description": "One-based source line.",
+            "minimum": 1,
+            "title": "Line",
+            "type": "integer"
+          },
+          "column": {
+            "description": "Zero-based Unicode character column, not bytes.",
+            "minimum": 0,
+            "title": "Column",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 10,
+            "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "line",
+          "column"
+        ],
+        "title": "resolve_definitionArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "resolve_definitionDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "find_references",
+      "description": "\n        Find repository-local uses of the symbol at a source position.\n        References are broader than CALLS: imports, reads, writes and\n        passing a callback may be included. Returns distinct locations,\n        not caller bodies or graph IDs. Jedi can stop searching early;\n        results are partial; truncated only reports the output limit.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "description": "Exact repository-relative indexed Python file.",
+            "title": "Path",
+            "type": "string"
+          },
+          "line": {
+            "description": "One-based source line.",
+            "minimum": 1,
+            "title": "Line",
+            "type": "integer"
+          },
+          "column": {
+            "description": "Zero-based Unicode character column, not bytes.",
+            "minimum": 0,
+            "title": "Column",
+            "type": "integer"
+          },
+          "include_declaration": {
+            "default": false,
+            "description": "Include resolved definition locations as well as uses. Import bindings and writes can be references.",
+            "title": "Include Declaration",
+            "type": "boolean"
+          },
+          "limit": {
+            "default": 20,
+            "description": "Maximum returned rows (1..100). Start with 3..5 and increase only when more evidence is needed.",
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "line",
+          "column"
+        ],
+        "title": "find_referencesArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "find_referencesDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "index_status",
+      "description": "\n        Inspect the indexed repository, build, embedding model, counts\n        and source freshness. Use for setup or stale-index diagnosis;\n        retrieval tools already check freshness on every call. This does\n        not verify backend connectivity or rebuild the index.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "title": "index_statusArguments"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "index_statusDictOutput",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

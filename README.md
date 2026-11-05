@@ -492,3 +492,9 @@ six low-reasoning turns succeeded. Codeaware used 21.79% more total tokens than
 its new baseline, versus 56.56% on the same questions previously. The agent
 used neither new feature; the observed workflow changes cannot be attributed
 to them. Q17/Q18 completeness omissions were resolved; Q11 remained.
+
+The [small Jedi-tool rerun](data/benchmark_results/2026-11-05-jedi-guided/README.md)
+completed Q11/Q17/Q18 once per condition with low reasoning. Codeaware used
+26.74% more total tokens than its new baseline. None of the three new tools
+was selected, and completeness grades were unchanged from the preceding pilot.
+The run does not establish a benefit or isolated overhead from those tools.

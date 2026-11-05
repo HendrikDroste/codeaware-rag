@@ -103,7 +103,10 @@ These instructions are recorded as `prompt_version=repository-qa-v5` and
 instructions both reuse it. Both benchmark conditions still receive identical
 prompts within each mode. The update contains no Flask-specific answers.
 
-The current three Jedi navigation tools and prompt v5 have not been benchmarked.
+The current combination was measured in the [small Jedi-tool rerun](
+../data/benchmark_results/2026-11-05-jedi-guided/README.md) on Q11/Q17/Q18,
+low reasoning, one observation per condition. The agent selected none of the
+three new tools; this establishes no benefit from them.
 The previous [navigation pilot](
 ../data/benchmark_results/2026-11-05-navigation-guided/README.md) used v4 and
 excerpt-navigation-v7; its measurements remain unchanged. Reconnect clients
