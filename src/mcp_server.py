@@ -14,7 +14,6 @@ from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from src.index_state import (
-    COLLECTION,
     CONTEXT_GUIDANCE,
     DEFAULT_CONFIG,
     REBUILD,
@@ -68,7 +67,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         ),
     )
     read_only = ToolAnnotations(read_only_hint=True, open_world_hint=False)
-    pipeline = None
+    model = None
     connected_build = None
     model_lock = Lock()
 
@@ -131,59 +130,31 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         """
         Discover Python implementation by meaning when its file or
         symbol name is unknown. Returns ranked snippets, relative paths,
-        inclusive line ranges, retrieval distances and overlapping
+        inclusive line ranges, squared L2 distances and overlapping
         symbol_ids. For a known function/class name, use find_symbols.
         Follow graph relationships only for unresolved relationship
         questions. Use targeted text search for exact assignments or
         attributes.
         """
-        nonlocal pipeline
+        nonlocal model
         try:
             validate_limit(limit, 20)
             if not query.strip():
                 raise ValueError("query must contain search text")
             manifest = snapshot()
             with model_lock:
-                if pipeline is None:
-                    if not (index_dir / "chroma").is_dir():
-                        raise ValueError(f"Vector index is missing. {REBUILD}")
-                    from src.pipelines.embedding_pipeline import (
-                        EmbeddingPipeline,
-                    )
+                if model is None:
+                    from src.embeddings.model import get_embedding_model
 
-                    pipeline = EmbeddingPipeline(
-                        config_path=str(config),
-                        collection_name=COLLECTION,
-                        chroma_persist_directory=str(index_dir / "chroma"),
-                        explicit_embeddings=True,
-                        existing_only=True,
-                    )
-                if (pipeline.collection.metadata or {}).get(
-                    "build_id"
-                ) != manifest["build_id"]:
-                    raise ValueError(
-                        f"Vector index belongs to another build. {REBUILD}"
-                    )
-                count = pipeline.collection.count()
-                if not count:
-                    raise ValueError(f"Vector index is empty. {REBUILD}")
-                result = pipeline.invoke(
-                    query, num_documents=min(limit + 1, count)
+                    model = get_embedding_model(config)
+                from src.retrievers.vector_search import search_chunks
+
+                rows = search_chunks(
+                    model.embed_query(query),
+                    repository_root=str(repository_root),
+                    build_id=manifest["build_id"],
+                    limit=limit + 1,
                 )
-            rows = [
-                {
-                    "path": meta["source"],
-                    "line_start": meta["line_start"],
-                    "line_end": meta["line_end"],
-                    "content": text,
-                    "distance": distance,
-                }
-                for text, meta, distance in zip(
-                    result["documents"][0],
-                    result["metadatas"][0],
-                    result["distances"][0],
-                )
-            ]
             from src.retrievers.query_graph import find_snippet_symbols
 
             symbols = find_snippet_symbols(
@@ -417,6 +388,9 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
                 "tool_description_version": TOOL_DESCRIPTION_VERSION,
                 "built_at": manifest["built_at"],
                 "embeddings": manifest["embeddings"],
+                "backend": manifest["backend"],
+                "vector_dimensions": manifest["vector_dimensions"],
+                "vector_similarity": manifest["vector_similarity"],
                 "counts": manifest["counts"],
                 "fresh": manifest["file_hashes"]
                 == file_hashes(repository_root),

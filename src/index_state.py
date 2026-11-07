@@ -23,9 +23,8 @@ EXCLUDE_DIRS = {
     "node_modules",
     ".codeaware-index",
 }
-COLLECTION = "codeaware_mcp"
-GRAPH_SCHEMA = 3  # Resolved file-to-file import bindings.
-TOOL_DESCRIPTION_VERSION = "focused-navigation-v9"
+GRAPH_SCHEMA = 4  # Neo4j stores both code relationships and chunk vectors.
+TOOL_DESCRIPTION_VERSION = "neo4j-navigation-v10"
 CONTEXT_GUIDANCE = (
     "Choose tools by capability, including native search when it directly "
     "exposes the needed fact. Use semantic search for unknown implementation "
@@ -100,11 +99,20 @@ def read_manifest(repository_root, index_dir, config, *, check_fresh=True):
             raise ValueError(f"Index build is incomplete. {REBUILD}")
         if manifest.get("graph_schema") != GRAPH_SCHEMA:
             raise ValueError(f"Index graph format is outdated. {REBUILD}")
+        if manifest.get("backend") != "neo4j":
+            raise ValueError(f"Index storage format is outdated. {REBUILD}")
         if manifest["embeddings"] != embedding_settings(config):
             raise ValueError(
                 f"Embedding settings differ from this index. {REBUILD}"
             )
-        for key in ("build_id", "file_hashes", "counts", "built_at"):
+        for key in (
+            "build_id",
+            "file_hashes",
+            "counts",
+            "built_at",
+            "vector_dimensions",
+            "vector_similarity",
+        ):
             manifest[key]
     except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         raise ValueError(

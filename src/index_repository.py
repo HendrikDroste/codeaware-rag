@@ -11,7 +11,6 @@ from pathlib import Path
 from uuid import uuid4
 
 from src.index_state import (
-    COLLECTION,
     DEFAULT_CONFIG,
     GRAPH_SCHEMA,
     embedding_settings,
@@ -25,9 +24,10 @@ def index_repository(repository_root, index_dir, config=DEFAULT_CONFIG):
     import jedi
 
     from src.embeddings.build_graph import build_graph
-    from src.embeddings.file_processor import embed_python_directory
+    from src.embeddings.file_processor import load_and_split_python_files
+    from src.embeddings.model import get_embedding_model
     from src.neo4j_connection import graph_connection
-    from src.pipelines.embedding_pipeline import EmbeddingPipeline
+    from src.retrievers.vector_search import store_chunks
 
     repository_root = Path(repository_root).resolve(strict=True)
     index_dir, config = Path(index_dir).resolve(), Path(config).resolve(
@@ -50,8 +50,7 @@ def index_repository(repository_root, index_dir, config=DEFAULT_CONFIG):
                 "separate directory"
             )
     driver, _ = graph_connection()
-    with driver:
-        driver.verify_connectivity()
+    driver.verify_connectivity()
     index_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
         "state": "building",
@@ -64,23 +63,13 @@ def index_repository(repository_root, index_dir, config=DEFAULT_CONFIG):
         "file_hashes": hashes,
         "counts": {},
     }
-    # Publish 'building' before replacing either backend, so failures
-    # cannot be served.
+    # Publish 'building' before replacing the repository's Neo4j data.
     write_manifest(index_dir, manifest)
-    pipeline = EmbeddingPipeline(
-        config_path=str(config),
-        collection_name=COLLECTION,
-        chroma_persist_directory=str(index_dir / "chroma"),
-        reset_collection=True,
-        explicit_embeddings=True,
-    )
-    pipeline.collection.modify(metadata={"build_id": manifest["build_id"]})
-    chunks = embed_python_directory(
-        str(repository_root),
-        pipeline,
+    model = get_embedding_model(config)
+    chunks = load_and_split_python_files(
+        files,
         chunk_size=900,
         chunk_overlap=0,
-        file_paths=files,
         repository_root=str(repository_root),
     )
     if not chunks:
@@ -97,12 +86,24 @@ def index_repository(repository_root, index_dir, config=DEFAULT_CONFIG):
         )
     finally:
         jedi.settings.cache_directory = previous_cache
+    dimensions = store_chunks(
+        chunks,
+        model,
+        repository_root=str(repository_root),
+        build_id=manifest["build_id"],
+    )
     if hashes != file_hashes(repository_root):
         raise ValueError(
             "Source files changed during indexing; rebuild from a stable "
             "checkout"
         )
-    manifest.update(state="complete", counts={**counts, "chunks": chunks})
+    manifest.update(
+        state="complete",
+        backend="neo4j",
+        vector_dimensions=dimensions,
+        vector_similarity="euclidean",
+        counts={**counts, "chunks": len(chunks)},
+    )
     write_manifest(index_dir, manifest)
     return manifest
 

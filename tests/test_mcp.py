@@ -19,17 +19,21 @@ from mcp.client.stdio import StdioServerParameters
 from src import index_repository as indexing
 from src import index_state, neo4j_connection
 from src.embeddings import build_graph as graph
+from src.embeddings import model as embedding_model
 from src.embeddings.file_processor import (
     get_all_python_files,
     load_and_split_python_files,
 )
 from src.mcp_server import create_server
-from src.pipelines.embedding_pipeline import EmbeddingPipeline
+from src.retrievers import vector_search
 
 
 class Result:
     def consume(self):
         return None
+
+    def single(self):
+        return {"i": {}}
 
 
 class RecordingDriver:
@@ -72,12 +76,6 @@ class Embeddings:
     def embed_documents(self, texts):
         return [self.embed_query(text) for text in texts]
 
-    def get_langchain_embedding_model(self):
-        return self
-
-    def get_chromadb_embedding_function(self):
-        return None
-
 
 @pytest.fixture
 def repository(tmp_path, monkeypatch):
@@ -112,10 +110,26 @@ def build(repository, config, tmp_path, monkeypatch):
         query_graph, "graph_connection", lambda: (driver, "neo4j")
     )
     monkeypatch.setattr(
-        EmbeddingPipeline,
-        "_setup_embedding_provider",
-        lambda self: Embeddings(),
+        embedding_model, "get_embedding_model", lambda config: Embeddings()
     )
+    monkeypatch.setattr(
+        vector_search, "graph_connection", lambda: (driver, "neo4j")
+    )
+
+    def search(vector, *, repository_root, build_id, limit):
+        rows = [
+            {
+                key: row[key]
+                for key in ("path", "line_start", "line_end", "content")
+            }
+            | {"distance": 0.0}
+            for query, parameters in driver.writes
+            if "CREATE (c:Codeaware:Chunk:" in query
+            for row in parameters["rows"]
+        ]
+        return rows[:limit]
+
+    monkeypatch.setattr(vector_search, "search_chunks", search)
     directory = tmp_path / "index"
     manifest = indexing.index_repository(repository, directory, config)
     return repository, directory, config, manifest, driver
@@ -154,22 +168,13 @@ def test_discovery_preserves_defaults_and_respects_repository_boundaries(
         "helpers.py",
         "worker.py",
     }
-    # The historical discovery function still uses glob without these
-    # exclusions.
-    (
-        repository / "linked"
-    ).unlink()  # Avoid a recursive fixture symlink in legacy glob.
-    assert str(repository / "link.py") in get_all_python_files(str(repository))
+    assert str(repository / "link.py") not in get_all_python_files(
+        str(repository)
+    )
 
 
 def test_splitter_reuses_baseline_and_correct_locations(repository):
     paths = index_state.source_files(repository)
-    legacy = load_and_split_python_files(
-        paths, chunk_size=900, chunk_overlap=0
-    )
-    assert not {"__init__.py", "cli.py"} & {
-        Path(d.metadata["source"]).name for d in legacy
-    }
     chunks = load_and_split_python_files(
         paths, 900, 0, repository_root=str(repository)
     )
@@ -356,29 +361,9 @@ def test_imports_omit_ambiguous_and_unindexed_targets(repository, monkeypatch):
     assert counts["import_edges"] == 0
 
 
-def test_pipeline_original_query_mode_is_preserved(config, monkeypatch):
-    monkeypatch.setattr(
-        EmbeddingPipeline,
-        "_setup_embedding_provider",
-        lambda self: Embeddings(),
-    )
-    pipeline = EmbeddingPipeline(
-        config_path=str(config), collection_name="legacy_test"
-    )
-    pipeline.collection = Mock()
-    pipeline.collection.query.return_value = {
-        "documents": [[]],
-        "metadatas": [[]],
-        "distances": [[]],
-        "ids": [[]],
-    }
-    pipeline.invoke("question")
-    pipeline.collection.query.assert_called_once_with(
-        query_texts=["question"], n_results=5
-    )
-
-
-def test_index_and_semantic_tool_reuse_real_pipeline(build, monkeypatch):
+def test_index_and_semantic_tool_keep_snippets_and_locations(
+    build, monkeypatch
+):
     from src.retrievers import query_graph
 
     root, directory, config, manifest, _ = build
@@ -398,7 +383,9 @@ def test_index_and_semantic_tool_reuse_real_pipeline(build, monkeypatch):
     }
     assert lookup.call_args.args[0][0]["path"] == row["path"]
     assert data(call(server, "index_status"))["fresh"]
-    assert (directory / "chroma").is_dir()
+    assert manifest["backend"] == "neo4j"
+    assert manifest["vector_dimensions"] == 4
+    assert manifest["counts"]["chunks"] > 0
 
 
 def test_snippet_symbol_mapping_keeps_empty_and_multiple_matches(monkeypatch):
@@ -559,10 +546,16 @@ def test_index_errors_are_actionable(build, case):
     assert result.is_error and "Rebuild" in str(result.content)
 
 
-def test_failed_rebuild_remains_incomplete(build, monkeypatch):
+@pytest.mark.parametrize("stage", ["graph", "vectors"])
+def test_failed_rebuild_remains_incomplete(build, monkeypatch, stage):
     root, directory, config, _, _ = build
+    target, name = (
+        (graph, "build_graph")
+        if stage == "graph"
+        else (vector_search, "store_chunks")
+    )
     monkeypatch.setattr(
-        graph, "build_graph", Mock(side_effect=RuntimeError("fixture failure"))
+        target, name, Mock(side_effect=RuntimeError("fixture failure"))
     )
     with pytest.raises(RuntimeError, match="fixture failure"):
         indexing.index_repository(root, directory, config)
@@ -570,6 +563,51 @@ def test_failed_rebuild_remains_incomplete(build, monkeypatch):
         json.loads((directory / "manifest.json").read_text())["state"]
         == "building"
     )
+
+
+@pytest.mark.parametrize("values", [[], [[float("nan")]], [[1], [1, 2]]])
+def test_invalid_vectors_are_rejected(values):
+    with pytest.raises(ValueError):
+        vector_search.validate_vectors(values)
+
+
+@pytest.mark.parametrize("problem", ["missing", "dimensions", "offline"])
+def test_vector_backend_errors_are_explicit(monkeypatch, problem):
+    driver = MagicMock()
+    session = driver.session.return_value.__enter__.return_value
+    metadata = {"chunks": 2, "vector_dimensions": 4}
+    if problem == "missing":
+        metadata["chunks"] = 0
+    elif problem == "dimensions":
+        metadata["vector_dimensions"] = 3
+    session.run.side_effect = [
+        Mock(single=Mock(return_value={"i": metadata})),
+        Mock(single=Mock(return_value={"state": "POPULATING"})),
+    ]
+    monkeypatch.setattr(
+        vector_search, "graph_connection", lambda: (driver, "neo4j")
+    )
+    with pytest.raises(ValueError, match="rebuild"):
+        vector_search.search_chunks(
+            [1.0] * 4, repository_root="/repo", build_id="b", limit=2
+        )
+
+
+def test_neo4j_driver_is_shared_and_closed(monkeypatch):
+    neo4j_connection.close_connection()
+    driver = MagicMock()
+    factory = Mock(return_value=driver)
+    monkeypatch.setenv("NEO4J_PASSWORD", "fixture")
+    monkeypatch.setattr(neo4j_connection.GraphDatabase, "driver", factory)
+    try:
+        first, _ = neo4j_connection.graph_connection()
+        second, _ = neo4j_connection.graph_connection()
+        assert first is second is driver
+        assert factory.call_count == 1
+        driver.close.assert_not_called()
+    finally:
+        neo4j_connection.close_connection()
+    driver.close.assert_called_once()
 
 
 def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
@@ -774,11 +812,13 @@ def test_real_neo4j_queries_rebuild_and_isolation(
 
     add_import_fixture(repository)
     monkeypatch.setattr(
-        EmbeddingPipeline,
-        "_setup_embedding_provider",
-        lambda self: Embeddings(),
+        embedding_model, "get_embedding_model", lambda config: Embeddings()
     )
     directory = tmp_path / "index"
+    other = tmp_path / "other-repository"
+    other.mkdir()
+    (other / "foreign.py").write_text('def first():\n    return "first"\n')
+    other_directory = tmp_path / "other-index"
     marker = str(uuid4())
     driver, database = graph_connection()
     try:
@@ -791,6 +831,7 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                 "symbol_id:'foreign'})",
                 repo=marker,
             ).consume()
+        indexing.index_repository(other, other_directory, config)
         manifest = indexing.index_repository(repository, directory, config)
         server = create_server(repository, directory, config)
         imports = data(
@@ -925,6 +966,20 @@ def test_real_neo4j_queries_rebuild_and_isolation(
         assert {row["symbol_id"] for row in matches} <= set(
             helper["symbol_ids"]
         )
+        assert "foreign.py" not in {row["path"] for row in search["results"]}
+        for row in search["results"]:
+            lines = (repository / row["path"]).read_text().splitlines()
+            assert row["content"] == "\n".join(
+                lines[row["line_start"] - 1 : row["line_end"]]
+            )
+            expected = sum(
+                (left - right) ** 2
+                for left, right in zip(
+                    Embeddings().embed_query("first"),
+                    Embeddings().embed_query(row["content"]),
+                )
+            )
+            assert row["distance"] == pytest.approx(expected)
         classes = data(call(server, "find_symbols", name="Child"))["results"]
         assert len(classes) == 2 and all(
             row["kind"] == "class" for row in classes
@@ -972,17 +1027,23 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                     if key.startswith("NEO4J_")
                 },
                 args=[
-                    "-m",
-                    "src.mcp_server",
-                    "--repo",
-                    str(repository),
-                    "--index-dir",
-                    str(directory),
-                    "--config",
-                    str(config),
+                    "-c",
+                    "import runpy; from src.embeddings import model; "
+                    "from src.mcp_server import create_server; "
+                    "E = runpy.run_path('tests/test_mcp.py')['Embeddings']; "
+                    "model.get_embedding_model = lambda config: E(); "
+                    f"create_server({str(repository)!r}, {str(directory)!r}, "
+                    f"{str(config)!r}).run(transport='stdio')",
                 ],
             )
             async with Client(params) as client:
+                semantic = data(
+                    await client.call_tool(
+                        "search_code", {"query": "first", "limit": 2}
+                    )
+                )
+                assert len(semantic["results"]) == 2
+                assert all("distance" in row for row in semantic["results"])
                 excerpt_result = data(
                     await client.call_tool(
                         "find_symbols",
@@ -1053,6 +1114,18 @@ def test_real_neo4j_queries_rebuild_and_isolation(
             data(call(fresh, "index_status"))["build_id"]
             != manifest["build_id"]
         )
+        foreign = create_server(other, other_directory, config)
+        assert (
+            data(call(foreign, "search_code", query="first"))["results"][0][
+                "path"
+            ]
+            == "foreign.py"
+        )
+        index_name, _ = vector_search.vector_names(str(repository))
+        with driver.session(database=database) as session:
+            session.run(f"DROP INDEX {index_name}").consume()
+        missing = call(fresh, "search_code", query="first")
+        assert missing.is_error and "missing" in str(missing.content)
         with driver.session(database=database) as session:
             assert (
                 session.run(
@@ -1072,6 +1145,13 @@ def test_real_neo4j_queries_rebuild_and_isolation(
             )
     finally:
         with driver.session(database=database) as session:
+            for root in (repository, other):
+                index_name, _ = vector_search.vector_names(str(root))
+                session.run(f"DROP INDEX {index_name} IF EXISTS").consume()
+                session.run(
+                    "MATCH (n:Codeaware {repository:$repo}) DETACH DELETE n",
+                    repo=str(root),
+                ).consume()
             session.run(
                 "MATCH (n:Codeaware {repository:$repo}) DETACH DELETE n",
                 repo=str(repository),
@@ -1083,4 +1163,3 @@ def test_real_neo4j_queries_rebuild_and_isolation(
             session.run(
                 "MATCH (n:CodeawareTestMarker {id:$id}) DELETE n", id=marker
             ).consume()
-        driver.close()

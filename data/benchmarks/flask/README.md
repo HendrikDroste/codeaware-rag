@@ -76,67 +76,9 @@ Added, deleted or edited Python files cause a mismatch. Adjusting labels also
 requires an intentional new manifest/dataset version; do not silently reuse the
 existing identity for different inputs.
 
-## Evaluate and save separately
+## Run the current agent evaluation
 
-Build the repository index from this exact corpus first, using the main README's
-indexing command. Then open that existing collection with the original pipeline
-and evaluate it. For the default embedding configuration:
-
-```python
-from pathlib import Path
-from src.index_state import COLLECTION, DEFAULT_CONFIG, read_manifest
-from src.pipelines.embedding_pipeline import EmbeddingPipeline
-from src.retrievers.validate_retriever import (
-    load_benchmark,
-    save_model_results,
-    save_results_to_csv,
-    validate_retriever,
-)
-
-repository = Path("/absolute/path/to/flask")
-index = Path("/absolute/path/to/codeaware-index")
-data = load_benchmark("data/benchmarks/flask", repository)
-manifest = read_manifest(repository, index, DEFAULT_CONFIG)
-pipeline = EmbeddingPipeline(
-    config_path=str(DEFAULT_CONFIG),
-    collection_name=COLLECTION,
-    chroma_persist_directory=str(index / "chroma"),
-    explicit_embeddings=True,
-    existing_only=True,
-)
-if pipeline.collection.metadata.get("build_id") != manifest["build_id"]:
-    raise ValueError("Collection and manifest belong to different builds")
-results = validate_retriever(pipeline, data)
-output = Path("data/benchmark_results/flask-49943b5a-v2")
-output.mkdir(parents=True, exist_ok=True)
-save_results_to_csv(results, str(output / "retrieval.csv"))
-save_model_results(results, "your-model-name", str(output / "models.csv"))
-```
-
-If indexing used a custom embedding configuration, use that same file for both
-`read_manifest` and `EmbeddingPipeline` instead of `DEFAULT_CONFIG`.
-
-The local repository root is inferred from the loaded dataset. Canonical
-repository-relative paths, absolute paths within that checkout, and the old
-`flask/...` paths relative to `src/` are normalized to `src/flask/...`. Paths
-outside the checkout are rejected. If loading a CSV directly instead, pass
-`repository_root=repository` explicitly for this normalization. Legacy calls
-without a repository root retain the old src-relative convention, but malformed
-annotations now fail rather than silently dropping labels.
-
-Metric version `unique-line-coverage-v2` counts each expected file/line pair once.
-Retrieved ranges are unioned before intersection with the expected union, so
-duplicates and overlaps cannot inflate coverage beyond 1.0. MRR still measures
-only the first overlapping hit; file matching still measures whether each
-expected range was hit at least once. Neither checks the correctness of an
-agent's final answer. Exported result rows include the dataset ID, repository
-revision and metric version.
-
-Do not append corrected runs to the historical result CSVs. Label and metric
-changes mean new scores are not directly comparable to those saved experiments.
-The [local run from 4 November 2026](
-../../benchmark_results/2026-11-04-local/README.md) records a subsequent
-evaluation with the original embedding model and 36 host-agent runs. It also
-records that the agent chose native search throughout the paired comparison.
-For an end-to-end comparison with host token usage, see the
-[agent baseline runner](../../../docs/agent-benchmark.md).
+Build the Neo4j index from this exact corpus using the main README. Then follow
+[the paired agent benchmark instructions](../../../docs/agent-benchmark.md).
+Record new results in a new directory. Saved historical measurements predate
+the Neo4j-only migration and must not be presented as measurements of this code.

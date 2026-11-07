@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 import pandas as pd
 import requests
 
-from src.pipelines.base_pipeline import BaseRAGPipeline
 from src.retrievers.metrics import (
     METRIC_VERSION,
     file_match_ratio,
@@ -235,7 +234,7 @@ def load_benchmark(benchmark_dir, repository_root) -> pd.DataFrame:
 
 
 def validate_retriever(
-    pipeline: BaseRAGPipeline,
+    pipeline: Any,
     validation_data: pd.DataFrame,
     *,
     repository_root=None,

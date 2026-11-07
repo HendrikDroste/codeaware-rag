@@ -257,11 +257,8 @@ def build_graph(codebase_path, *, file_paths=None, build_id="manual"):
 
         return counts
     finally:
-        try:
-            if session is not None:
-                session.close()
-        finally:
-            driver.close()
+        if session is not None:
+            session.close()
 
 
 def process_imports(
@@ -555,7 +552,3 @@ def get_qualified_name(node):
             names.append(node.child_by_field_name('name').text.decode('utf8'))
         node = node.parent
     return '.'.join(reversed(names))
-
-
-if __name__ == "__main__":
-    build_graph("../../../flask/src")

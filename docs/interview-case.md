@@ -4,9 +4,10 @@
 
 The hypothesis was that semantic retrieval plus structured Python relationships
 would help a coding agent answer repository questions more efficiently. The
-system works, but the current experiments do not establish that hypothesis or
+system works, but the recorded experiments do not establish that hypothesis or
 a business-value improvement. Present the evaluation and resulting decisions
-as the outcome; avoid claiming a successful productivity product.
+as the outcome; avoid claiming a successful productivity product. The recorded
+agent results predate the Neo4j-only storage migration.
 
 The original seminar work was personally built. The subsequent tool-server
 extension used AI assistance. Be prepared to explain and change the relevant
@@ -21,12 +22,11 @@ benchmarks evaluate repository Q&A, not successful autonomous code changes.
 1. Problem and hypothesis: locating relevant implementation in unfamiliar code.
    Developer onboarding/maintenance is a possible application, not a validated
    customer requirement or realized saving.
-2. Architecture: manual indexing, Chroma semantic retrieval, Neo4j relationships,
+2. Architecture: manual indexing, Neo4j vector retrieval and code relationships,
    fixed read-only tools, and the host agent's decisions.
-3. Evidence: pinned Flask source, paired native/Codeaware runs, reported tokens,
-   tool adoption, and scoped answer-quality review.
-4. Decision: reduce speculative functionality and retain the understandable core.
-   More tools did not automatically improve the evaluated workflow.
+3. Evidence and decision: pinned Flask source, paired native/Codeaware runs,
+   reported tokens and scoped answer-quality review. Explain how the evidence
+   led to reducing speculative functionality.
 
 ## Code discussion route
 
@@ -34,6 +34,7 @@ benchmarks evaluate repository Q&A, not successful autonomous code changes.
 |---|---|
 | `src/index_repository.py` | Shared source list, build identity and incomplete-build handling |
 | `src/embeddings/build_graph.py` | Tree-sitter extraction, Jedi resolution, ambiguous targets and scoped replacement |
+| `src/retrievers/vector_search.py` | Neo4j vector index, stored chunks and repository isolation |
 | `src/retrievers/query_graph.py` | Explicit parameterized queries and one-hop relationships |
 | `src/mcp_server.py` | Tool contracts, limits, excerpts and error handling |
 | `src/index_state.py` | Freshness, configuration compatibility and snapshot limitations |
@@ -61,19 +62,35 @@ pilots separate from repeated runs and full-dataset aggregates.
 
 ## Why simplify
 
-Remove only the on-demand outlines, definition and reference tools. Keep Jedi
-inside the existing graph builder: it resolves targets that Tree-sitter alone
+The on-demand outlines, definition and reference tools were removed. Jedi
+remains inside the existing graph builder: it resolves targets that Tree-sitter alone
 does not identify semantically. Keep the measured experiment history intact.
 Keep small excerpt controls and hints that make the core contracts explicit.
 
 The remaining seven tools have a direct explanation: semantic discovery,
 indexed symbol lookup, callers, callees, inheritance, imports and index status.
-The simplification itself has no new benchmark result.
+The simplification itself has no new agent benchmark result. Neo4j now stores
+both chunks/vectors and code relationships. The archived experiment pipelines
+are outside this branch. The default embedding model and chunk boundaries
+remain the same; approximate vector rankings still require fresh evaluation.
 
 The proposed live-workspace/versioned-library catalog is a future architecture
 option. Its unresolved questions include actual user demand, dependency version
 selection, local type information and cross-boundary references. A full rewrite
 before establishing a use case would increase uncertainty and review scope.
+
+## Neo4j consolidation
+
+Semantic search and relationship queries need different indexes, but can share
+one database. Neo4j now stores repository-scoped chunk vectors alongside the
+existing code graph. The embedding model and 900-character, zero-overlap
+chunking remain unchanged. The driver is reused within each process.
+
+Verification on 7 November 2026: all 86 tests passed, including real Neo4j
+isolation/rebuilding and MCP stdio queries. The real-model Flask rebuild stored
+83 files and 933 chunks with 1024-dimensional embeddings. A separate stdio
+check found file-serving code semantically and followed Blueprint inheritance.
+These are functional checks, not a new agent-performance or quality benchmark.
 
 ## Preparation still needed
 

@@ -1,8 +1,8 @@
 # Agent baseline and token usage
 
-The original `data/results_baseline.csv` compares embedding retrieval settings.
-It contains no agent token usage, and its historical scores use old labels and
-metrics. It is not an end-to-end coding-agent baseline.
+Recorded runs predate the Neo4j-only storage migration unless their metadata
+explicitly says otherwise. The original retrieval experiments are archived on
+the separate experiment branch. Their metrics do not measure agent token use.
 
 `python -m src.benchmark_agent` runs the same pinned Flask questions in two
 conditions, using Codex CLI as the host:

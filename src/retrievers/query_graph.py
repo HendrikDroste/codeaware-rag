@@ -15,6 +15,7 @@ def check_graph(session, repository_root, build_id):
             "Graph is missing or from another build; rebuild the index "
             "and reconnect"
         )
+    return dict(result["i"])
 
 
 def find_symbols(
@@ -48,7 +49,7 @@ def find_symbols(
             "start_line must be a positive integer with include_code=true"
         )
     driver, database = graph_connection()
-    with driver, driver.session(database=database) as session:
+    with driver.session(database=database) as session:
         check_graph(session, repository_root, build_id)
         result = session.run(
             "MATCH (f:Codeaware {repository: $repo}) "
@@ -109,7 +110,7 @@ def find_snippet_symbols(snippets, *, repository_root, build_id):
         for i, row in enumerate(snippets)
     ]
     driver, database = graph_connection()
-    with driver, driver.session(database=database) as session:
+    with driver.session(database=database) as session:
         check_graph(session, repository_root, build_id)
         result = session.run(
             "UNWIND $snippets AS snippet "
@@ -141,7 +142,7 @@ def query_imports(
         raise ValueError("direction must be imports or importers")
     absolute_path = str(Path(repository_root) / path)
     driver, database = graph_connection()
-    with driver, driver.session(database=database) as session:
+    with driver.session(database=database) as session:
         check_graph(session, repository_root, build_id)
         exists = session.run(
             "MATCH (f:Codeaware:File {repository:$repo, path:$path}) RETURN f",
@@ -173,7 +174,7 @@ def query_inheritance(symbol_id, *, repository_root, build_id, limit=20):
     order, not MRO.
     """
     driver, database = graph_connection()
-    with driver, driver.session(database=database) as session:
+    with driver.session(database=database) as session:
         check_graph(session, repository_root, build_id)
         exists = session.run(
             "MATCH (c:Codeaware:Class {repository:$repo, symbol_id:$id}) "
@@ -221,7 +222,7 @@ def query_calls(
         direction
     ]  # An internal choice, never agent-supplied Cypher.
     driver, database = graph_connection()
-    with driver, driver.session(database=database) as session:
+    with driver.session(database=database) as session:
         check_graph(session, repository_root, build_id)
         exists = session.run(
             "MATCH (f:Codeaware:Function {repository: $repo, symbol_id: "
@@ -253,36 +254,10 @@ def query_calls(
         return [dict(row) for row in result]
 
 
-# Prototype for querying references to a function in a Neo4j graph
-# database
-# This file is ony for testing purposes
-def query_references(
-    function_name=None,
-    *,
-    symbol_id=None,
-    repository_root=None,
-    build_id=None,
-    limit=20,
-):
-    if symbol_id is not None:
-        return query_calls(
-            symbol_id,
-            repository_root=repository_root,
-            build_id=build_id,
-            limit=limit,
-        )
-    driver, database = graph_connection()
-    # Cypher to find CALLS edges to the function
-    with driver, driver.session(database=database) as session:
-        result = session.run(
-            "MATCH (caller:Function)-[r:CALLS]->(target:Function "
-            "{name:$name}) "
-            "MATCH (caller)-[:DEFINED_IN]->(file:File) "
-            "RETURN file.path AS file, r.line AS line",
-            name=function_name,
-        )
-        return [dict(record) for record in result]
-
-
-if __name__ == "__main__":
-    print(query_references("send_static_file"))
+def query_references(*, symbol_id, repository_root, build_id, limit=20):
+    return query_calls(
+        symbol_id,
+        repository_root=repository_root,
+        build_id=build_id,
+        limit=limit,
+    )

@@ -149,10 +149,10 @@ python -m src.benchmark_agent \
   --timeout 300
 ```
 
-For retrieval, [run_retrieval.py](run_retrieval.py) uses the existing pipeline
-and evaluator. Copy it into a new sibling result directory before rerunning,
-so the recorded results remain intact, and launch it from the repository root
-with `PYTHONPATH=.`. The script writes its exports alongside itself.
+The historical retrieval runner and its storage implementation are archived on
+the experiment branch. These saved exports remain unchanged. Use the current
+agent benchmark instructions for new runs rather than rerunning the archived
+pipeline against the new storage layout.
 
 One run per question/condition gives no estimate of repeat variability. The
 questions mostly concern familiar Flask APIs and named symbols; they do not

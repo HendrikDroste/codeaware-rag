@@ -1,49 +1,45 @@
 # Codeaware-RAG
 
-Codeaware-RAG provides semantic code search and a partial static Python code
-graph to coding agents through a local Model Context Protocol (MCP) server.
-It started as a programming-experience seminar project at HPI comparing code
-retrieval and chunking approaches. The MCP extension reuses that implementation.
+Codeaware provides semantic code search and a partial static Python code graph
+to a coding agent through a local MCP server. **Neo4j is the only database:**
+it stores code chunks, embeddings, definitions and relationships.
 
-Codex or Claude Code supplies the agent loop: it chooses tools, interprets the
-results and decides what to do next. Codeaware supplies repository context.
-It does not run an additional LLM, execute repository code or edit source files.
+Codex or Claude Code supplies the agent loop. It chooses tools, interprets
+results and controls any editing or testing. Codeaware supplies read-only
+repository context. It does not run an additional chat model or execute code.
 
-## How it works
+## Architecture
 
 ```mermaid
 flowchart LR
-    User[User request] --> Host[Codex or Claude Code]
-    Host -->|Tool calls over stdio| MCP[Codeaware MCP server]
-    MCP --> Vector[Chroma: semantic search]
-    MCP --> Graph[Neo4j: symbols and relationships]
-    Vector --> Context[Code, locations and symbol IDs]
-    Graph --> Context
-    Context --> Host
+    Files[Python source and tests] --> Index[Manual indexer]
+    Index --> DB[Neo4j: chunks, vectors and code relationships]
+    Agent[Codex or Claude Code] <-->|Tool calls and evidence| MCP[Codeaware tools]
+    MCP <-->|Vector search and fixed Cypher| DB
 ```
 
-The manual indexer processes the same Python file list for both databases:
+1. **Index:** discover one repository's Python files. Split them into chunks
+   of up to 900 characters with zero overlap and generate embeddings with the
+   configured sentence-transformers model.
+2. **Extract relationships:** Tree-sitter finds definitions, call sites and
+   imports. Jedi resolves call targets, explicit base classes and imported
+   names. Neo4j stores `File`, `Function`, `Class` and `Chunk` nodes with
+   `DEFINED_IN`, `CALLS`, `INHERITS_FROM` and file-to-file `IMPORTS` relationships.
+3. **Publish a snapshot:** store chunks and vectors in Neo4j and wait for the
+   repository's vector index to become available. Mark the local manifest
+   complete only after the graph, vectors and final source-hash check succeed.
+4. **Query:** seven read-only tools return source excerpts, relative paths,
+   inclusive line ranges and symbol IDs. Embeddings load lazily on the first
+   semantic query. Logs go to stderr and stdout carries MCP messages.
 
-1. The existing baseline splitter creates chunks of up to 900 characters with
-   zero overlap. The configured embedding provider stores their vectors and
-   source metadata in persistent Chroma storage.
-2. Tree-sitter finds definitions, call sites and import statements. Jedi resolves
-   call targets, explicit base classes and imported names. Neo4j stores
-   `Function`, `Class` and `File` nodes with `DEFINED_IN`, `CALLS`,
-   `INHERITS_FROM` and file-to-file `IMPORTS` relationships.
-3. A manifest records the repository, model settings, build identifier, file
-   hashes and counts. It is marked complete only after both backends succeed.
-4. Seven Python functions expose retrieval over MCP using the official Python
-   SDK v2. Model components load lazily on the first semantic search. Logs go
-   to stderr; stdout is reserved for MCP messages.
-
-The original experiments and their results are documented in
-[Historical seminar experiments](docs/experiments.md).
+Each repository has its own vector index and generated chunk label. Semantic
+search cannot compete with another repository's chunks for the result limit.
+The Neo4j driver is shared within the process, using short-lived sessions.
 
 ## Installation
 
-Use **Python 3.11**, pip and a running local Neo4j database. From this project
-directory:
+Use **Python 3.11** and **Neo4j 5.26 or newer**, running locally. From this
+project directory:
 
 ```bash
 python3.11 -m venv .venv
@@ -51,24 +47,17 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-The dependencies include `mcp>=2,<3`; the implementation has been tested with
-MCP SDK 2.3.0 and Chroma 1.0.21. The requirements retain the original experiment
-dependency stack as well as the MCP dependencies.
+The requirements constrain the official MCP SDK to `mcp>=2,<3`. The local
+integration was checked with MCP 2.3.0 and Neo4j 2026.06.0. No additional vector
+database or chat-model API key is required.
 
-The embedding model downloads on first use. A Hugging Face login is needed only
-if your selected model requires authentication or gated access:
-
-```bash
-huggingface-cli login
-```
-
-The configured local embedding workflow needs no chat-model API key. The chat
-settings in `config/app_config.yaml` belong to the summary-embedding experiment.
+The embedding model downloads on first use. If a selected model needs gated
+access, authenticate with Hugging Face first. The default is the existing
+`Lajavaness/bilingual-embedding-large` sentence-transformers model.
 
 ## Build an index
 
-Start your local Neo4j server and set its connection settings in the environment.
-The password is required; the other values below are the defaults.
+Start Neo4j and configure the connection. The password is required:
 
 ```bash
 export NEO4J_URI=bolt://localhost:7687
@@ -81,49 +70,38 @@ python -m src.index_repository \
   --index-dir /absolute/path/to/codeaware-index
 ```
 
-Run this from the Codeaware project directory. Use a dedicated index directory,
-preferably outside the repository being indexed. The command includes Python
-source and tests, including `__init__.py` and `cli.py`, while excluding Git
-metadata, virtual environments, caches and symlinks.
+`--index-dir` contains the manifest and Jedi cache. Code and embeddings live in
+Neo4j. Keep this directory outside the indexed repository. Source discovery
+includes tests, `__init__.py` and `cli.py`, excluding environments, caches,
+Git metadata and symlinks.
 
-The default model comes from [`config/app_config.yaml`](config/app_config.yaml).
-To select a different model, copy that file, edit `models.embeddings` and pass
-`--config /absolute/path/model.yaml` to **both** the indexer and MCP server.
-Indexing and query vectors must use the same provider and model settings.
+A rebuild replaces only this repository's `Codeaware` nodes and its vector
+index. Other repositories and unrelated database content survive. Rebuilds are
+manual and must not overlap queries or another rebuild for the same repository.
 
-A rebuild replaces the `codeaware_mcp` Chroma collection in the chosen index
-directory and only the `Codeaware` Neo4j nodes owned by the configured repository.
-Unrelated graph data, including legacy nodes without that ownership label, is
-left untouched. Use one index and server process per repository; do not query
-the index while rebuilding it.
+The manifest records repository root, source hashes, build ID, schema version,
+model settings, vector dimensions and counts. Change the embedding model in a
+copy of `config/app_config.yaml` and pass `--config /absolute/model.yaml` to
+**both** the indexer and server. Rebuild after changing model settings.
 
 ### Changes and failures
 
-Updates are **manual**. After editing, adding or deleting Python files, rebuild
-with the command above and reconnect the MCP server. There is no file watcher,
-automatic refresh or incremental indexing yet.
+After editing, adding or deleting Python files, rebuild and reconnect the host.
+Retrieval checks source hashes before and after each tool call and refuses
+stale snapshots. Syntax errors abort indexing. A failed build remains incomplete.
+There is no automatic or incremental updating yet.
 
-Retrieval checks file hashes before and after the query and refuses stale data.
-Missing, incomplete, outdated-format or mismatched indexes produce explicit
-errors. Tree-sitter syntax errors abort indexing; a failed build is not marked
-complete. Fix the cause and rerun the indexer before querying again.
+Indexes from the earlier storage layout are rejected by schema version. Build
+a new index with the command above before querying this version. A shared
+Neo4j database does not make the multi-step rebuild atomic; the manifest and
+build-ID checks still prevent serving incomplete or mismatched data.
 
 ## Connect an agent
 
-The host starts the server with an absolute Python executable and repository
-and index paths. To inspect the launch arguments without starting MCP:
+Use an absolute Python executable, launch directory and repository/index paths.
+These are templates; the project does not modify personal client settings.
 
-```bash
-python -m src.mcp_server --help
-```
-
-The following are templates. They do not modify your personal client settings.
-If using a custom embedding configuration, add the same `--config` argument
-used during indexing.
-
-### Codex
-
-Adapt this entry in your Codex MCP configuration:
+For Codex, add a matching entry to your client configuration:
 
 ```toml
 [mcp_servers.codeaware]
@@ -134,16 +112,15 @@ args = [
   "--index-dir", "/absolute/path/to/codeaware-index"
 ]
 cwd = "/absolute/path/to/codeaware-rag"
-env_vars = ["NEO4J_PASSWORD", "NEO4J_URI", "NEO4J_USER", "NEO4J_DATABASE"]
+
+[mcp_servers.codeaware.env]
+NEO4J_URI = "bolt://localhost:7687"
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "<your-local-password>"
+NEO4J_DATABASE = "neo4j"
 ```
 
-See the [official Codex MCP documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
-for configuration locations and environment forwarding.
-
-### Claude Code
-
-An equivalent `.mcp.json` entry uses `PYTHONPATH` to make the project importable
-regardless of the client's working directory:
+For Claude Code, a corresponding MCP configuration is:
 
 ```json
 {
@@ -158,322 +135,113 @@ regardless of the client's working directory:
       ],
       "env": {
         "PYTHONPATH": "/absolute/path/to/codeaware-rag",
-        "NEO4J_PASSWORD": "${NEO4J_PASSWORD}",
-        "NEO4J_URI": "${NEO4J_URI:-bolt://localhost:7687}",
-        "NEO4J_USER": "${NEO4J_USER:-neo4j}",
-        "NEO4J_DATABASE": "${NEO4J_DATABASE:-neo4j}"
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASSWORD": "<your-local-password>",
+        "NEO4J_DATABASE": "neo4j"
       }
     }
   }
 }
 ```
 
-See the [official Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
-Both hosts must receive the password in their process environment. Exporting it
-in a terminal only affects applications launched from that terminal; configure
-GUI-host environments explicitly and keep credentials out of committed files.
+Launch Claude Code from the Codeaware directory. `PYTHONPATH` also makes the
+module importable if the client launches it from the target repository.
+Check arguments independently with `python -m src.mcp_server --help`.
 
 ## Tools
 
-All seven tools retrieve context without modifying source files or rebuilding
-the index. They use fixed, parameterized graph queries; arbitrary Cypher and
-shell execution are not exposed.
-
-| Tool | Result |
+| Tool | Purpose |
 |---|---|
-| `search_code(query, limit=5)` | Ranked snippets with relative paths, inclusive line ranges, retrieval distances and overlapping `symbol_ids` |
-| `find_symbols(name, path=None, limit=10, include_code=False, max_lines=60, start_line=None)` | Exact simple or qualified function/method/class matches with IDs, definition locations, `kind` and optional bounded source excerpts |
-| `get_callers(symbol_id, limit=20)` | Direct resolved callers, their stored function `content` and call-site locations |
-| `get_callees(symbol_id, limit=20)` | Direct resolved callees, their stored function `content` and call-site locations |
-| `get_inheritance(symbol_id, limit=20)` | Direct class parents/subclasses with `relation`, definition locations and `base_index` |
-| `get_imports(path, direction="imports", limit=20)` | Resolved local import dependencies or reverse `importers`, with paths, imported names, aliases and import-site locations |
-| `index_status()` | Repository, build identifier, model, counts, source freshness and whether reconnection is required |
+| `search_code(query, limit=5)` | Discover implementation by meaning |
+| `find_symbols(name, path=None, limit=10)` | Exact simple or qualified function/class names |
+| `get_callers(symbol_id, limit=20)` | Direct callers and call-site locations |
+| `get_callees(symbol_id, limit=20)` | Direct callees and call-site locations |
+| `get_inheritance(symbol_id, limit=20)` | Direct parents/subclasses and written base order |
+| `get_imports(path, direction="imports", limit=20)` | Local imports or reverse importers, with aliases/sites |
+| `index_status()` | Build identity, embedding settings, counts and freshness |
 
-Search limits are 1–20; other result-list limits are 1–100. Results include the
-build identifier and indicate truncation. Distances are retrieval scores, not
-confidence probabilities. `index_status` checks source freshness, not live
-database availability. Semantic search also requires Neo4j for symbol lookup.
+`find_symbols` can include a bounded source excerpt with `include_code=true`,
+`max_lines=60` (1..100) and an optional repository line `start_line`. Prefer a
+relevant method to a large class prefix. Assignments and attributes require
+native text search. Ambiguous names return distinct IDs for the host to select.
 
-Search links snippets to symbols by overlapping inclusive line ranges in the
-same file. A snippet can overlap several definitions, including nested ones, or
-have no matching symbol. Names can be ambiguous: select the intended ID from
-the returned locations. Caller/callee tools require function or method IDs;
-inheritance requires a class ID. Unknown IDs are errors; known symbols without
-resolved neighbors return empty lists.
+Semantic results contain chunks, paths, inclusive lines, overlapping symbol IDs
+and **squared Euclidean distance** (lower is better). Neo4j uses a Euclidean
+approximate-nearest-neighbor index; returned distances are computed from the
+stored vectors. Approximate results may differ from the previous backend.
+The old benchmark is not evidence that migration preserved ranking or improved
+agent efficiency.
 
-For implementation questions, request source during symbol lookup, for example:
+Semantic results are capped at 20, other lists at 100. Lists report truncation
+and include the build ID. Graph traversal is one hop per call. The host decides
+whether further traversal is needed. Unknown graph IDs are errors; known symbols
+without neighbors return empty results. Arbitrary Cypher, shell execution and
+rebuilding are not exposed.
 
-```json
-{
-  "name": "App.add_url_rule",
-  "path": "src/flask/sansio/app.py",
-  "limit": 1,
-  "include_code": true,
-  "max_lines": 60
-}
-```
+## Walkthrough
 
-`find_symbols` still returns metadata only by default. With `include_code=true`,
-each match adds `code_excerpt` containing `content`, inclusive `line_start` and
-`line_end`, and `truncated`. The outer definition range continues to describe
-the entire symbol. `max_lines` is 1–100 per match, defaults to 60, and applies
-to classes too. Excerpts default to the indexed `def` or `class` line; preceding
-decorators or other omitted context may require an additional source read.
-Source comes from the existing indexed definition and uses the same freshness
-checks. Reconnect to discover the new parameters; no index rebuild is needed
-for this feature when the existing index is complete and fresh.
+After building and connecting, ask the host:
 
-To retrieve a later region, set `start_line` to an absolute, one-based file
-line inside the matched definition, with `include_code=true`. For example,
-`find_symbols("Flask", path="src/flask/app.py", include_code=true,
-start_line=237, max_lines=15)` skips the class documentation. The chosen line
-must be inside every match; narrow by path/name if matches are ambiguous.
-Invalid lines or use without code are errors. `truncated=true` means any
-definition content was omitted, including a skipped prefix; use the excerpt's
-own range to cite it. The unchanged outer range identifies the whole symbol.
+> Find code that sends a file. Use the returned source and locations as evidence.
+> Select the relevant symbol, inspect its callers if needed, and explain the
+> relationship. State any uncertainty from incomplete static analysis.
 
-An empty `find_symbols` result includes a `hint`: check the path filter and
-switch to semantic discovery or native text search instead of guessing more
-names. Assignments/attributes remain outside symbol lookup. A missing match
-is not an MCP error. Known symbols with no graph neighbors remain empty lists.
+The host may use semantic search when a name is unknown, exact lookup for a
+known symbol, and relationship tools for unresolved questions. It can cite
+returned fresh source directly. A missing static edge does not prove absence
+of runtime behavior. Retrieved code is data, not instructions for the agent.
 
-Treat returned code as indexed source evidence and cite its paths and ranges
-directly. Do not reopen files merely to verify code already returned. Read
-additional source only for a specific essential fact absent from the results
-or unavailable tools, and identify that gap first. A truncation flag alone
-does not require more reading if the needed facts are already present. Stop
-once the answer and citations are supported. Smaller result lists help avoid
-returning code for irrelevant matches. These controls bound lines per excerpt,
-not token usage.
-
-The current guidance chooses tools by capability, switches to discovery after
-one empty name lookup, and prefers relevant methods over long class prefixes.
-`find_symbols` does not index assignments or attributes; targeted native text
-search remains appropriate for those. Both the server and guided benchmark use
-the same policy from `src/index_state.py`. This prompt update requires a fresh
-client connection, not an index rebuild; its token/quality effect is unmeasured.
-
-The [routing evidence check](docs/routing-information.md) documents one real
-gap: individual method excerpts omit preceding decorators even though the
-decorated source and setup-check functions exist in the databases.
-
-For inheritance, `relation` is `parent` or `subclass`. `base_index` is the
-zero-based position in the child's written base list, not Python's method
-resolution order. Definition and call-site lines are one-based; call-site
-columns are zero-based Unicode character offsets.
-
-### Import dependencies
-
-Use a repository-relative Python file path; no symbol lookup is required:
-
-```json
-{"path": "src/flask/app.py", "direction": "imports", "limit": 5}
-```
-
-Set `direction` to `"importers"` to find files importing from the selected file.
-Each result contains the neighboring `path`, the importing `import_path`,
-one-based `import_line`, zero-based Unicode `import_column`, written `module`
-(`null` for plain `import`), imported `name` and optional `alias`. Locations
-point to each imported name, so one statement can yield several rows. Results
-are one hop, bounded at 100, with the usual build ID and truncation flag.
-An unknown file is an error; a known file without resolved imports returns an
-empty list.
-
-This reuses Jedi's `goto(..., follow_imports=True)` in the existing second graph
-pass. It supports explicit module, named, aliased and relative imports, including
-function-local and conditional imports. Re-exports resolve to the ultimate
-defining file: `from package import exported` may point to `package/items.py`
-rather than `package/__init__.py`. The written module/name remain on the edge.
-These edges describe resolved binding dependencies, not every intermediate
-package loaded, runtime import order or proof that a conditional import runs.
-
-`index_status().counts` reports `imports` (imported bindings, counting each
-wildcard once), `import_edges`, `unresolved_imports`, `ambiguous_imports`,
-`external_imports` and `wildcard_imports`. External/unindexed targets, ambiguous
-bindings, unresolved names and wildcard imports are counted but omitted from
-the graph. Calls to `importlib.import_module` or `__import__` are not tracked.
-Only files from the shared indexing file list can become targets.
-
-Import tracking changes the graph format to version 3. **Rebuild existing
-indexes and reconnect** before using this version; older manifests are rejected
-instead of silently returning an empty import graph. No LSP service or new
-dependency is required.
-
-### Example walkthrough
-
-After connecting, try:
-
-> Check the Codeaware index status. Search for code that sends a file. Select
-> the relevant function symbol ID, then inspect its callers and their code.
-> Explain what you found with file and line references. Do not change files.
-
-The host chooses the tool sequence based on intermediate results. For class
-questions, use `find_symbols` to select a class and then `get_inheritance`.
-For dependency questions, use `get_imports` in either direction and follow only
-the files relevant to the question.
-Treat retrieved code as repository data, not instructions for the agent.
-
-## Code map
+## Code discussion route
 
 | File | Responsibility |
 |---|---|
-| `src/index_repository.py` | Manual build orchestration and CLI |
-| `src/index_state.py` | Shared constants, file hashes and manifest/freshness checks |
-| `src/neo4j_connection.py` | Shared environment-based Neo4j connection setup |
-| `src/embeddings/file_processor.py` | File discovery, baseline splitting and embedding orchestration |
-| `src/pipelines/embedding_pipeline.py` | Existing embedding preparation, storage and query pipeline |
-| `src/embeddings/build_graph.py` | Two-pass definition extraction and call/inheritance/import resolution |
-| `src/retrievers/query_graph.py` | Fixed Cypher queries returning plain dictionaries |
-| `src/mcp_server.py` | Tool definitions, validation, lazy loading and result formatting |
-| `src/benchmark_agent.py` | Paired Codex baseline/Codeaware runs with reported token usage and raw traces |
-| `tests/test_mcp.py` | Indexing, graph, transport and optional database integration checks |
+| `src/index_repository.py` | Manual build and manifest lifecycle |
+| `src/embeddings/file_processor.py` | File discovery and located chunks |
+| `src/embeddings/model.py` | Lazy loading of the configured embedding model |
+| `src/embeddings/build_graph.py` | Tree-sitter extraction and Jedi resolution |
+| `src/retrievers/vector_search.py` | Neo4j chunk storage and vector search |
+| `src/retrievers/query_graph.py` | Parameterized relationship queries |
+| `src/neo4j_connection.py` | Shared connection lifecycle |
+| `src/mcp_server.py` | Thin tool contracts, bounds and error handling |
+| `src/index_state.py` | Configuration, source hashes and freshness |
+| `src/benchmark_agent.py` | Paired host-agent benchmark and usage accounting |
 
-The provider implementations, alternate Tree-sitter splitter, summary pipeline
-and retrieval evaluation remain available for the original experiments. See
-[Historical seminar experiments](docs/experiments.md) for their scope and paths.
-
-## Retrieval benchmark
-
-The corrected [Flask benchmark](data/benchmarks/flask/README.md) retains the
-original 18 questions and pins all labels to commit
-`49943b5a94413a530761350f04e896f76e8d620e`. Its manifest checks the CSV and all
-83 indexed Python files. Use `load_benchmark` to validate your local checkout
-before evaluation; annotations are checked locally without GitHub downloads.
-
-Expected and retrieved paths are normalized to repository-relative paths such
-as `src/flask/app.py`. Coverage counts unique file/line pairs, so overlapping
-snippets cannot inflate the score. New exports record the dataset, revision and
-metric version. Save corrected runs separately from the historical result CSVs.
-
-See the [benchmark instructions](data/benchmarks/flask/README.md) for loading,
-evaluation and the annotation review. These are retrieval metrics. A separate
-[agent benchmark runner](docs/agent-benchmark.md) compares the same Codex host
-with and without Codeaware, recording input/cached/output/reasoning token usage,
-elapsed time and raw traces. The baseline uses native repository tools; the
-second condition adds MCP. The [local run from 4 November 2026](
-data/benchmark_results/2026-11-04-local/README.md) includes all 18 retrieval
-questions and 36 successful agent runs. Codex used native tools in every paired
-run, so the comparison establishes a baseline without demonstrating a Codeaware
-benefit. A separate tool-directed walkthrough successfully exercised all six
-MCP tool types. No token savings or business impact are established.
-
-Use `--tool-policy auto` (default) to measure voluntary tool selection, or
-`--tool-policy guided` for capability-based tool selection and evidence reuse.
-Both conditions receive the same prompt within each mode. New runs record the
-mode, prompt version and tool-description version; see the
-[prompt-mode instructions](docs/agent-benchmark.md#tool-selection-modes).
-The [three-question guidance pilot](
-data/benchmark_results/2026-11-04-guidance/README.md) recorded MCP use in 0/3
-automatic runs and 3/3 guided runs. Guided Codeaware used more tokens than its
-guided native baseline; the pilot establishes no savings.
-
-New benchmark exports also count successful excerpt-returning calls, excerpt
-rows, truncations and MCP errors. Use `--repeats 3` for repeated pairs with
-per-repetition traces and alternating pair order; the default remains one.
-The [repeated excerpt benchmark](
-data/benchmark_results/2026-11-05-excerpts-guided/README.md) completed 18 turns
-with zero MCP errors. Codeaware returned excerpts in six of nine turns and
-used 28.34% more total tokens overall; no overall quality gain is established.
-
-The [guided rerun with import tracking](
-data/benchmark_results/2026-11-05-imports-guided/README.md) completed another
-18 turns with the stronger evidence-reuse prompt. Codeaware made no native
-command calls, but used 15.46% more total tokens than its new baseline. The
-import tool was available but unused; no overall answer-quality improvement
-is established. These separate batches do not isolate individual changes.
-
-## Verification
+## Verification and evaluation
 
 ```bash
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
-python -m black --check src tests data/create_plots_mmr.py
-python -m isort --check-only src tests data/create_plots_mmr.py
-python -m pycodestyle src tests data/create_plots_mmr.py
-```
 
-Tests use deterministic embeddings with real Chroma storage. They cover symbol
-identity, cross-file aliases, repeated method names, nested functions, Unicode
-locations, inheritance, import aliases/re-exports, unresolved targets,
-freshness/errors, bounded results and MCP stdio discovery. No model download
-is required for the automated tests.
-
-The optional integration test runs Cypher and an MCP stdio tool call against an
-**isolated test Neo4j instance**, using the current `NEO4J_*` settings:
-
-```bash
+# With an isolated local Neo4j instance configured through NEO4J_*:
 CODEAWARE_TEST_NEO4J=1 python -m pytest -q
 ```
 
-It checks graph queries, repository-scoped rebuilding and preservation of
-unrelated data. Use a disposable test database rather than your normal instance.
+Unit tests use deterministic embeddings and recorded database calls. The real
+Neo4j integration exercises vector search, relationship queries, source ranges,
+stdio tool calls, rebuilding, missing indexes and isolation between repositories.
+It also checks unrelated graph data survives. No model download is needed for
+automated tests.
 
-Style follows [PEP 8](https://peps.python.org/pep-0008/): 79-character code lines
-and 72-character prose comments/docstrings. To format, run isort and Black
-without `--check-only`/`--check`. The source fixtures in `tests/fixtures` retain
-deliberate Unicode identifiers, a semicolon and exact locations for analysis
-tests; formatters exclude them. The checker accepts Black's spacing for complex
-slices and breaks before operators.
+The [paired agent benchmark](docs/agent-benchmark.md) compares the same host
+with and without the extra tools. The [pinned Flask dataset](data/benchmarks/flask/README.md)
+contains 18 questions. Saved [full-run results](data/benchmark_results/2026-11-05-low-full-guided/README.md)
+and [quality review](data/benchmark_results/2026-11-05-low-full-guided/quality-review.md)
+are historical: the earlier configuration used more total tokens without an
+overall quality advantage in the scoped, unblinded review. They predate this
+migration. No new agent-performance improvement is claimed.
 
-## Limitations and next steps
+The original seminar experiment implementations and plots are archived on the
+separate experiment branch. This branch contains the current tool server and
+retains recorded agent evidence without rewriting its historical configuration.
 
-- This is a partial static graph. Dynamic dispatch and unresolved/ambiguous
-  calls are incomplete; uncertain edges are omitted and counted. Module-level
-  calls are counted as outside the function graph. Callers are not all references.
-- Explicit, unambiguous repository-local base classes are supported, including
-  aliased/qualified imports and multiple inheritance. Dynamic, ambiguous and
-  external bases, including built-in `object`, are omitted and counted in
-  `unresolved_bases`. Inherited method resolution, `super()`, MRO and LSP
-  integration are outside this version.
-- Automatic refresh, an index coordinator and incremental indexing are proposed
-  next steps, not implemented features. Rebuild and reconnect manually today.
-- Historical line-coverage scores could double-count overlapping ranges. The
-  current metric fixes this; historical results have not been recomputed, and
-  new labels/metrics are not directly comparable to those saved runs.
-- A working agent walkthrough demonstrates integration, not improved agent
-  performance. Compare the same host with and without Codeaware on fixed tasks
-  before making claims about correctness, latency, cost or tool-call savings.
+## Limits and TODOs
 
-Original validation data, results, plots, `presentation.pdf` and `abstract.txt`
-remain available. Their historical context and evaluation caveats are documented
-in [Historical seminar experiments](docs/experiments.md).
-
-The [full low-reasoning guided run](data/benchmark_results/2026-11-05-low-full-guided/README.md)
-completed all 18 questions once in both conditions (36 turns). Codeaware used
-17.85% more total tokens, with fewer tokens on 6/18 pairs and zero reported MCP
-errors. A subsequent manual review of all 36 answers found 15 rubric ties
-and three baseline advantages on completeness, with no demonstrated Codeaware
-quality gain. The review is retrospective and unblinded.
-
-The [Q11/Q17/Q18 navigation pilot](data/benchmark_results/2026-11-05-navigation-guided/README.md)
-measured the updated prompts plus empty-result hints and excerpt offsets. All
-six low-reasoning turns succeeded. Codeaware used 21.79% more total tokens than
-its new baseline, versus 56.56% on the same questions previously. The agent
-used neither new feature; the observed workflow changes cannot be attributed
-to them. Q17/Q18 completeness omissions were resolved; Q11 remained.
-
-The [small Jedi-tool rerun](data/benchmark_results/2026-11-05-jedi-guided/README.md)
-completed Q11/Q17/Q18 once per condition with low reasoning. Codeaware used
-26.74% more total tokens than its new baseline. None of the three new tools
-was selected, and completeness grades were unchanged from the preceding pilot.
-The run does not establish a benefit or isolated overhead from those tools.
-
-## Interview scope and simplification
-
-The current case is an evaluated repository-context tool server, with no
-demonstrated productivity or business-value improvement. See the
-[interview walkthrough](docs/interview-case.md) for the proposed presentation
-and code-review route.
-
-The three on-demand Jedi tools (`list_symbols`, `resolve_definition`,
-`find_references`) were removed after the small pilot selected none of them.
-Their functionality tests passed, but their additional complexity had no
-demonstrated benefit on those tasks. This does not establish that the tools
-are generally unhelpful. Jedi remains part of graph extraction during indexing.
-
-The seven-tool interface retains semantic search, indexed symbol excerpts,
-calls, inheritance, imports and index status. Excerpt offsets and empty-result
-hints remain. All historical benchmarks and reviews are preserved, including
-the ten-tool pilot; they describe their recorded versions, not the current code.
-The rollback is not a new performance result. Reconnect MCP to rediscover tools;
-no database rebuild is required.
+- One configured Python repository per server process.
+- Partial static analysis: unresolved, ambiguous, external and dynamic targets
+  are omitted and counted. Imports are resolved file bindings, not a complete
+  runtime module graph. Base order is not Python's computed MRO.
+- Manual snapshots. TODO: evaluate automatic/incremental updating after a real
+  workflow demonstrates value.
+- No independent agent loop, execution sandbox, LSP server or production rollout.
+- No validated customer demand, developer productivity improvement or business ROI.
