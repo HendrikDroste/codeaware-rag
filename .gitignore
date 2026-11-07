@@ -9,4 +9,5 @@ __pycache__/
 .ruff_cache/
 .codeaware-index/
 data/agent_runs/
+benchmarks/runs/
 *.pyc

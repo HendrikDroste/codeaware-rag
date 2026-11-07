@@ -205,7 +205,6 @@ of runtime behavior. Retrieved code is data, not instructions for the agent.
 | `src/neo4j_connection.py` | Shared connection lifecycle |
 | `src/mcp_server.py` | Thin tool contracts, bounds and error handling |
 | `src/index_state.py` | Configuration, source hashes and freshness |
-| `src/benchmark_agent.py` | Paired host-agent benchmark and usage accounting |
 
 ## Verification and evaluation
 
@@ -223,17 +222,22 @@ stdio tool calls, rebuilding, missing indexes and isolation between repositories
 It also checks unrelated graph data survives. No model download is needed for
 automated tests.
 
-The [paired agent benchmark](docs/agent-benchmark.md) compares the same host
-with and without the extra tools. The [pinned Flask dataset](data/benchmarks/flask/README.md)
-contains 18 questions. Saved [full-run results](data/benchmark_results/2026-11-05-low-full-guided/README.md)
-and [quality review](data/benchmark_results/2026-11-05-low-full-guided/quality-review.md)
+The [paired agent benchmark](benchmarks/README.md) compares the same host
+with and without the extra tools. The [pinned Flask dataset](benchmarks/flask/README.md)
+contains 18 questions. Saved [full-run results](benchmarks/results/2026-11-05-low-full-guided/README.md)
+and [quality review](benchmarks/results/2026-11-05-low-full-guided/quality-review.md)
 are historical: the earlier configuration used more total tokens without an
 overall quality advantage in the scoped, unblinded review. They predate this
 migration. No new agent-performance improvement is claimed.
 
-The original seminar experiment implementations and plots are archived on the
-separate experiment branch. This branch contains the current tool server and
-retains recorded agent evidence without rewriting its historical configuration.
+This branch separates the tool server in `src/` from evaluation in
+`benchmarks/`. It retains one complete recorded run without rewriting its
+historical configuration. The original seminar code and exploratory pilots
+are preserved in the
+[archive branch](https://github.com/HendrikDroste/codeaware-rag/tree/codex/archive-before-presentation-cleanup-2026-11-07).
+
+The [three-slide outline](docs/presentation-outline.md) contains the project
+story and preparation notes. No slide deck is generated.
 
 ## Limits and TODOs
 

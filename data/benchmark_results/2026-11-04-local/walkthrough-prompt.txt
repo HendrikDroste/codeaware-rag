@@ -1,5 +1,0 @@
-Answer this question about the local repository. Cite source paths and line numbers, and state any uncertainty. You may use the available repository tools. Do not edit files, use the web, inspect other repositories, or delegate to other agents.
-
-This is a tool-directed diagnostic walkthrough. Start by calling Codeaware index_status, then search_code for the question. Use find_symbols to select App.add_url_rule and inspect its get_callers and get_callees. Also use find_symbols and get_inheritance to explain how App relates to Scaffold and the public Flask class. Treat missing static edges as uncertainty, and use native file reads when needed. Explain what the graph established and what required source inspection.
-
-How does the add_url_rule method work under the hood, and how does it relate to the route decorator?

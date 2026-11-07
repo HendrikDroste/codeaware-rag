@@ -9,10 +9,9 @@ import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 
-import pandas as pd
 import pytest
 
-from src import benchmark_agent as benchmark
+from benchmarks import run_agent as benchmark
 
 
 def trace(usage=None, mcp=False):
@@ -249,11 +248,13 @@ def test_paired_runner_exports_usage_and_alternates_order(
 ):
     repository = tmp_path / "repo"
     repository.mkdir()
-    data = pd.DataFrame({"Question": ["first", "second"]})
-    data.attrs["benchmark"] = {
-        "dataset_id": "fixture",
-        "revision": "pinned",
-        "metric_version": "v2",
+    data = {
+        "questions": ["first", "second"],
+        "metadata": {
+            "dataset_id": "fixture",
+            "revision": "pinned",
+            "metric_version": "v2",
+        },
     }
     checks = []
 

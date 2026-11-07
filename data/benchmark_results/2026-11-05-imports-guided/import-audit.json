@@ -1,6 +1,0 @@
-{
-  "agent_import_calls": 0,
-  "checked_rows": 0,
-  "rows": [],
-  "note": "Preflight import calls are recorded separately; source sites and file existence do not prove runtime execution."
-}
