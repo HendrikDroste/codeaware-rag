@@ -1,8 +1,10 @@
 {
-  "reviewed_at_utc": "2026-11-05T08:04:45.858519+00:00",
-  "project_commit": "080329f7376dd58584eb7f37851912793d88255a",
+  "reviewed_at_utc": "2026-11-07T17:38:55.257244+00:00",
+  "reviewer": "Implementing assistant",
+  "blinded": false,
   "flask_revision": "49943b5a94413a530761350f04e896f76e8d620e",
   "rubric_sha256": "6a5c0a1a0aba47cb5d55d5eb27a8752efedd54ca4d1e253b807052e8d35d3748",
+  "dataset_manifest_sha256": "2a22d17716b0b3dcac55fbff70567373e31392f2312120d27068cb12bbc93575",
   "source_sha256": {
     "docs/config.rst": "2ad5bb5692512847144f87f100ec801aa9b9862c919331c9cf93ac3686ef6e3d",
     "docs/debugging.rst": "09bf141a35b5dd6ee45531bb77d9af7bfb94b46c8c8c11f36c26317de07e7b0c",
@@ -29,5 +31,12 @@
     "src/flask/wrappers.py": "e281b742d8067c961dd03dbbbd6dff335641b7e3406ea7f9ac4985df8926b421",
     "tests/test_basic.py": "099e8dea31c6b55065003cb5c62132893cb51eec9cbe648cad7ac6b97caecc19",
     "tests/test_blueprints.py": "9c7e1a3caf96db080ed22d52dcab8994f7e64381a06b5aa7f605eff62e8b21fc"
+  },
+  "evidence_sha256": {
+    "answers.md": "da5e66fdc9fbb86531f908e061aa9619f1fdd1c2b15c3810ebf4199813ca3ca4",
+    "usage.csv": "cfabf9243102d0893b49a05724bfa10b4c7d640916aa2595280a243f571cb86d",
+    "run.json": "45d438834c2d54bac2536b887f930701d105b2d428fa44cbc7ea05b466a1d711",
+    "quality-review.json": "7855d49c8a9328b1bf988af34b806c32d94d6977950235efa1a305037919d770",
+    "quality-citation-audit.json": "5d3f20def4475788ac95b6563cc83cac1c82e46030020c5a8414329f17bd2418"
   }
 }

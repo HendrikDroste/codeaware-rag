@@ -18,9 +18,9 @@ from mcp.client.stdio import StdioServerParameters
 
 from src import index_repository as indexing
 from src import index_state, neo4j_connection
-from src.embeddings import build_graph as graph
-from src.embeddings import model as embedding_model
-from src.embeddings.file_processor import (
+from src.indexing import build_graph as graph
+from src.indexing import model as embedding_model
+from src.indexing.file_processor import (
     get_all_python_files,
     load_and_split_python_files,
 )
@@ -203,6 +203,13 @@ def test_graph_keeps_two_passes_and_resolves_identity(repository, monkeypatch):
         file_paths=index_state.source_files(repository),
         build_id="test",
     )
+    definition_queries = [q for q, _ in driver.writes if "MERGE (func:" in q]
+    assert any(
+        "MERGE (func:Codeaware:Function " in q for q in definition_queries
+    )
+    assert any("MERGE (func:Codeaware:Class " in q for q in definition_queries)
+    assert all(":Symbol" not in q for q, _ in driver.writes)
+    assert all("symbol_name_constraint" not in q for q, _ in driver.writes)
     symbols = [p for q, p in driver.writes if "MERGE (func:" in q]
     calls = [p for q, p in driver.writes if "MERGE (caller)-" in q]
     ids = {p["qualified"]: p["id"] for p in symbols}
@@ -247,6 +254,72 @@ def test_graph_keeps_two_passes_and_resolves_identity(repository, monkeypatch):
     assert ":Codeaware" in deletion[0] and deletion[1]["repo"] == str(
         repository
     )
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_graph_preserves_definition_content_and_unicode_positions(
+    tmp_path, monkeypatch, newline
+):
+    root = tmp_path / "source"
+    root.mkdir()
+    code = (
+        'def café():\n    return "ä"\n\n'
+        'def entry():\n    label = "ä"; return café()\n'
+    )
+    path = root / "example.py"
+    path.write_bytes(code.replace("\n", newline).encode("utf8"))
+    driver = RecordingDriver()
+    monkeypatch.setattr(graph, "graph_connection", lambda: (driver, "neo4j"))
+    counts = graph.build_graph(root, file_paths=[str(path)])
+    definitions = [p for q, p in driver.writes if "MERGE (func:" in q]
+    assert [
+        (p["id"], p["sln"], p["eln"], p["content"]) for p in definitions
+    ] == [
+        ("example.py:1:café", 1, 2, 'def café():\n    return "ä"\n'),
+        ("example.py:4:entry", 4, 5, code[code.index("def entry") :]),
+    ]
+    call = next(p for q, p in driver.writes if "MERGE (caller)-" in q)
+    assert (call["c1"], call["c2"], call["ln"], call["col"], call["ct"]) == (
+        "example.py:4:entry",
+        "example.py:1:café",
+        5,
+        code.splitlines()[4].index("café"),
+        "function",
+    )
+    line = code.splitlines()[4]
+    column = line.index("café") + len("café")
+    assert graph._jedi_position(
+        code.splitlines(), graph.Point(4, len(line[:column].encode("utf8")))
+    ) == (5, column)
+    assert counts["symbols"] == 2 and counts["calls"] == 1
+    assert driver.closed
+
+
+@pytest.mark.parametrize("failure", ["syntax", "neo4j"])
+def test_graph_closes_session_and_propagates_failure(
+    repository, monkeypatch, failure
+):
+    driver = RecordingDriver()
+    monkeypatch.setattr(graph, "graph_connection", lambda: (driver, "neo4j"))
+    if failure == "syntax":
+        (repository / "broken.py").write_text("def broken(:\n")
+        error_type, message = ValueError, "Cannot index Python syntax errors"
+    else:
+        error = RuntimeError("graph write failed")
+        original_run = driver.run
+
+        def fail_write(query, **parameters):
+            if "MERGE (func:" in query:
+                raise error
+            return original_run(query, **parameters)
+
+        monkeypatch.setattr(driver, "run", fail_write)
+        error_type, message = RuntimeError, "graph write failed"
+    with pytest.raises(error_type, match=message) as raised:
+        graph.build_graph(repository)
+    if failure == "neo4j":
+        assert raised.value is error
+    assert driver.closed
 
 
 def add_import_fixture(repository):
@@ -439,7 +512,7 @@ def test_retrieval_refuses_stale_sources(build, change, include_code):
     server = create_server(root, directory, config)
     assert not data(call(server, "index_status"))["fresh"]
     result = call(
-        server, "find_symbols", name="first", include_code=include_code
+        server, "find_definitions", name="first", include_code=include_code
     )
     assert result.is_error and "stale" in str(result.content)
 
@@ -498,9 +571,9 @@ def test_symbol_excerpts_preserve_ranges_and_bound_class_code(
         or not 10 <= start_line <= 13
     ):
         with pytest.raises(ValueError, match="start_line"):
-            query_graph.find_symbols("Café", **arguments)
+            query_graph.find_definitions("Café", **arguments)
         return
-    rows = query_graph.find_symbols(
+    rows = query_graph.find_definitions(
         "Café",
         **arguments,
     )
@@ -616,7 +689,7 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
     root, directory, config, _, _ = build
     rows = [{"symbol_id": str(i)} for i in range(3)]
     lookup = Mock(return_value=rows)
-    monkeypatch.setattr(query_graph, "find_symbols", lookup)
+    monkeypatch.setattr(query_graph, "find_definitions", lookup)
     monkeypatch.setattr(query_graph, "query_references", Mock(return_value=[]))
     inheritance = Mock(
         return_value=[
@@ -627,14 +700,14 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
     imports = Mock(return_value=[{"path": str(i)} for i in range(3)])
     monkeypatch.setattr(query_graph, "query_imports", imports)
     server = create_server(root, directory, config)
-    result = data(call(server, "find_symbols", name="run", limit=2))
+    result = data(call(server, "find_definitions", name="run", limit=2))
     assert result["truncated"] and len(result["results"]) == 2
     assert lookup.call_args.kwargs["limit"] == 3
     assert lookup.call_args.kwargs["include_code"] is False
     assert lookup.call_args.kwargs["max_lines"] == 60
     call(
         server,
-        "find_symbols",
+        "find_definitions",
         name="run",
         include_code=True,
         max_lines=1,
@@ -643,7 +716,7 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
     assert lookup.call_args.kwargs["max_lines"] == 1
     call(
         server,
-        "find_symbols",
+        "find_definitions",
         name="run",
         include_code=True,
         start_line=12,
@@ -651,13 +724,13 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
     )
     assert lookup.call_args.kwargs["start_line"] == 12
     lookup.return_value = []
-    empty = data(call(server, "find_symbols", name="missing"))
+    empty = data(call(server, "find_definitions", name="missing"))
     assert empty["results"] == [] and "attributes" in empty["hint"]
     assert "hint" not in result
     for invalid in (0, 101):
         assert call(
             server,
-            "find_symbols",
+            "find_definitions",
             name="run",
             include_code=True,
             max_lines=invalid,
@@ -674,7 +747,7 @@ def test_graph_tools_delegate_and_report_truncation(build, monkeypatch):
     assert call(server, "search_code", query="first", limit=21).is_error
     assert call(server, "get_callers", symbol_id="known", limit=101).is_error
     assert call(
-        server, "find_symbols", name="run", path="../outside.py"
+        server, "find_definitions", name="run", path="../outside.py"
     ).is_error
     result = data(
         call(
@@ -722,7 +795,7 @@ def test_stdio_discovery_and_errors_do_not_load_models(build):
             tools = await client.list_tools()
             assert {t.name for t in tools.tools} == {
                 "search_code",
-                "find_symbols",
+                "find_definitions",
                 "get_callers",
                 "get_callees",
                 "get_inheritance",
@@ -745,7 +818,7 @@ def test_stdio_discovery_and_errors_do_not_load_models(build):
             assert (
                 schemas["get_callers"]["properties"]["limit"]["default"] == 20
             )
-            symbol_arguments = schemas["find_symbols"]["properties"]
+            symbol_arguments = schemas["find_definitions"]["properties"]
             assert symbol_arguments["include_code"]["default"] is False
             assert symbol_arguments["max_lines"]["default"] == 60
             assert symbol_arguments["max_lines"]["minimum"] == 1
@@ -872,19 +945,19 @@ def test_real_neo4j_queries_rebuild_and_isolation(
         )
         assert bounded["truncated"] and len(bounded["results"]) == 1
         assert call(server, "get_imports", path="missing.py").is_error
-        matches = data(call(server, "find_symbols", name="run"))["results"]
+        matches = data(call(server, "find_definitions", name="run"))["results"]
         assert {r["qualified_name"] for r in matches} == {
             "First.run",
             "Second.run",
         }
         first = data(
-            call(server, "find_symbols", name="first", path="helpers.py")
+            call(server, "find_definitions", name="first", path="helpers.py")
         )["results"][0]
         assert "code_excerpt" not in first
         excerpt = data(
             call(
                 server,
-                "find_symbols",
+                "find_definitions",
                 name="first",
                 path="helpers.py",
                 include_code=True,
@@ -902,7 +975,7 @@ def test_real_neo4j_queries_rebuild_and_isolation(
         later = data(
             call(
                 server,
-                "find_symbols",
+                "find_definitions",
                 name="first",
                 path="helpers.py",
                 include_code=True,
@@ -940,7 +1013,7 @@ def test_real_neo4j_queries_rebuild_and_isolation(
         )["results"]
         assert [r["symbol_id"] for r in outgoing] == [first["symbol_id"]]
         assert outgoing[0]["content"] == 'def first():\n    return "first"\n'
-        nested = data(call(server, "find_symbols", name="outer.inner"))[
+        nested = data(call(server, "find_definitions", name="outer.inner"))[
             "results"
         ][0]
         snippets = [
@@ -956,7 +1029,9 @@ def test_real_neo4j_queries_rebuild_and_isolation(
             repository_root=str(repository),
             build_id=manifest["build_id"],
         )
-        outer = data(call(server, "find_symbols", name="outer"))["results"][0]
+        outer = data(call(server, "find_definitions", name="outer"))[
+            "results"
+        ][0]
         assert overlapping == [[outer["symbol_id"], nested["symbol_id"]], []]
         search = data(call(server, "search_code", query="first", limit=20))
         helper = next(
@@ -980,7 +1055,9 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                 )
             )
             assert row["distance"] == pytest.approx(expected)
-        classes = data(call(server, "find_symbols", name="Child"))["results"]
+        classes = data(call(server, "find_definitions", name="Child"))[
+            "results"
+        ]
         assert len(classes) == 2 and all(
             row["kind"] == "class" for row in classes
         )
@@ -1028,7 +1105,7 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                 },
                 args=[
                     "-c",
-                    "import runpy; from src.embeddings import model; "
+                    "import runpy; from src.indexing import model; "
                     "from src.mcp_server import create_server; "
                     "E = runpy.run_path('tests/test_mcp.py')['Embeddings']; "
                     "model.get_embedding_model = lambda config: E(); "
@@ -1046,7 +1123,7 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                 assert all("distance" in row for row in semantic["results"])
                 excerpt_result = data(
                     await client.call_tool(
-                        "find_symbols",
+                        "find_definitions",
                         {
                             "name": "first",
                             "path": "helpers.py",
@@ -1058,7 +1135,7 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                 assert excerpt_result["results"][0] == excerpt
                 later_result = data(
                     await client.call_tool(
-                        "find_symbols",
+                        "find_definitions",
                         {
                             "name": "first",
                             "path": "helpers.py",
@@ -1083,9 +1160,9 @@ def test_real_neo4j_queries_rebuild_and_isolation(
                 assert result["results"] == imports
 
         asyncio.run(inheritance_over_stdio())
-        unused = data(call(server, "find_symbols", name="unused"))["results"][
-            0
-        ]
+        unused = data(call(server, "find_definitions", name="unused"))[
+            "results"
+        ][0]
         assert (
             data(call(server, "get_callers", symbol_id=unused["symbol_id"]))[
                 "results"
@@ -1094,14 +1171,14 @@ def test_real_neo4j_queries_rebuild_and_isolation(
         )
         assert call(server, "get_callers", symbol_id="unknown").is_error
         assert (
-            data(call(server, "find_symbols", name="first' RETURN f //"))[
+            data(call(server, "find_definitions", name="first' RETURN f //"))[
                 "results"
             ]
             == []
         )
         indexing.index_repository(repository, directory, config)
         assert call(
-            server, "find_symbols", name="first"
+            server, "find_definitions", name="first"
         ).is_error  # Requires reconnect.
         fresh = create_server(repository, directory, config)
         assert (

@@ -22,11 +22,11 @@ from src.index_state import (
     read_manifest,
 )
 
-SymbolId = Annotated[
+DefinitionId = Annotated[
     str,
     Field(
         description=(
-            "Exact symbol_id returned by find_symbols or search_code. "
+            "Exact symbol_id returned by find_definitions or search_code. "
             "Select the intended path and kind; do not construct an ID."
         )
     ),
@@ -52,7 +52,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         instructions=(
             "Codeaware indexes Python source and tests in one repository. "
             "Use search_code when implementation names are unknown, "
-            "find_symbols for known function/class names, "
+            "find_definitions for known function/class names, "
             "get_callers/get_callees for "
             "direct call relationships, and get_inheritance for direct "
             "class parents/subclasses. Use get_imports with a file path "
@@ -131,7 +131,8 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         Discover Python implementation by meaning when its file or
         symbol name is unknown. Returns ranked snippets, relative paths,
         inclusive line ranges, squared L2 distances and overlapping
-        symbol_ids. For a known function/class name, use find_symbols.
+        symbol_ids. For a known function/class name, use
+        find_definitions.
         Follow graph relationships only for unresolved relationship
         questions. Use targeted text search for exact assignments or
         attributes.
@@ -144,7 +145,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             manifest = snapshot()
             with model_lock:
                 if model is None:
-                    from src.embeddings.model import get_embedding_model
+                    from src.indexing.model import get_embedding_model
 
                     model = get_embedding_model(config)
                 from src.retrievers.vector_search import search_chunks
@@ -197,7 +198,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             ) from exc
 
     @server.tool(annotations=read_only)
-    def find_symbols(
+    def find_definitions(
         name: Annotated[
             str,
             Field(
@@ -274,7 +275,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         if path is not None:
             path = relative_path(path)
         result = graph_query(
-            "find_symbols",
+            "find_definitions",
             limit,
             name=name,
             path=path,
@@ -294,7 +295,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
 
     @server.tool(annotations=read_only)
     def get_callers(
-        symbol_id: SymbolId, limit: ResultLimit = 20
+        symbol_id: DefinitionId, limit: ResultLimit = 20
     ) -> dict[str, Any]:
         """
         Investigate which indexed functions directly call a selected
@@ -309,7 +310,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
 
     @server.tool(annotations=read_only)
     def get_callees(
-        symbol_id: SymbolId, limit: ResultLimit = 20
+        symbol_id: DefinitionId, limit: ResultLimit = 20
     ) -> dict[str, Any]:
         """
         Trace direct calls made by a selected function or method.
@@ -324,7 +325,7 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
 
     @server.tool(annotations=read_only)
     def get_inheritance(
-        symbol_id: SymbolId, limit: ResultLimit = 20
+        symbol_id: DefinitionId, limit: ResultLimit = 20
     ) -> dict[str, Any]:
         """
         Inspect a selected class's direct parents and subclasses.

@@ -24,11 +24,11 @@ EXCLUDE_DIRS = {
     ".codeaware-index",
 }
 GRAPH_SCHEMA = 4  # Neo4j stores both code relationships and chunk vectors.
-TOOL_DESCRIPTION_VERSION = "neo4j-navigation-v10"
+TOOL_DESCRIPTION_VERSION = "neo4j-navigation-v11"
 CONTEXT_GUIDANCE = (
     "Choose tools by capability, including native search when it directly "
     "exposes the needed fact. Use semantic search for unknown implementation "
-    "locations. find_symbols supports functions, methods and classes, not "
+    "locations. find_definitions supports functions, methods and classes, not "
     "assignments or attributes; use targeted text search for those. Treat "
     "remembered names as hypotheses. After one empty exact-name lookup, "
     "switch to behavior or text search instead of trying guessed name "
@@ -54,7 +54,12 @@ REBUILD = (
 
 
 def source_files(repository_root):
-    from src.embeddings.file_processor import get_all_python_files
+    """Return Python file paths using the shared indexing exclusions.
+
+    Use the same file selection for indexing and freshness checks so
+    both operations describe the same repository corpus.
+    """
+    from src.indexing.file_processor import get_all_python_files
 
     return get_all_python_files(
         str(repository_root), exclude_dirs=EXCLUDE_DIRS
@@ -62,6 +67,12 @@ def source_files(repository_root):
 
 
 def file_hashes(repository_root, files=None):
+    """Map repository-relative paths to SHA-256 hashes of file bytes.
+
+    Hash the supplied files, or rediscover the current Python corpus
+    when files is None. Comparing maps detects content changes and,
+    after rediscovery, added or deleted files.
+    """
     files = source_files(repository_root) if files is None else files
     return {
         Path(p)
@@ -73,11 +84,23 @@ def file_hashes(repository_root, files=None):
 
 
 def embedding_settings(config):
+    """Return the configured embedding model's name, vendor and type.
+
+    Store these settings in the manifest and compare them at retrieval
+    time to reject an index built with a different model configuration.
+    This reads configuration only; it does not load the model.
+    """
     settings = load_config(path=str(config))["models"]["embeddings"]
     return {key: settings[key] for key in ("name", "vendor", "type")}
 
 
 def write_manifest(index_dir, manifest):
+    """Write manifest metadata into an existing index directory.
+
+    Write a temporary JSON file, then atomically replace manifest.json
+    so readers do not observe partially written JSON. This returns None
+    and does not make the Neo4j index build itself atomic.
+    """
     temporary = index_dir / "manifest.json.tmp"
     temporary.write_text(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
@@ -86,6 +109,13 @@ def write_manifest(index_dir, manifest):
 
 
 def read_manifest(repository_root, index_dir, config, *, check_fresh=True):
+    """Return a compatible, complete manifest or raise ValueError.
+
+    Check repository identity, storage/schema version, embedding
+    settings and required fields. By default, also compare source hashes
+    to reject stale indexes. Disable check_fresh only to inspect status;
+    all other validation still applies. This does not contact Neo4j.
+    """
     try:
         manifest = json.loads(
             (index_dir / "manifest.json").read_text(encoding="utf-8")
@@ -113,6 +143,7 @@ def read_manifest(repository_root, index_dir, config, *, check_fresh=True):
             "vector_dimensions",
             "vector_similarity",
         ):
+            # Require these fields before downstream code consumes them.
             manifest[key]
     except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         raise ValueError(

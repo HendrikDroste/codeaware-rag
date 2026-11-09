@@ -18,7 +18,7 @@ def check_graph(session, repository_root, build_id):
     return dict(result["i"])
 
 
-def find_symbols(
+def find_definitions(
     name,
     *,
     repository_root,
@@ -184,7 +184,7 @@ def query_inheritance(symbol_id, *, repository_root, build_id, limit=20):
         ).single()
         if exists is None:
             raise ValueError(
-                "Unknown class symbol_id; use find_symbols to select a "
+                "Unknown class symbol_id; use find_definitions to select a "
                 "class from this index"
             )
         result = session.run(
@@ -232,7 +232,7 @@ def query_calls(
         ).single()
         if exists is None:
             raise ValueError(
-                "Unknown function/method symbol_id; use find_symbols to "
+                "Unknown function/method symbol_id; use find_definitions to "
                 "select a function from this index"
             )
         result = session.run(

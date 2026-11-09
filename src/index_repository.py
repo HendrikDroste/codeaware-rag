@@ -23,9 +23,9 @@ from src.index_state import (
 def index_repository(repository_root, index_dir, config=DEFAULT_CONFIG):
     import jedi
 
-    from src.embeddings.build_graph import build_graph
-    from src.embeddings.file_processor import load_and_split_python_files
-    from src.embeddings.model import get_embedding_model
+    from src.indexing.build_graph import build_graph
+    from src.indexing.file_processor import load_and_split_python_files
+    from src.indexing.model import get_embedding_model
     from src.neo4j_connection import graph_connection
     from src.retrievers.vector_search import store_chunks
 

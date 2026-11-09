@@ -1,6 +1,6 @@
 # Codeaware interview notes
 
-Updated 7 November 2026. Three project slides, about 7–8 minutes total.
+Updated 8 November 2026. Five project slides, about 9–9½ minutes total.
 Prepare a spoken introduction separately. The supplied brief gives the
 introduction and project presentation separate 5–10 minute slots, followed
 by 35–45 minutes of code discussion. Introduction slides are optional.
@@ -23,7 +23,7 @@ branch for follow-up questions. They do not establish an agent-level benefit.
 
 ## Slide 1: Problem, hypothesis and contribution
 
-**Time: about 2 minutes**
+**Time: about 1 minute 30 seconds**
 **Visual:** a concrete maintenance question beside a small Blueprint inheritance
 chain spanning several Flask files.
 
@@ -34,7 +34,7 @@ Blueprint and the SansioBlueprint import alias.
 
 State the hypothesis: semantic discovery plus explicit relationships could help
 a coding agent investigate unfamiliar code more efficiently. The host can also
-start with an exact symbol name; semantic search is not mandatory before every
+start with an exact definition name; semantic search is not mandatory before every
 graph call.
 
 Explain what you built and which parts came from the seminar versus the later
@@ -43,7 +43,7 @@ demand, developer time savings and business ROI have not been validated.
 
 ## Slide 2: Architecture and agent workflow
 
-**Time: about 3 minutes**
+**Time: about 1 minute 45 seconds**
 **Visual:** one diagram showing the host agent, Codeaware tools and Neo4j, with
 a short explanation of offline indexing.
 
@@ -53,9 +53,9 @@ Speaking route:
    characters with zero overlap and generate embeddings using the configured
    sentence-transformers model.
 2. Tree-sitter extracts definitions and call sites. Jedi resolves targets,
-   explicit bases and imported names. Neo4j stores symbols, relationships,
+   explicit bases and imported names. Neo4j stores code definitions, relationships,
    chunks and embeddings, with a vector index scoped to each repository.
-3. The host chooses a semantic search, symbol lookup or relationship query,
+3. The host chooses a semantic search, definition lookup or relationship query,
    receives source evidence and decides its next action. Explain one request
    through this path instead of listing every tool.
 4. Explain fixed Cypher, bounded responses and source/build checks. Freshness
@@ -70,27 +70,69 @@ Keep an actual tool trace available for the joint discussion. The presentation
 need not depend on a live application switch. Recorded Q&A runs do not establish
 successful autonomous code changes.
 
-## Slide 3: Evaluation, lessons and next decision
+## Slide 3: Following a question through Codeaware
 
-**Time: about 2 minutes 30 seconds**
+**Time: about 2 minutes**
+**Visual:** three steps, with the answer inside the final step.
+
+1. `find_definitions(name="Blueprint")`: choose the public class from the
+   matching definitions, using its path, and keep its returned definition ID.
+2. `get_inheritance` twice: query the selected class, then its parent. Each
+   call returns direct parents and subclasses; follow the parent results.
+3. The host explains the chain: public Blueprint inherits from the Sansio
+   Blueprint, which inherits from Scaffold. The Sansio name is an import alias.
+
+Keep paths and line numbers off the slide. They remain available in tool results.
+The ID is called `symbol_id` in the unchanged API/database schema.
+
+## Slide 4: Engineering decisions and trade-offs
+
+**Time: about 1 minute 45 seconds**
+**Visual:** three decisions with a reason and consequence for each.
+
+- One Neo4j database: vectors and relationships together; an external service
+  still needs operating.
+- Python-focused analysis: limit language support to keep the prototype simple;
+  other languages need additional extraction and resolution logic.
+- Manual snapshots: simple indexing with an explicit source version; source edits
+  require a rebuild and reconnect. Source hashes reject stale context.
+
+This is the former A2 slide, moved into the main presentation without duplication.
+
+## Slide 5: Evaluation, lessons and next decision
+
+**Time: about 2 minutes**
 **Visual:** a compact token comparison with the quality-review findings and the
 resulting engineering decision.
 
-| Recorded full benchmark | Native tools | Native tools plus Codeaware |
+| Current Neo4j-only benchmark, 7 November 2026 | Native tools | Native tools plus Codeaware |
 |---|---:|---:|
-| Total reported tokens | 979,194 | 1,154,004 |
-| Relative token change | Reference | +17.85% |
+| Total reported tokens | 1,027,206 | 958,262 |
+| Relative token change | Reference | -6.71% |
+| Uncached input plus output | 162,566 | 166,582 |
 
 The same host/model answered 18 pinned Flask questions with low reasoning,
-once per question and condition. The retrospective, unblinded implementer
-review found 15 ties and three baseline completeness advantages. Six pairs
-saved tokens with Codeaware and tied on the scoped rubric. No overall
-quality advantage or reliable productivity improvement was established.
+once per question and condition. All 36 runs completed with reported usage
+and no MCP errors. Codeaware used fewer tokens on 13 of 18 questions. The
+retrospective, unblinded implementing-assistant review found 17 ties and one
+baseline completeness advantage on the unchanged historical rubric. The
+Q15 difference is a missing explanation of response-tuple status and headers;
+a narrower literal-question rubric would score it as a tie.
 
-These results predate the Neo4j-only migration and final tool simplification.
-The comparison evaluates the combined added tools, without isolating the graph's
-contribution. Cached input is included, indexing is excluded, and token totals
-are not monetary costs. Preserve these qualifications alongside the chart.
+Cached input accounts for the aggregate reduction. Uncached input plus output
+rose 2.47%, and the median token count rose 4.16%. Token totals are not monetary
+costs. Indexing is excluded. The comparison evaluates the combined added tools,
+with eight semantic searches, 19 definition lookups and one inheritance query.
+It does not isolate the graph's contribution or demonstrate productivity.
+
+Use the neutral title **Evaluation and lessons learned**. Show the result
+clearly, then connect it to your engineering decisions. Avoid describing the
+project as failed or claiming proven savings from a single trial.
+
+The earlier benchmark remains optional discussion material: +17.85% tokens,
+15 ties and three baseline completeness advantages. Host version, prompts,
+tool metadata and storage changed between the two runs. Their difference
+cannot isolate which change caused an improvement.
 
 Explain the decisions the evidence informed:
 
@@ -108,13 +150,13 @@ maintenance costs. Time saved is not automatically cash saved.
 
 Suggested closing:
 
-> “I built a working integration, but the benchmark challenged my efficiency
-> hypothesis. I simplified the system and would validate one maintenance
-> workflow before expanding it. We can now look at the graph construction,
-> tool contracts or evaluation.”
+> “I built a working code-context integration and tested it against native
+> tools. The current run used fewer reported tokens, with no quality advantage
+> and no proven cost saving. I would next validate one maintenance workflow
+> before expanding it.”
 
-Evidence: [full run](../benchmarks/results/2026-11-05-low-full-guided/README.md),
-[quality review](../benchmarks/results/2026-11-05-low-full-guided/quality-review.md)
+Evidence: [current full run](../benchmarks/results/2026-11-07-neo4j-low-full-guided/README.md),
+[quality review](../benchmarks/results/2026-11-07-neo4j-low-full-guided/quality-review.md)
 and [archive index](../benchmarks/results/README.md).
 
 ## Joint code discussion
@@ -122,7 +164,7 @@ and [archive index](../benchmarks/results/README.md).
 | File | Discussion |
 |---|---|
 | `src/index_repository.py` | Shared file list, build identity and incomplete builds |
-| `src/embeddings/build_graph.py` | Extraction, target resolution, uncertain calls and imports |
+| `src/indexing/build_graph.py` | Extraction, target resolution, uncertain calls and imports |
 | `src/retrievers/vector_search.py` | Vector storage, distance and repository isolation |
 | `src/retrievers/query_graph.py` | Parameterized queries and one-hop relationships |
 | `src/mcp_server.py` | Tool contracts, source excerpts and limits |
@@ -138,7 +180,8 @@ still needs its own rehearsal; the Q&A benchmark does not demonstrate it.
 
 The Neo4j migration was functionally checked against a real database, with
 stdio tool calls and a real-model Flask rebuild of 83 files and 933 chunks.
-Those checks support integration correctness, not an efficiency or quality claim.
+Those integration checks support functional correctness. The separate paired
+Q&A run above measures agent usage and reviewed answer quality within its scope.
 
 ## Sources
 

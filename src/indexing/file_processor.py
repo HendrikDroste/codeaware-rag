@@ -5,9 +5,16 @@ from pathlib import Path
 
 
 def get_all_python_files(source_dir, *, exclude_dirs=()):
+    """Return sorted absolute paths to Python files below source_dir.
+
+    Skip named exclusion directories, virtual environments identified
+    by pyvenv.cfg, and symlinked files/directories. Include tests and
+    special filenames such as __init__.py; callers choose exclusions.
+    """
     root = os.path.realpath(source_dir)
     python_files = []
     for directory, dirs, names in os.walk(root, followlinks=False):
+        # Change dirs in place so os.walk never enters excluded folders.
         dirs[:] = sorted(
             name
             for name in dirs
@@ -25,6 +32,13 @@ def get_all_python_files(source_dir, *, exclude_dirs=()):
 def load_and_split_python_files(
     file_paths, chunk_size=900, chunk_overlap=0, *, repository_root
 ):
+    """Return code chunks with relative paths and inclusive line ranges.
+
+    Read the supplied UTF-8 files inside repository_root and split them
+    using Python-aware separators. Size and overlap are in characters;
+    chunks are not guaranteed to contain whole functions or classes.
+    Raise ValueError if a chunk cannot be located in its source file.
+    """
     from langchain_core.documents import Document
     from langchain_text_splitters import (
         Language,
@@ -46,11 +60,13 @@ def load_and_split_python_files(
             metadata={"source": path.relative_to(repository_root).as_posix()},
         )
         for chunk in splitter.split_documents([document]):
+            # The splitter's offset distinguishes repeated snippets.
             start = chunk.metadata.pop("start_index")
             if start < 0 or content[
                 start : start + len(chunk.page_content)
             ] != (chunk.page_content):
                 raise ValueError(f"Cannot locate a chunk in {file_path}")
+            # Convert the character offset to a one-based source line.
             first = content[:start].count("\n") + 1
             chunk.metadata.update(
                 line_start=first,

@@ -1,0 +1,791 @@
+{
+  "status": "complete",
+  "reviewed_at_utc": "2026-11-07T17:38:55.257244+00:00",
+  "reviewer": "Implementing assistant",
+  "blinded": false,
+  "rubric_version": "flask-low-full-quality-v1",
+  "rubric_sha256": "6a5c0a1a0aba47cb5d55d5eb27a8752efedd54ca4d1e253b807052e8d35d3748",
+  "rows": [
+    {
+      "question_id": 1,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Valid send_file path or binary-file example",
+          "covered": true
+        },
+        {
+          "fact": "Attachment/name options explained",
+          "covered": true
+        },
+        {
+          "fact": "Use trusted-directory send_from_directory for client-supplied names",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "1277b37c5ca789123770a10116bfea40da0a668ee90321481b4222fd0d828f99",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 1,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Valid send_file path or binary-file example",
+          "covered": true
+        },
+        {
+          "fact": "Attachment/name options explained",
+          "covered": true
+        },
+        {
+          "fact": "Use trusted-directory send_from_directory for client-supplied names",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "a40e63b234b999c9048b0ddc2b5f15ab63cb0357b68ad92616cd1d94e4d65044",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 2,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Bind CLI or app.run to 0.0.0.0",
+          "covered": true
+        },
+        {
+          "fact": "Explain external address/reachability depends on network",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "aeabd29b01b2b2c15ad7789747dbd0e5c24908faf6c5e1003935e79eed3f9327",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 2,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Bind CLI or app.run to 0.0.0.0",
+          "covered": true
+        },
+        {
+          "fact": "Explain external address/reachability depends on network",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "2c5a9e7441109a6f8ae0123b877ed9aa7048842438c256135c3aa62f2eb98759",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 3,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "dumps for a JSON string from list/dict",
+          "covered": true
+        },
+        {
+          "fact": "jsonify or automatic list/dict conversion for JSON HTTP response",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "e828283ca7393885f92c7dd4e2f6611f2051b3ebda5c71b37863e3558a88e816",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 3,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "dumps for a JSON string from list/dict",
+          "covered": true
+        },
+        {
+          "fact": "jsonify or automatic list/dict conversion for JSON HTTP response",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "195310f13b18ddde89973b4874c34353ad1fe6e6b773433afe5efd612fe17de0",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 4,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Return redirect with destination URL",
+          "covered": true
+        },
+        {
+          "fact": "Default is 303 in this pinned revision",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "e50708bee1817523826bf496d600b160c661bc37a2eba0f139b462af00098823",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 4,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Return redirect with destination URL",
+          "covered": true
+        },
+        {
+          "fact": "Default is 303 in this pinned revision",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "5d6005c03884ca0cb6f5578864a1a62155e425eaf08161295ec2ba490fe5b14f",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 5,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Split into Python package/modules with Blueprints",
+          "covered": true
+        },
+        {
+          "fact": "Application factory imports and registers blueprints",
+          "covered": true
+        },
+        {
+          "fact": "Coherent illustrative route/prefix example",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "44f784940410a64a8ff718eb7c4bddb1f369ad7e756e2232f1679d7a3a8da270",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 5,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Split into Python package/modules with Blueprints",
+          "covered": true
+        },
+        {
+          "fact": "Application factory imports and registers blueprints",
+          "covered": true
+        },
+        {
+          "fact": "Coherent illustrative route/prefix example",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "eb7ce105f50b6b0322adf69e5648b195d696af401d14b00c2d01650312a29d32",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 6,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Supported Content-Type change via response header/mimetype or return tuple",
+          "covered": true
+        },
+        {
+          "fact": "Usable view example",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "aa4c4c8f04cb2fe1657259e8c8f025a7b4baa170c31e0207515dba0a9c7959cf",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 6,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Supported Content-Type change via response header/mimetype or return tuple",
+          "covered": true
+        },
+        {
+          "fact": "Usable view example",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "b816e62e4530fbf142ed8a13452cccb06c29d6a2eeda75ac1b6d9ba92c9d0b1b",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 7,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "routes CLI or url_map.iter_rules lists registered routes",
+          "covered": true
+        },
+        {
+          "fact": "Explain endpoint/method/rule output and route registration timing",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "89f4ec6577a1956a23c3ec16ee57bd2f188da47d4fd3e82d5930c0efa126efe4",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 7,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "routes CLI or url_map.iter_rules lists registered routes",
+          "covered": true
+        },
+        {
+          "fact": "Explain endpoint/method/rule output and route registration timing",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "9a9b2961b0dd88382a369fba566702a8fc0a6dd07eac6ea08558f6049ce0d528",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 8,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Usable route decorator or add_url_rule example",
+          "covered": true
+        },
+        {
+          "fact": "Explain URL-to-view registration and method selection",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "99df8c6b85f4f6cec6e84f30a84f324609919de97667fe533af1f7f4a6bf41a1",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 8,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Usable route decorator or add_url_rule example",
+          "covered": true
+        },
+        {
+          "fact": "Explain URL-to-view registration and method selection",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "e1519cc0c7038a57a705e7be75302ff7da9109371fb652a5660028d5ee1de1ae",
+      "notes": "Essential facts present. Extra supported detail is not rewarded."
+    },
+    {
+      "question_id": 9,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "CLI --debug or app.run(debug=True)",
+          "covered": true
+        },
+        {
+          "fact": "Explain reload/debugger behavior and development-only use",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "d0e187f881ec0cf34beb080ee565757d59b502cdcf257b83c5628e66bd62708d",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 9,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "CLI --debug or app.run(debug=True)",
+          "covered": true
+        },
+        {
+          "fact": "Explain reload/debugger behavior and development-only use",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "84fe8f04da320136eb1481fbcb163ee290cb6b0fd4f968c812f24d99f9a7a8f7",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 10,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "413 can follow request/form limits",
+          "covered": true
+        },
+        {
+          "fact": "MAX_CONTENT_LENGTH mitigation",
+          "covered": true
+        },
+        {
+          "fact": "Distinguish multipart field size and field count limits",
+          "covered": true
+        },
+        {
+          "fact": "Avoid diagnosing an unknown deployment layer with certainty",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "b16464303a90077eccacbbef08ba5586d3a65d970824d0fac011f2af5173b780",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 10,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "413 can follow request/form limits",
+          "covered": true
+        },
+        {
+          "fact": "MAX_CONTENT_LENGTH mitigation",
+          "covered": true
+        },
+        {
+          "fact": "Distinguish multipart field size and field count limits",
+          "covered": true
+        },
+        {
+          "fact": "Avoid diagnosing an unknown deployment layer with certainty",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "ea8457df8b7940e430490fca1493949a3a63df30cdba590f81abbd6d4b5a4b60",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 11,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "object -> Scaffold -> sansio.Blueprint -> public Blueprint chain",
+          "covered": true
+        },
+        {
+          "fact": "Map SansioBlueprint alias to the Sans-I/O base",
+          "covered": true
+        },
+        {
+          "fact": "Explicit public flask.Blueprint export",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "7a33d1982d793e1bf1f8a88db4e55cb6732de989ebb5a422d33359141bdd624e",
+      "notes": "Q11 includes the public flask.Blueprint re-export in both conditions."
+    },
+    {
+      "question_id": 11,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "object -> Scaffold -> sansio.Blueprint -> public Blueprint chain",
+          "covered": true
+        },
+        {
+          "fact": "Map SansioBlueprint alias to the Sans-I/O base",
+          "covered": true
+        },
+        {
+          "fact": "Explicit public flask.Blueprint export",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "b63f0041c31bd8f9037c694fc9b87b3a925b69cb20d7ea3ee4f971186afd433c",
+      "notes": "Q11 includes the public flask.Blueprint re-export in both conditions."
+    },
+    {
+      "question_id": 12,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "AppGroup wraps commands with app context and defaults nested group type",
+          "covered": true
+        },
+        {
+          "fact": "FlaskGroup extends AppGroup for app loading/discovery and full CLI commands/options",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "0ede23e8f1d37fc0045548847783cb08c49476af7d7595c508c63a64c180f12d",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 12,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "AppGroup wraps commands with app context and defaults nested group type",
+          "covered": true
+        },
+        {
+          "fact": "FlaskGroup extends AppGroup for app loading/discovery and full CLI commands/options",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "3bb68192c9a6b8ab03df0859d14b1ea56590540b521f576a3089a5f72af7a95c",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 13,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Scaffold common app/blueprint configuration and registration base",
+          "covered": true
+        },
+        {
+          "fact": "Describe resource settings and registries/routing",
+          "covered": true
+        },
+        {
+          "fact": "Identify direct App and sansio.Blueprint subclasses and public descendants",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "c4c78b8976b21558723d6bb92e6398c53f1719b17af5923cdae8b409af9f3a19",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 13,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Scaffold common app/blueprint configuration and registration base",
+          "covered": true
+        },
+        {
+          "fact": "Describe resource settings and registries/routing",
+          "covered": true
+        },
+        {
+          "fact": "Identify direct App and sansio.Blueprint subclasses and public descendants",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "f3c1dccfdf788f1339fbde689d24962e78c77b23fbf554987b28264010d983bb",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 14,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "State direct-data-attribute interpretation",
+          "covered": true
+        },
+        {
+          "fact": "Identify default_config, request_class, response_class, session_interface and instance cli",
+          "covered": true
+        },
+        {
+          "fact": "Distinguish inherited/dynamic attributes and methods",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "a05b9b82338a063a88532f352139ce9df6c4390a60b4481ffae32c72870ff783",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 14,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "State direct-data-attribute interpretation",
+          "covered": true
+        },
+        {
+          "fact": "Identify default_config, request_class, response_class, session_interface and instance cli",
+          "covered": true
+        },
+        {
+          "fact": "Distinguish inherited/dynamic attributes and methods",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "602349a7443219c9c61c07d42c70524c62e7669b752534347a0f33486ba5749a",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 15,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Identify Flask.make_response as converter",
+          "covered": true
+        },
+        {
+          "fact": "Connect finalize_request to conversion before postprocessing",
+          "covered": true
+        },
+        {
+          "fact": "Describe core return-type handling, including JSON and tuple status/headers",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "09714357e56a418116ff0c8252728e214a2c843a8aa6a2b2de7f57cbcdb0a218",
+      "notes": "Essential facts present; no substantive issue identified in reviewed claims."
+    },
+    {
+      "question_id": 15,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 1,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "Identify Flask.make_response as converter",
+          "covered": true
+        },
+        {
+          "fact": "Connect finalize_request to conversion before postprocessing",
+          "covered": true
+        },
+        {
+          "fact": "Describe core return-type handling, including JSON and tuple status/headers",
+          "covered": false
+        }
+      ],
+      "answer_sha256": "89a6adaa2bd840ea09eb68ec15a3ffacd08f2921ced282548c76963ed20baf37",
+      "notes": "Mentions response tuples, but does not explain their status/header handling. The conversion point and ordering are correct; this is a checklist completeness difference, not an incorrect answer."
+    },
+    {
+      "question_id": 16,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "route returns decorator calling add_url_rule and returning original function",
+          "covered": true
+        },
+        {
+          "fact": "Default endpoint and separate URL-rule/view-function stores",
+          "covered": true
+        },
+        {
+          "fact": "Method defaults and conditional automatic OPTIONS",
+          "covered": true
+        },
+        {
+          "fact": "Registration versus dispatch and conflicting endpoint rejection",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "6d99a0aad495a48ce8da955cf609797d9558c633072a8468872d5820f07396be",
+      "notes": "Both conditions explain registration, conditional OPTIONS, endpoint conflict checks and dispatch."
+    },
+    {
+      "question_id": 16,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "route returns decorator calling add_url_rule and returning original function",
+          "covered": true
+        },
+        {
+          "fact": "Default endpoint and separate URL-rule/view-function stores",
+          "covered": true
+        },
+        {
+          "fact": "Method defaults and conditional automatic OPTIONS",
+          "covered": true
+        },
+        {
+          "fact": "Registration versus dispatch and conflicting endpoint rejection",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "2f160984ea37ecc63ff938cc179889043a32e588eb96edd21a1d77ec38f04fcb",
+      "notes": "Both conditions explain registration, conditional OPTIONS, endpoint conflict checks and dispatch."
+    },
+    {
+      "question_id": 17,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "App.__init__ calls make_config",
+          "covered": true
+        },
+        {
+          "fact": "make_config copies self.default_config, overrides DEBUG and creates config_class",
+          "covered": true
+        },
+        {
+          "fact": "Locate concrete default values in Flask.default_config in src/flask/app.py",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "4f760c02ae795eb783ea401b2b37e3148db7cc49b61cddb7c4cb3e62e224ac75",
+      "notes": "Both conditions locate Flask.default_config."
+    },
+    {
+      "question_id": 17,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "App.__init__ calls make_config",
+          "covered": true
+        },
+        {
+          "fact": "make_config copies self.default_config, overrides DEBUG and creates config_class",
+          "covered": true
+        },
+        {
+          "fact": "Locate concrete default values in Flask.default_config in src/flask/app.py",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "68c06466601d54727b0278de1567a1b4b403cec7cd18d2d84232c4b0825cce47",
+      "notes": "Both conditions locate Flask.default_config."
+    },
+    {
+      "question_id": 18,
+      "variant": "baseline",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "WSGI -> wsgi_app -> request_context -> AppContext.from_environ",
+          "covered": true
+        },
+        {
+          "fact": "Construct request_class(environ), assign app.json, store in context",
+          "covered": true
+        },
+        {
+          "fact": "Default/customizable Request and context-bound flask.request proxy",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "891304f94ce4ca67404b02b691a527e8b5de1774ddc19bd6e69b3a3b565dc618",
+      "notes": "Both conditions include the context-bound LocalProxy."
+    },
+    {
+      "question_id": 18,
+      "variant": "codeaware",
+      "correctness": 2,
+      "completeness": 2,
+      "citation_support": 2,
+      "fact_coverage": [
+        {
+          "fact": "WSGI -> wsgi_app -> request_context -> AppContext.from_environ",
+          "covered": true
+        },
+        {
+          "fact": "Construct request_class(environ), assign app.json, store in context",
+          "covered": true
+        },
+        {
+          "fact": "Default/customizable Request and context-bound flask.request proxy",
+          "covered": true
+        }
+      ],
+      "answer_sha256": "077a79278b1a03a544a640bedad44458ce5a12563aae1961f7964718dc3ef1fc",
+      "notes": "Both conditions include the context-bound LocalProxy."
+    }
+  ],
+  "method": "Retrospective, unblinded implementing-assistant review against the unchanged historical rubric. Core claims checked against pinned source. Examples source-reviewed, not executed. No independent evaluator or grading model."
+}

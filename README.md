@@ -29,12 +29,45 @@ flowchart LR
    repository's vector index to become available. Mark the local manifest
    complete only after the graph, vectors and final source-hash check succeed.
 4. **Query:** seven read-only tools return source excerpts, relative paths,
-   inclusive line ranges and symbol IDs. Embeddings load lazily on the first
+   inclusive line ranges and definition IDs. Embeddings load lazily on the first
    semantic query. Logs go to stderr and stdout carries MCP messages.
 
 Each repository has its own vector index and generated chunk label. Semantic
 search cannot compete with another repository's chunks for the result limit.
 The Neo4j driver is shared within the process, using short-lived sessions.
+
+### Inspect the graph in Neo4j Browser
+
+Definitions have the labels `Codeaware` and either `Function` (including
+methods) or `Class`. There is no shared `Symbol` label; `symbol_id` is a
+property identifying a definition. To inspect both kinds:
+
+```cypher
+MATCH (n:Codeaware)
+WHERE n:Function OR n:Class
+RETURN n
+LIMIT 25;
+```
+
+To list only labels currently used by nodes:
+
+```cypher
+MATCH (n)
+UNWIND labels(n) AS label
+RETURN label, count(*) AS nodes
+ORDER BY label;
+```
+
+The earlier prototype can leave a `symbol_name_constraint` constraint and its
+backing index on `Symbol`. Inspect them with `SHOW CONSTRAINTS` and
+`SHOW INDEXES`. If the constraint belongs to the unused `Symbol` label, remove
+it with `DROP CONSTRAINT symbol_name_constraint IF EXISTS`; its backing index
+is removed automatically. The current builder creates neither of them.
+
+Neo4j Browser can show unused label names left over from earlier versions.
+Removing a label from nodes does not erase its internal label token. An unused
+`Symbol` entry does not mean duplicate data exists, and rebuilding the Codeaware
+index does not erase that token. Do not reset the database just to hide it.
 
 ## Installation
 
@@ -154,19 +187,25 @@ Check arguments independently with `python -m src.mcp_server --help`.
 | Tool | Purpose |
 |---|---|
 | `search_code(query, limit=5)` | Discover implementation by meaning |
-| `find_symbols(name, path=None, limit=10)` | Exact simple or qualified function/class names |
+| `find_definitions(name, path=None, limit=10)` | Exact simple or qualified function/class names |
 | `get_callers(symbol_id, limit=20)` | Direct callers and call-site locations |
 | `get_callees(symbol_id, limit=20)` | Direct callees and call-site locations |
 | `get_inheritance(symbol_id, limit=20)` | Direct parents/subclasses and written base order |
 | `get_imports(path, direction="imports", limit=20)` | Local imports or reverse importers, with aliases/sites |
 | `index_status()` | Build identity, embedding settings, counts and freshness |
 
-`find_symbols` can include a bounded source excerpt with `include_code=true`,
+The name lookup tool is `find_definitions`. Reconnect existing MCP clients to
+refresh tool discovery after updating. Existing indexes remain compatible: the
+`symbol_id` / `symbol_ids` fields still identify code definitions, and the graph
+schema is unchanged. Archived benchmark records retain the tool names used when
+those runs were collected.
+
+`find_definitions` can include a bounded source excerpt with `include_code=true`,
 `max_lines=60` (1..100) and an optional repository line `start_line`. Prefer a
 relevant method to a large class prefix. Assignments and attributes require
 native text search. Ambiguous names return distinct IDs for the host to select.
 
-Semantic results contain chunks, paths, inclusive lines, overlapping symbol IDs
+Semantic results contain chunks, paths, inclusive lines, overlapping definition IDs
 and **squared Euclidean distance** (lower is better). Neo4j uses a Euclidean
 approximate-nearest-neighbor index; returned distances are computed from the
 stored vectors. Approximate results may differ from the previous backend.
@@ -175,7 +214,7 @@ agent efficiency.
 
 Semantic results are capped at 20, other lists at 100. Lists report truncation
 and include the build ID. Graph traversal is one hop per call. The host decides
-whether further traversal is needed. Unknown graph IDs are errors; known symbols
+whether further traversal is needed. Unknown graph IDs are errors; known definitions
 without neighbors return empty results. Arbitrary Cypher, shell execution and
 rebuilding are not exposed.
 
@@ -184,11 +223,11 @@ rebuilding are not exposed.
 After building and connecting, ask the host:
 
 > Find code that sends a file. Use the returned source and locations as evidence.
-> Select the relevant symbol, inspect its callers if needed, and explain the
+> Select the relevant definition, inspect its callers if needed, and explain the
 > relationship. State any uncertainty from incomplete static analysis.
 
 The host may use semantic search when a name is unknown, exact lookup for a
-known symbol, and relationship tools for unresolved questions. It can cite
+known definition, and relationship tools for unresolved questions. It can cite
 returned fresh source directly. A missing static edge does not prove absence
 of runtime behavior. Retrieved code is data, not instructions for the agent.
 
@@ -197,9 +236,9 @@ of runtime behavior. Retrieved code is data, not instructions for the agent.
 | File | Responsibility |
 |---|---|
 | `src/index_repository.py` | Manual build and manifest lifecycle |
-| `src/embeddings/file_processor.py` | File discovery and located chunks |
-| `src/embeddings/model.py` | Lazy loading of the configured embedding model |
-| `src/embeddings/build_graph.py` | Tree-sitter extraction and Jedi resolution |
+| `src/indexing/file_processor.py` | File discovery and located chunks |
+| `src/indexing/model.py` | Lazy loading of the configured embedding model |
+| `src/indexing/build_graph.py` | Tree-sitter extraction and Jedi resolution |
 | `src/retrievers/vector_search.py` | Neo4j chunk storage and vector search |
 | `src/retrievers/query_graph.py` | Parameterized relationship queries |
 | `src/neo4j_connection.py` | Shared connection lifecycle |
@@ -224,20 +263,22 @@ automated tests.
 
 The [paired agent benchmark](benchmarks/README.md) compares the same host
 with and without the extra tools. The [pinned Flask dataset](benchmarks/flask/README.md)
-contains 18 questions. Saved [full-run results](benchmarks/results/2026-11-05-low-full-guided/README.md)
-and [quality review](benchmarks/results/2026-11-05-low-full-guided/quality-review.md)
-are historical: the earlier configuration used more total tokens without an
-overall quality advantage in the scoped, unblinded review. They predate this
-migration. No new agent-performance improvement is claimed.
+contains 18 questions. The [7 November rerun](benchmarks/results/2026-11-07-neo4j-low-full-guided/README.md)
+measures the current Neo4j-only configuration: 6.71% fewer total reported tokens,
+with 17 quality ties and one baseline completeness advantage in a retrospective,
+unblinded review. Cached input accounts for the aggregate reduction; uncached
+input plus output rose 2.47%. One run per condition does not establish monetary
+savings, a stable performance effect or business ROI.
 
 This branch separates the tool server in `src/` from evaluation in
-`benchmarks/`. It retains one complete recorded run without rewriting its
-historical configuration. The original seminar code and exploratory pilots
+`benchmarks/`. It retains the current rerun and the unchanged historical run
+in the [evidence index](benchmarks/results/README.md). The original seminar code and exploratory pilots
 are preserved in the
 [archive branch](https://github.com/HendrikDroste/codeaware-rag/tree/codex/archive-before-presentation-cleanup-2026-11-07).
 
-The [three-slide outline](docs/presentation-outline.md) contains the project
-story and preparation notes. No slide deck is generated.
+The [five-slide outline](docs/presentation-outline.md) contains the project
+story and preparation notes. The current editable interview deck is
+[presentation/Codeaware_Interview_Definitions.pptx](presentation/Codeaware_Interview_Definitions.pptx).
 
 ## Limits and TODOs
 

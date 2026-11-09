@@ -100,15 +100,21 @@ answer or successful tool use. Inspect the saved evidence.
 
 ## Interpretation and retained evidence
 
-The [retained full run](results/2026-11-05-low-full-guided/README.md) covers all
-18 questions once per condition with low reasoning: 36 successful turns.
-Codeaware used 17.85% more total tokens. Its retrospective, unblinded
-[quality review](results/2026-11-05-low-full-guided/quality-review.md) found
-15 ties and three baseline completeness advantages on the selected rubric.
+The [7 November Neo4j-only rerun](results/2026-11-07-neo4j-low-full-guided/README.md)
+covers all 18 questions once per condition with low reasoning: 36 completed turns,
+all with reported usage and no MCP errors. Codeaware used 6.71% fewer total
+reported tokens, with fewer tokens on 13 of 18 questions. Its median token count
+rose 4.16%. Cached input accounts for the aggregate reduction; uncached input
+plus output rose 2.47%. The retrospective, unblinded
+[quality review](results/2026-11-07-neo4j-low-full-guided/quality-review.md) found
+17 ties and one baseline completeness advantage on the unchanged rubric.
 
-These measurements predate storage consolidation and the final smaller tool
-set. They neither measure the current server nor isolate the graph's benefit.
-The [evidence index](results/README.md) links the archived pilot history.
+The [historical run](results/2026-11-05-low-full-guided/README.md) used 17.85%
+more total tokens and its review found 15 ties and three baseline completeness
+advantages. It predates storage consolidation and tool simplification. Host,
+prompt and tool metadata also changed, so cross-run differences cannot isolate
+the effect of an individual change. Neither run isolates the graph's benefit.
+The [evidence index](results/README.md) links both runs and archived pilot history.
 
 Token totals are not monetary cost. Cached tokens may have different pricing,
 and local embeddings/indexing are outside host usage. Wall time includes fresh
