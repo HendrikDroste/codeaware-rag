@@ -27,7 +27,10 @@ def index_repository(repository_root, index_dir, config=DEFAULT_CONFIG):
     from src.indexing.file_processor import load_and_split_python_files
     from src.indexing.model import get_embedding_model
     from src.neo4j_connection import graph_connection
-    from src.retrievers.vector_search import store_chunks
+    from src.retrievers.vector_search import (
+        store_chunks,
+        store_definition_vectors,
+    )
 
     repository_root = Path(repository_root).resolve(strict=True)
     index_dir, config = Path(index_dir).resolve(), Path(config).resolve(
@@ -91,6 +94,14 @@ def index_repository(repository_root, index_dir, config=DEFAULT_CONFIG):
         model,
         repository_root=str(repository_root),
         build_id=manifest["build_id"],
+    )
+    counts.update(
+        store_definition_vectors(
+            model,
+            repository_root=str(repository_root),
+            build_id=manifest["build_id"],
+            dimensions=dimensions,
+        )
     )
     if hashes != file_hashes(repository_root):
         raise ValueError(

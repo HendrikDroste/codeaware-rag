@@ -29,6 +29,9 @@ from src.retrievers import vector_search
 
 
 class Result:
+    def data(self):
+        return []
+
     def consume(self):
         return None
 
@@ -619,14 +622,14 @@ def test_index_errors_are_actionable(build, case):
     assert result.is_error and "Rebuild" in str(result.content)
 
 
-@pytest.mark.parametrize("stage", ["graph", "vectors"])
+@pytest.mark.parametrize("stage", ["graph", "vectors", "definitions"])
 def test_failed_rebuild_remains_incomplete(build, monkeypatch, stage):
     root, directory, config, _, _ = build
-    target, name = (
-        (graph, "build_graph")
-        if stage == "graph"
-        else (vector_search, "store_chunks")
-    )
+    target, name = {
+        "graph": (graph, "build_graph"),
+        "vectors": (vector_search, "store_chunks"),
+        "definitions": (vector_search, "store_definition_vectors"),
+    }[stage]
     monkeypatch.setattr(
         target, name, Mock(side_effect=RuntimeError("fixture failure"))
     )
@@ -642,6 +645,106 @@ def test_failed_rebuild_remains_incomplete(build, monkeypatch, stage):
 def test_invalid_vectors_are_rejected(values):
     with pytest.raises(ValueError):
         vector_search.validate_vectors(values)
+
+
+def test_definition_vectors_update_existing_nodes(monkeypatch):
+    driver = MagicMock()
+    session = driver.session.return_value.__enter__.return_value
+    function = {
+        "id": "a.py:1:f",
+        "path": "a.py",
+        "name": "f",
+        "content": "def f():\n    return 1\n",
+    }
+    class_definition = {
+        "id": "a.py:4:C",
+        "path": "a.py",
+        "name": "C",
+        "content": "class C:\n    pass\n",
+    }
+
+    def run(query, **kwargs):
+        result = MagicMock()
+        result.single.return_value = {"i": {}}
+        if "RETURN d.symbol_id" in query:
+            result.data.return_value = (
+                [function] if ":Function " in query else [class_definition]
+            )
+        return result
+
+    session.run.side_effect = run
+    monkeypatch.setattr(
+        vector_search, "graph_connection", lambda: (driver, "neo4j")
+    )
+    model = Mock(wraps=Embeddings())
+    counts = vector_search.store_definition_vectors(
+        model, repository_root="/repo", build_id="b", dimensions=4
+    )
+    assert counts == {"function_vectors": 1, "class_vectors": 1}
+    assert model.embed_documents.call_args_list[0].args[0] == [
+        "a.py:f\n" + function["content"]
+    ]
+    writes = [
+        (args[0], kwargs)
+        for args, kwargs in session.run.call_args_list
+        if "UNWIND $rows" in args[0]
+    ]
+    assert [p["rows"][0]["id"] for _, p in writes] == [
+        function["id"],
+        class_definition["id"],
+    ]
+    assert all("CREATE" not in q and p["repo"] == "/repo" for q, p in writes)
+    assert all(len(p["rows"][0]["embedding"]) == 4 for _, p in writes)
+
+
+@pytest.mark.parametrize("kind", ["function", "class"])
+def test_definition_search_returns_direct_ids(build, monkeypatch, kind):
+    root, directory, config, _, _ = build
+    search = Mock(
+        return_value=[
+            {
+                "symbol_id": "a.py:1:Example",
+                "path": "a.py",
+                "content": "code",
+                "line_start": 1,
+                "line_end": 2,
+                "distance": 0.0,
+                "kind": kind,
+            }
+        ]
+    )
+    monkeypatch.setattr(vector_search, "search_vectors", search)
+    result = data(
+        call(
+            create_server(root, directory, config),
+            "search_code",
+            query="example",
+            kind=kind,
+            limit=2,
+        )
+    )
+    assert result["results"][0]["symbol_ids"] == ["a.py:1:Example"]
+    assert search.call_args.kwargs["kind"] == kind
+    assert search.call_args.kwargs["limit"] == 3
+
+
+def test_definition_search_requires_rebuild_for_old_indexes(monkeypatch):
+    driver = MagicMock()
+    session = driver.session.return_value.__enter__.return_value
+    session.run.return_value.single.return_value = {
+        "i": {"chunks": 2, "vector_dimensions": 4}
+    }
+    monkeypatch.setattr(
+        vector_search, "graph_connection", lambda: (driver, "neo4j")
+    )
+    with pytest.raises(ValueError, match="rebuild"):
+        vector_search.search_vectors(
+            [1.0] * 4,
+            repository_root="/repo",
+            build_id="old",
+            limit=2,
+            kind="function",
+        )
 
 
 @pytest.mark.parametrize("problem", ["missing", "dimensions", "offline"])
@@ -815,6 +918,11 @@ def test_stdio_discovery_and_errors_do_not_load_models(build):
             assert (
                 schemas["search_code"]["properties"]["limit"]["default"] == 5
             )
+            assert schemas["search_code"]["properties"]["kind"]["enum"] == [
+                "chunk",
+                "function",
+                "class",
+            ]
             assert (
                 schemas["get_callers"]["properties"]["limit"]["default"] == 20
             )
@@ -907,6 +1015,25 @@ def test_real_neo4j_queries_rebuild_and_isolation(
         indexing.index_repository(other, other_directory, config)
         manifest = indexing.index_repository(repository, directory, config)
         server = create_server(repository, directory, config)
+        for kind in ("function", "class"):
+            result = data(
+                call(server, "search_code", query="first", kind=kind, limit=2)
+            )
+            assert len(result["results"]) == 2 and result["truncated"]
+            for row in result["results"]:
+                assert row["symbol_ids"] == [row["symbol_id"]]
+                assert row["kind"] == kind
+                assert row["content"]
+            with driver.session(database=database) as session:
+                stored = session.run(
+                    f"MATCH (d:Codeaware:{kind.title()} {{repository:$repo}}) "
+                    "RETURN count(d) AS total, "
+                    "sum(CASE WHEN size(d.embedding) = 4 THEN 1 ELSE 0 END) "
+                    "AS embedded",
+                    repo=str(repository),
+                ).single()
+                assert stored["embedded"] == stored["total"]
+                assert stored["total"] == manifest["counts"][f"{kind}_vectors"]
         imports = data(
             call(server, "get_imports", path="package/consumer.py")
         )["results"]
@@ -1223,8 +1350,9 @@ def test_real_neo4j_queries_rebuild_and_isolation(
     finally:
         with driver.session(database=database) as session:
             for root in (repository, other):
-                index_name, _ = vector_search.vector_names(str(root))
-                session.run(f"DROP INDEX {index_name} IF EXISTS").consume()
+                for kind in ("chunk", "function", "class"):
+                    index_name, _ = vector_search.vector_names(str(root), kind)
+                    session.run(f"DROP INDEX {index_name} IF EXISTS").consume()
                 session.run(
                     "MATCH (n:Codeaware {repository:$repo}) DETACH DELETE n",
                     repo=str(root),

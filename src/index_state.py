@@ -24,7 +24,7 @@ EXCLUDE_DIRS = {
     ".codeaware-index",
 }
 GRAPH_SCHEMA = 4  # Neo4j stores both code relationships and chunk vectors.
-TOOL_DESCRIPTION_VERSION = "neo4j-navigation-v11"
+TOOL_DESCRIPTION_VERSION = "neo4j-navigation-v12"
 CONTEXT_GUIDANCE = (
     "Choose tools by capability, including native search when it directly "
     "exposes the needed fact. Use semantic search for unknown implementation "

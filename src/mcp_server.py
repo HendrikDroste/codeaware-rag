@@ -126,6 +126,16 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
             int,
             Field(description="Maximum snippets (1..20); start with 3..5."),
         ] = 5,
+        kind: Annotated[
+            Literal["chunk", "function", "class"],
+            Field(
+                description=(
+                    "Search text chunks (default), complete functions/methods "
+                    "or complete classes. Definition search requires "
+                    "rebuilding indexes created before definition embeddings."
+                )
+            ),
+        ] = "chunk",
     ) -> dict[str, Any]:
         """
         Discover Python implementation by meaning when its file or
@@ -133,6 +143,8 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
         inclusive line ranges, squared L2 distances and overlapping
         symbol_ids. For a known function/class name, use
         find_definitions.
+        kind selects chunks (default), complete functions/methods or
+        complete classes. Definition results include their exact IDs.
         Follow graph relationships only for unresolved relationship
         questions. Use targeted text search for exact assignments or
         attributes.
@@ -148,20 +160,30 @@ def create_server(repository_root, index_dir, config=DEFAULT_CONFIG):
                     from src.indexing.model import get_embedding_model
 
                     model = get_embedding_model(config)
-                from src.retrievers.vector_search import search_chunks
+                from src.retrievers.vector_search import (
+                    search_chunks,
+                    search_vectors,
+                )
 
-                rows = search_chunks(
+                search = search_chunks if kind == "chunk" else search_vectors
+                options = {} if kind == "chunk" else {"kind": kind}
+                rows = search(
                     model.embed_query(query),
                     repository_root=str(repository_root),
                     build_id=manifest["build_id"],
                     limit=limit + 1,
+                    **options,
                 )
             from src.retrievers.query_graph import find_snippet_symbols
 
-            symbols = find_snippet_symbols(
-                rows,
-                repository_root=str(repository_root),
-                build_id=manifest["build_id"],
+            symbols = (
+                find_snippet_symbols(
+                    rows,
+                    repository_root=str(repository_root),
+                    build_id=manifest["build_id"],
+                )
+                if kind == "chunk"
+                else [[row["symbol_id"]] for row in rows]
             )
             for row, symbol_ids in zip(rows, symbols):
                 row["symbol_ids"] = symbol_ids

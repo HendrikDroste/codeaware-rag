@@ -32,7 +32,8 @@ flowchart LR
    inclusive line ranges and definition IDs. Embeddings load lazily on the first
    semantic query. Logs go to stderr and stdout carries MCP messages.
 
-Each repository has its own vector index and generated chunk label. Semantic
+Each repository has separate vector indexes and generated labels for chunks,
+functions and classes. Semantic
 search cannot compete with another repository's chunks for the result limit.
 The Neo4j driver is shared within the process, using short-lived sessions.
 
@@ -186,7 +187,7 @@ Check arguments independently with `python -m src.mcp_server --help`.
 
 | Tool | Purpose |
 |---|---|
-| `search_code(query, limit=5)` | Discover implementation by meaning |
+| `search_code(query, limit=5, kind="chunk")` | Discover snippets, functions or classes by meaning |
 | `find_definitions(name, path=None, limit=10)` | Exact simple or qualified function/class names |
 | `get_callers(symbol_id, limit=20)` | Direct callers and call-site locations |
 | `get_callees(symbol_id, limit=20)` | Direct callees and call-site locations |
@@ -211,6 +212,22 @@ approximate-nearest-neighbor index; returned distances are computed from the
 stored vectors. Approximate results may differ from the previous backend.
 The old benchmark is not evidence that migration preserved ranking or improved
 agent efficiency.
+
+Use `kind="function"` to search functions and methods, or `kind="class"` to
+search classes directly. Indexing adds an `embedding` property to the existing
+definition nodes; it does not duplicate them. Both kinds embed the relative
+path, qualified name and complete stored source using the same model as chunks.
+Results contain complete definition source and its exact `symbol_id`, also in
+`symbol_ids`, ready for graph navigation. Class source includes its methods, so
+class and method embeddings intentionally overlap. Long inputs are truncated
+at the embedding model's token limit; returned source remains complete.
+
+Chunks remain the default and cover module-level code as well. The three kinds
+have separate rankings and are not merged. Rebuild manually and reconnect to
+add definition vectors to an existing index; older indexes still support chunk
+search but definition search returns an explicit rebuild error. The manifest
+reports `function_vectors` and `class_vectors` counts. Existing benchmark
+results describe default chunk search, not the new definition search modes.
 
 Semantic results are capped at 20, other lists at 100. Lists report truncation
 and include the build ID. Graph traversal is one hop per call. The host decides
